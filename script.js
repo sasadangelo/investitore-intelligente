@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-  // URL del CSV contenente i dati dei tassi di interesse BCE
-  const csvUrl = 'https://raw.githubusercontent.com/sasadangelo/investo/refs/heads/main/tassi-interesse.csv';
+  const csvUrl = 'https://raw.githubusercontent.com/sasadangelo/investo/main/tassi-interesse.csv';
 
   fetch(csvUrl)
     .then(response => response.text())
@@ -9,22 +8,26 @@ document.addEventListener('DOMContentLoaded', function () {
       const values = [];
 
       // Elaborazione del CSV
-      const rows = data.split('\n');
+      const rows = data.trim().split('\n').slice(1); // Ignora l'header
       rows.forEach(row => {
         const cols = row.split(',');
-        labels.push(cols[0]); // Data
-        values.push(parseFloat(cols[1])); // Tasso di interesse
+
+        // Converte manualmente la data dd/mm/yyyy in yyyy-mm-dd per il parsing corretto in JavaScript
+        const dateParts = cols[0].split('/');
+        const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
+        labels.push(new Date(formattedDate)); // Converte la data in oggetto Date
+        values.push(parseFloat(cols[2].replace('%', ''))); // Tasso di interesse
       });
 
-      // Creazione del grafico con Chart.js
+      // Crea il grafico
       const ctx = document.getElementById('interestChart').getContext('2d');
       new Chart(ctx, {
         type: 'line',
         data: {
-          labels: labels,
+          labels: labels.reverse(),
           datasets: [{
             label: 'Tasso di Interesse BCE',
-            data: values,
+            data: values.reverse(),
             borderColor: 'rgba(75, 192, 192, 1)',
             backgroundColor: 'rgba(75, 192, 192, 0.2)',
             fill: true
@@ -36,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function () {
               type: 'time',
               time: {
                 unit: 'month'
+              },
+              ticks: {
+                maxTicksLimit: 10
               }
             },
             y: {
@@ -47,3 +53,4 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .catch(error => console.error('Errore nel caricamento del CSV:', error));
 });
+
