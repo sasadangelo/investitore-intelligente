@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interest Rates - Home</title>
+  <title>Investitore Intelligente - Home</title>
   <link rel="stylesheet" href="styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <!-- Libreria per grafici -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
@@ -12,31 +12,32 @@
 
 <body>
   <header>
-    <div class="logo">Interest Rates</div>
+    <img src="img/logo.webp" alt="Logo" class="logo">
+    <div class="logo">Investitore Intelligente</div>
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="contact.html">Contact</a></li>
+        <li><a href="about.html">Chi Sono</a></li>
+        <li><a href="contact.html">Contatti</a></li>
       </ul>
     </nav>
   </header>
 
   <main>
     <section class="intro">
-      <h1>Interest Rates Overview</h1>
-      <p>Welcome to our site tracking ECB interest rates over time!</p>
+      <h1>Panoramica dei Tassi di Interesse</h1>
+      <p>Benvenuto nel nostro sito che traccia i tassi di interesse della BCE nel tempo!</p>
     </section>
 
     <section class="chart-container">
       <canvas id="interestChart"></canvas>
     </section>
 
-    <button id="view-data" onclick="window.location.href='data.html'">View Detailed Data</button>
+    <button id="view-data" onclick="window.location.href='data.html'">Visualizza i Dati</button>
   </main>
 
   <footer>
-    <p>&copy; 2025 Interest Rates Tracker</p>
+    <p>&copy; 2025 Investitore Intelligente</p>
   </footer>
 
   <script src="script.js"></script>

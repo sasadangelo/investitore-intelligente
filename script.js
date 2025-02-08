@@ -9,14 +9,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // Elaborazione del CSV
       const rows = data.trim().split('\n').slice(1); // Ignora l'header
+      let previousValue = null;
+
       rows.forEach(row => {
         const cols = row.split(',');
 
         // Converte manualmente la data dd/mm/yyyy in yyyy-mm-dd per il parsing corretto in JavaScript
         const dateParts = cols[0].split('/');
         const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`;
-        labels.push(new Date(formattedDate)); // Converte la data in oggetto Date
-        values.push(parseFloat(cols[2].replace('%', ''))); // Tasso di interesse
+        const currentValue = parseFloat(cols[2].replace('%', ''));
+
+        // Aggiungi il valore precedente se esiste, per rendere la linea stabile
+        if (previousValue !== null) {
+          // Duplica il valore precedente per la data corrente
+          labels.push(new Date(formattedDate));
+          values.push(previousValue);
+        }
+
+        // Aggiungi il valore corrente
+        labels.push(new Date(formattedDate));
+        values.push(currentValue);
+
+        // Imposta il valore precedente come quello corrente per il prossimo ciclo
+        previousValue = currentValue;
       });
 
       // Crea il grafico
@@ -53,4 +68,3 @@ document.addEventListener('DOMContentLoaded', function () {
     })
     .catch(error => console.error('Errore nel caricamento del CSV:', error));
 });
-

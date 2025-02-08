@@ -68,3 +68,35 @@ footer {
   width: 100%;
   bottom: 0;
 }
+
+table {
+  width: 100%;
+  margin-top: 2rem;
+  border-collapse: collapse;
+  background-color: #fff;
+}
+
+table,
+th,
+td {
+  border: 1px solid #ddd;
+}
+
+th,
+td {
+  padding: 12px;
+  text-align: left;
+}
+
+th {
+  background-color: #005f99;
+  color: white;
+}
+
+td {
+  background-color: #f9f9f9;
+}
+
+td:nth-child(even) {
+  background-color: #f1f1f1;
+}

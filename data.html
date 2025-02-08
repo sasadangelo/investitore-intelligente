@@ -4,18 +4,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Interest Rates - Data</title>
+  <title>Investitore Intelligente - Tassi di Interesse - Dati</title>
   <link rel="stylesheet" href="styles.css">
+  <script src="percorso/del/tuo/script.js"></script>
 </head>
 
 <body>
   <header>
-    <div class="logo">Interest Rates</div>
+    <img src="img/logo.webp" alt="Logo" class="logo">
+    <div class="logo">Investitore Intelligente</div>
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="contact.html">Contact</a></li>
+        <li><a href="about.html">Chi Sono</a></li>
+        <li><a href="contact.html">Contatti</a></li>
       </ul>
     </nav>
   </header>
@@ -24,13 +26,16 @@
     <section>
       <h1>Dati Tassi di Interesse BCE</h1>
       <p>Qui troverai i dati dettagliati sui tassi di interesse della BCE.</p>
-      <!-- Puoi caricare e visualizzare i dati in una tabella o altro -->
+      <div id="data-table-container">
+        <!-- La tabella verrà inserita qui dal JavaScript -->
+      </div>
     </section>
   </main>
 
   <footer>
-    <p>&copy; 2025 Interest Rates Tracker</p>
+    <p>&copy; 2025 Investitore Intelligente</p>
   </footer>
+  <script src="load_csv.js"></script>
 </body>
 
 </html>
