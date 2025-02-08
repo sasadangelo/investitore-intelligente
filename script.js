@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
   // URL del CSV contenente i dati dei tassi di interesse BCE
-  const csvUrl = 'https://github.com/sasadangelo/investo/blob/main/tassi-interesse.csv';
+  const csvUrl = 'https://raw.githubusercontent.com/sasadangelo/investo/refs/heads/main/tassi-interesse.csv';
 
   fetch(csvUrl)
     .then(response => response.text())
