@@ -13,7 +13,7 @@
 <body>
   <header>
     <img src="img/logo.webp" alt="Logo" class="logo">
-    <div class="logo">Investitore Intelligente</div>
+    <h1>Investitore Intelligente</h1>
     <nav>
       <ul>
         <li><a href="index.html">Home</a></li>
@@ -23,24 +23,33 @@
     </nav>
   </header>
 
-  <main>
-    <section class="intro">
-      <h1>Panoramica dei Tassi di Interesse</h1>
-      <p>Benvenuto nel nostro sito che traccia i tassi di interesse della BCE nel tempo!</p>
-    </section>
+  <div class="container">
+    <!-- Menu laterale -->
+    <aside class="sidebar">
+      <ul>
+        <li><a href="data.html">Dati Macro</a></li>
+        <li><a href="#calcolatore-bot">Calcolatore BOT</a></li>
+        <li><a href="#calcolatore-obbligazioni">Calcolatore Obbligazioni/BTP</a></li>
+      </ul>
+    </aside>
+    <main>
+      <section class="intro">
+        <h1>Panoramica dei Tassi di Interesse</h1>
+        <p>Benvenuto nel nostro sito che traccia i tassi di interesse della BCE nel tempo!</p>
+      </section>
 
-    <section class="chart-container">
-      <canvas id="interestChart"></canvas>
-    </section>
+      <section class="chart-container">
+        <canvas id="interestChart"></canvas>
+      </section>
 
-    <button id="view-data" onclick="window.location.href='data.html'">Visualizza i Dati</button>
-  </main>
+      <button id="view-data" onclick="window.location.href='data.html'">Visualizza i Dati</button>
+    </main>
 
-  <footer>
-    <p>&copy; 2025 Investitore Intelligente</p>
-  </footer>
+    <footer>
+      <p>&copy; 2025 Investitore Intelligente</p>
+    </footer>
 
-  <script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 
 </html>

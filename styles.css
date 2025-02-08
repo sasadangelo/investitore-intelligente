@@ -20,7 +20,8 @@ header {
 }
 
 .logo {
-  font-size: 1.5rem;
+  max-height: 100px;
+  margin-right: 10px;
 }
 
 nav ul {
@@ -99,4 +100,59 @@ td {
 
 td:nth-child(even) {
   background-color: #f1f1f1;
+}
+
+/* Contenitore principale */
+.container {
+  display: flex;
+}
+
+/* Menu laterale */
+.sidebar {
+  width: 250px;
+  background-color: #ffffff;
+  color: #333;
+  padding: 20px;
+  height: 100vh;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  /* Ombra laterale */
+}
+
+.sidebar ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.sidebar ul li {
+  margin-bottom: 20px;
+  /* Spazio tra i link */
+}
+
+.sidebar ul li a {
+  color: #005f99;
+  text-decoration: none;
+  font-size: 1.2rem;
+  font-weight: 500;
+  display: block;
+  /* Per permettere una comoda interazione */
+  padding: 10px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.sidebar ul li a:hover {
+  background-color: #f1f1f1;
+  /* Sfondo chiaro al passaggio del mouse */
+  color: #003c6e;
+  /* Colore del testo più scuro */
+}
+
+.sidebar ul li a:active {
+  background-color: #ddd;
+  /* Colore ancora più scuro quando cliccato */
+}
+
+/* Aggiungere spazio tra il menu laterale e il contenuto */
+main {
+  flex-grow: 1;
+  padding-left: 20px;
 }
