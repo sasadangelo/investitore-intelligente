@@ -30,9 +30,8 @@ document.addEventListener('DOMContentLoaded', function () {
           const quotazioni = {};
           quotazioniRows.forEach(row => {
             const cols = row.split(',');
-            const nomeBot = cols[0].replace(/"/g, '').trim(); // Rimuove virgolette e spazi
-            console.log(cols[3])
-            const ultimoPrezzo = cols[3].replace(/"/g, '').trim() // Rimuove virgolette, sostituisce la virgola con il punto
+            const nomeBot = cols[0]
+            const ultimoPrezzo = cols[2]
             quotazioni[nomeBot] = ultimoPrezzo;
           });
 
