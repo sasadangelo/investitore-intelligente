@@ -25,12 +25,12 @@ data = []
 for row in rows:
     cols = row.find_all("td")
     if len(cols) >= 6:
-        titolo = cols[0].get_text(strip=True)
-        ora = cols[1].get_text(strip=True)
-        ultimo = cols[2].get_text(strip=True)
-        var_percent = cols[3].get_text(strip=True)
-        apertura = cols[4].get_text(strip=True)
-        min_max = cols[5].get_text(strip=True)
+        titolo = cols[0].get_text(strip=True).replace('"', "")
+        ora = cols[1].get_text(strip=True).replace('"', "")
+        ultimo = cols[2].get_text(strip=True).replace('"', "").replace(",", ".")
+        var_percent = cols[3].get_text(strip=True).replace('"', "").replace(",", ".")
+        apertura = cols[4].get_text(strip=True).replace('"', "").replace(",", ".")
+        min_max = cols[5].get_text(strip=True).replace('"', "").replace(",", ".")
         data.append([titolo, ora, ultimo, var_percent, apertura, min_max])
 
 # Scrivi i dati in un file CSV
