@@ -1,6 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const emissioniBotCsvUrl = 'https://raw.githubusercontent.com/sasadangelo/investo/main/emissioni-bot.csv';
-  const quotazioniBotCsvUrl = 'https://raw.githubusercontent.com/sasadangelo/investo/main/quotazioni-bot.csv';
+  const emissioniBotCsvUrl = 'https://raw.githubusercontent.com/sasadangelo/investitore-intelligente/refs/heads/main/emissioni-bot.csv';
+  const quotazioniBotCsvUrl = 'https://raw.githubusercontent.com/sasadangelo/investitore-intelligente/refs/heads/main/quotazioni-bot.csv';
 
   // Funzione per ottenere la data in formato UTC senza ora
   function getDateWithoutTime(date) {
