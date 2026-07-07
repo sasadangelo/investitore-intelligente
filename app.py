@@ -15,6 +15,9 @@ import os
 import sys
 from pathlib import Path
 
+from flask.app import Flask
+from werkzeug.wrappers.response import Response
+
 # Make the 'src' package importable when running from the project root
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
@@ -43,8 +46,8 @@ logger = LoggerManager.get_logger("App")
 
 def create_app() -> Flask:
     """Application factory."""
-    app = Flask(
-        __name__,
+    app: Flask = Flask(
+        import_name=__name__,
         template_folder="src/intelligent_investor/templates",
         static_folder="src/intelligent_investor/static",
     )
@@ -56,19 +59,19 @@ def create_app() -> Flask:
     DatabaseInitializer().initialize_tables()
 
     # Register Blueprints
-    app.register_blueprint(bond_bp)
+    app.register_blueprint(blueprint=bond_bp)
 
     # Root redirect → bonds list
-    @app.route("/")
-    def index():
-        return redirect(url_for("bonds.index"))
+    @app.route(rule="/")
+    def index() -> Response:
+        return redirect(location=url_for(endpoint="bonds.index"))
 
     logger.info("Flask application created and configured.")
     return app
 
 
 if __name__ == "__main__":
-    application = create_app()
+    application: Flask = create_app()
     application.run(
         host=config.app.host,
         port=config.app.port,

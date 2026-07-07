@@ -2,16 +2,20 @@
 # Copyright (c) 2025 Salvatore D'Angelo, Code4Projects
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
+import json
+from collections.abc import Generator
 from datetime import date
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, Response, flash, redirect, render_template, request, stream_with_context, url_for
 from pydantic import ValidationError
 
 from intelligent_investor.dtos import BondDTO
-from intelligent_investor.services import BondService
+from intelligent_investor.services import BondService, ScraperRegistry
+from intelligent_investor.services.bond_quote_service import BondQuoteService
 
 bond_bp = Blueprint("bonds", __name__, url_prefix="/bonds")
 _service = BondService()
+_quote_service = BondQuoteService()
 
 # Allowed bond types for dropdowns
 BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
@@ -24,6 +28,46 @@ BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
 def _parse_date(value: str) -> date:
     """Parse a date string in YYYY-MM-DD format (HTML date input)."""
     return date.fromisoformat(value)
+
+
+def _calc_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | None, float | None]:
+    """
+    Compute gross and net annualised yield for a zero-coupon BOT using the
+    same compound formula as catalogo-bot.js:
+
+        gross = (redemption / last_price) ^ (1 / yearfrac) - 1
+        net   = (redemption / (last_price + imposta_disaggio)) ^ (1 / yearfrac) - 1
+
+    where:
+        giorni_totali  = (maturity - issue) in days
+        giorni_residui = (maturity - today) in days
+        disaggio_lordo = (redemption - issue_price) * giorni_residui / giorni_totali
+        imposta        = disaggio_lordo * (tax_rate / 100)
+        yearfrac       = giorni_residui / (366 if leap else 365)
+
+    Returns (gross_pct, net_pct) as percentage values, or (None, None) if the
+    data is insufficient.
+    """
+    total_days = (bond.maturity_date - bond.issue_date).days
+    residual_days = (bond.maturity_date - today).days
+
+    if residual_days <= 0 or total_days <= 0 or last_price <= 0:
+        return None, None
+
+    year_days = 366 if _is_leap(bond.maturity_date.year) else 365
+    yearfrac = residual_days / year_days
+
+    disaggio_lordo = (bond.redemption_price - bond.issue_price) * residual_days / total_days
+    imposta_disaggio = disaggio_lordo * (bond.tax_rate / 100)
+
+    gross = (bond.redemption_price / last_price) ** (1 / yearfrac) - 1
+    net   = (bond.redemption_price / (last_price + imposta_disaggio)) ** (1 / yearfrac) - 1
+
+    return gross * 100, net * 100
+
+
+def _is_leap(year: int) -> bool:
+    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
 
 def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
@@ -50,8 +94,82 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
 @bond_bp.route("/", methods=["GET"])
 def index():
     """List all bonds."""
-    bonds = _service.list_all()
-    return render_template("bonds/index.html", bonds=bonds)
+    today = date.today()
+    bonds = sorted(
+        (b for b in _service.list_all() if b.maturity_date >= today),
+        key=lambda b: b.maturity_date,
+    )
+    quotes = {q.bond_id: q for q in _quote_service.list_all()}
+
+    # Pre-compute yields so the template doesn't need math operations
+    yields: dict[int, tuple[float | None, float | None]] = {}
+    for bond in bonds:
+        if bond.id is not None:
+            quote = quotes.get(bond.id)
+            if quote is not None:
+                yields[bond.id] = _calc_yields(bond, quote.last_price, today)
+
+    return render_template("bonds/index.html", bonds=bonds, quotes=quotes, yields=yields)
+
+
+@bond_bp.route("/refresh-bot-quotes/stream", methods=["GET"])
+def refresh_bot_quotes_stream():
+    """
+    SSE endpoint — streams scraper progress events to the browser.
+
+    Each event is a JSON-encoded ScraperEvent:
+        data: {"type": "progress"|"done"|"error", "pct": 0-100, "message": "..."}
+    """
+    def _event_stream() -> Generator[str, None, None]:
+        try:
+            for event in ScraperRegistry.run("teleborsa_bot"):
+                yield f"data: {json.dumps(event)}\n\n"
+        except Exception as exc:
+            error_event = {"type": "error", "pct": 0, "message": str(exc)}
+            yield f"data: {json.dumps(error_event)}\n\n"
+
+    return Response(
+        stream_with_context(_event_stream()),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",   # disable Nginx buffering
+        },
+    )
+
+
+@bond_bp.route("/<int:bond_id>", methods=["GET"])
+def detail(bond_id: int):
+    """Show the detail/read-only view of a bond with computed yields."""
+    today = date.today()
+    bond = _service.get_by_id(bond_id)
+    if bond is None:
+        flash("BOT non trovato.", "warning")
+        return redirect(url_for("bonds.index"))
+
+    quote = _quote_service.get_by_bond_id(bond_id)
+    gross_yield, net_yield = (
+        _calc_yields(bond, quote.last_price, today) if quote else (None, None)
+    )
+    residual_days = (bond.maturity_date - today).days if bond.maturity_date >= today else 0
+    total_days = (bond.maturity_date - bond.issue_date).days
+
+    disaggio_lordo = None
+    imposta_disaggio = None
+    if total_days > 0 and residual_days > 0:
+        disaggio_lordo = (bond.redemption_price - bond.issue_price) * residual_days / total_days
+        imposta_disaggio = disaggio_lordo * (bond.tax_rate / 100)
+
+    return render_template(
+        "bonds/detail.html",
+        bond=bond,
+        quote=quote,
+        gross_yield=gross_yield,
+        net_yield=net_yield,
+        residual_days=residual_days,
+        disaggio_lordo=disaggio_lordo,
+        imposta_disaggio=imposta_disaggio,
+    )
 
 
 @bond_bp.route("/new", methods=["GET"])

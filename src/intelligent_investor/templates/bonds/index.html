@@ -5,9 +5,33 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2 class="mb-0"><i class="bi bi-bank me-2 text-primary"></i>BOT / Obbligazioni</h2>
-  <a href="{{ url_for('bonds.new') }}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i>Aggiungi
-  </a>
+  <div class="d-flex gap-2">
+    <button id="btn-refresh" class="btn btn-success" onclick="startRefresh()">
+      <i class="bi bi-arrow-clockwise me-1"></i>Aggiorna Quotazioni BOT
+    </button>
+    <a href="{{ url_for('bonds.new') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>Aggiungi
+    </a>
+  </div>
+</div>
+
+<!-- Progress panel — hidden until refresh starts -->
+<div id="refresh-panel" class="card mb-4 d-none">
+  <div class="card-body">
+    <div class="d-flex justify-content-between mb-1">
+      <span class="small fw-semibold" id="refresh-message">Avvio…</span>
+      <span class="small text-muted" id="refresh-pct">0%</span>
+    </div>
+    <div class="progress" style="height: 10px;">
+      <div id="refresh-bar"
+           class="progress-bar progress-bar-striped progress-bar-animated"
+           role="progressbar"
+           style="width: 0%"
+           aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+      </div>
+    </div>
+    <p id="refresh-status" class="small text-muted mt-2 mb-0"></p>
+  </div>
 </div>
 
 {% if bonds %}
@@ -20,13 +44,11 @@
             <th>#</th>
             <th>Nome</th>
             <th>ISIN</th>
-            <th>Tipo</th>
             <th>Emissione</th>
             <th>Scadenza</th>
             <th class="text-end">Prezzo emissione</th>
-            <th class="text-end">Rimborso</th>
-            <th class="text-end">Cedola %</th>
-            <th class="text-end">Aliquota fiscale</th>
+            <th class="text-end">Rendimento lordo</th>
+            <th class="text-end">Rendimento netto</th>
             <th class="text-center">Azioni</th>
           </tr>
         </thead>
@@ -34,31 +56,23 @@
           {% for bond in bonds %}
           <tr>
             <td class="text-muted small">{{ bond.id }}</td>
-            <td><strong>{{ bond.name }}</strong></td>
-            <td><code>{{ bond.isin }}</code></td>
             <td>
-              {% set btype = bond.bond_type | lower %}
-              <span class="badge
-                {% if btype == 'bot' %}badge-bot
-                {% elif btype == 'btp' %}badge-btp
-                {% elif btype == 'btp_italia' %}badge-btp_italia
-                {% else %}badge-corporate
-                {% endif %}">
-                {{ bond.bond_type }}
-              </span>
+              <a href="{{ url_for('bonds.detail', bond_id=bond.id) }}" class="text-decoration-none fw-semibold">
+                {{ bond.name }}
+              </a>
             </td>
+            <td><code>{{ bond.isin }}</code></td>
             <td>{{ bond.issue_date.strftime('%d/%m/%Y') }}</td>
             <td>{{ bond.maturity_date.strftime('%d/%m/%Y') }}</td>
             <td class="text-end">{{ "%.4f"|format(bond.issue_price) }}</td>
-            <td class="text-end">{{ "%.2f"|format(bond.redemption_price) }}</td>
-            <td class="text-end">
-              {% if bond.nominal_rate == 0.0 %}
-                <span class="text-muted">—</span>
-              {% else %}
-                {{ "%.2f"|format(bond.nominal_rate) }}%
-              {% endif %}
-            </td>
-            <td class="text-end">{{ "%.1f"|format(bond.tax_rate) }}%</td>
+            {% set yld = yields.get(bond.id) %}
+            {% if yld and yld[0] is not none %}
+              <td class="text-end">{{ "%.2f"|format(yld[0]) }}%</td>
+              <td class="text-end">{{ "%.2f"|format(yld[1]) }}%</td>
+            {% else %}
+              <td class="text-end text-muted">—</td>
+              <td class="text-end text-muted">—</td>
+            {% endif %}
             <td class="text-center text-nowrap">
               <a href="{{ url_for('bonds.edit', bond_id=bond.id) }}"
                  class="btn btn-sm btn-outline-primary me-1"
@@ -93,4 +107,66 @@
   </div>
 </div>
 {% endif %}
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function startRefresh() {
+  const btn     = document.getElementById('btn-refresh');
+  const panel   = document.getElementById('refresh-panel');
+  const bar     = document.getElementById('refresh-bar');
+  const msgEl   = document.getElementById('refresh-message');
+  const pctEl   = document.getElementById('refresh-pct');
+  const statusEl= document.getElementById('refresh-status');
+
+  // Reset UI
+  btn.disabled = true;
+  panel.classList.remove('d-none', 'border-success', 'border-danger');
+  bar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
+  bar.style.width = '0%';
+  bar.setAttribute('aria-valuenow', 0);
+  msgEl.textContent  = 'Connessione al server…';
+  pctEl.textContent  = '0%';
+  statusEl.textContent = '';
+
+  const url = "{{ url_for('bonds.refresh_bot_quotes_stream') }}";
+  const es  = new EventSource(url);
+
+  es.onmessage = function(e) {
+    let ev;
+    try { ev = JSON.parse(e.data); } catch(_) { return; }
+
+    const pct = Math.min(100, Math.max(0, ev.pct ?? 0));
+    bar.style.width = pct + '%';
+    bar.setAttribute('aria-valuenow', pct);
+    pctEl.textContent  = pct + '%';
+    msgEl.textContent  = ev.message ?? '';
+
+    if (ev.type === 'done') {
+      bar.className = 'progress-bar bg-success';
+      panel.classList.add('border-success');
+      statusEl.textContent = ev.message;
+      es.close();
+      btn.disabled = false;
+      // Reload the table to reflect new data
+      setTimeout(() => window.location.reload(), 1500);
+    } else if (ev.type === 'error') {
+      bar.className = 'progress-bar bg-danger';
+      panel.classList.add('border-danger');
+      statusEl.textContent = '⚠ ' + ev.message;
+      es.close();
+      btn.disabled = false;
+    }
+  };
+
+  es.onerror = function() {
+    bar.className = 'progress-bar bg-danger';
+    msgEl.textContent = 'Connessione interrotta.';
+    statusEl.textContent = 'Riprova tra qualche istante.';
+    panel.classList.add('border-danger');
+    es.close();
+    btn.disabled = false;
+  };
+}
+</script>
 {% endblock %}
