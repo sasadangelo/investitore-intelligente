@@ -5,26 +5,28 @@
 from pathlib import Path
 
 import yaml
-from pydantic import BaseModel, computed_field
+from pydantic import BaseModel, Field, computed_field
 
-# Resolve config.yaml relative to this file's location (src/intelligent-investor/)
+# Resolve config.yaml relative to this file's location (src/intelligent_investor/)
 _CONFIG_PATH: Path = Path(__file__).parent.parent / "config.yaml"
 
 
 # ---------------------------------------------------------------------------
 # Section models
+# All fields are required; the values below are the documented defaults.
+# A missing or invalid config.yaml will raise ValidationError at startup.
 # ---------------------------------------------------------------------------
 
 class AppSettings(BaseModel):
-    debug: bool = False
-    host: str = "0.0.0.0"
-    port: int = 5001
+    debug: bool = Field(default=False)          # default: false
+    host: str = Field(default="0.0.0.0")        # default: "0.0.0.0"
+    port: int = Field(default=5001, ge=1, le=65535)  # default: 5001
 
 
 class SQLiteSettings(BaseModel):
-    relative_path: str = "data/investitore.db"
-    echo: bool = False
-    pool_pre_ping: bool = True
+    relative_path: str = Field(default="data/investor.db")  # default: "data/investor.db"
+    echo: bool = Field(default=False)                        # default: false
+    pool_pre_ping: bool = Field(default=True)                # default: true
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -38,16 +40,16 @@ class SQLiteSettings(BaseModel):
 
 
 class DatabaseSettings(BaseModel):
-    sqlite: SQLiteSettings = SQLiteSettings()
+    sqlite: SQLiteSettings = Field(default_factory=SQLiteSettings)
 
 
 class LogSettings(BaseModel):
-    level: str = "INFO"
-    console: bool = True
-    file: str = "logs/investitore.log"
-    rotation: str = "10 MB"
-    retention: str = "7 days"
-    compression: str = "zip"
+    level: str = Field(default="INFO")          # default: "INFO"
+    console: bool = Field(default=True)         # default: true
+    file: str = Field(default="logs/investor.log")   # default: "logs/investor.log"
+    rotation: str = Field(default="10 MB")      # default: "10 MB"
+    retention: str = Field(default="7 days")    # default: "7 days"
+    compression: str = Field(default="zip")     # default: "zip"
 
 
 # ---------------------------------------------------------------------------
@@ -55,15 +57,25 @@ class LogSettings(BaseModel):
 # ---------------------------------------------------------------------------
 
 class Config(BaseModel):
-    app: AppSettings = AppSettings()
-    database: DatabaseSettings = DatabaseSettings()
-    log: LogSettings = LogSettings()
+    app: AppSettings = Field(default_factory=AppSettings)
+    database: DatabaseSettings = Field(default_factory=DatabaseSettings)
+    log: LogSettings = Field(default_factory=LogSettings)
 
 
-def _load_config() -> Config:
-    """Load config.yaml and return a validated Config instance."""
+def _load() -> Config:
+    """
+    Load and validate config.yaml.
+
+    Raises:
+        FileNotFoundError: if config.yaml does not exist.
+        yaml.YAMLError: if the file is not valid YAML.
+        pydantic.ValidationError: if any field has an invalid value.
+    """
     if not _CONFIG_PATH.exists():
-        return Config()
+        raise FileNotFoundError(
+            f"Configuration file not found: {_CONFIG_PATH}\n"
+            "Create 'src/intelligent_investor/config.yaml' before starting the application."
+        )
 
     with _CONFIG_PATH.open("r", encoding="utf-8") as f:
         raw = yaml.safe_load(f) or {}
@@ -75,5 +87,5 @@ def _load_config() -> Config:
     return Config.model_validate(raw)
 
 
-# Global configuration instance
-config = _load_config()
+# Loaded once at import time — raises on missing/invalid config.yaml.
+config: Config = _load()

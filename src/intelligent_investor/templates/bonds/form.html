@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — Investitore Intelligente{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-{% if bond and bond.id %}pencil-square{% else %}plus-circle{% endif %} fs-5"></i>
+        <span class="fw-semibold fs-5">{{ title }}</span>
+      </div>
+      <div class="card-body">
+
+        {# fval(field, default): works with BondDTO objects and raw form dicts #}
+        {% macro fval(field, default='') -%}
+          {%- if bond is none -%}
+            {{ default }}
+          {%- elif bond is mapping -%}
+            {{ bond.get(field, default) }}
+          {%- else -%}
+            {{ bond | attr(field) }}
+          {%- endif -%}
+        {%- endmacro %}
+
+        <form action="{{ action }}" method="post" novalidate>
+
+          <!-- Row 1: Nome + ISIN -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-7">
+              <label for="name" class="form-label fw-semibold">Nome <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control"
+                id="name"
+                name="name"
+                value="{{ fval('name') }}"
+                placeholder="es. Bot Zc Jul25 A Eur"
+                required
+              />
+            </div>
+            <div class="col-sm-5">
+              <label for="isin" class="form-label fw-semibold">ISIN <span class="text-danger">*</span></label>
+              <input
+                type="text"
+                class="form-control font-monospace"
+                id="isin"
+                name="isin"
+                value="{{ fval('isin') }}"
+                placeholder="es. IT0005603342"
+                maxlength="20"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Row 2: Tipo + Frequenza cedola -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="bond_type" class="form-label fw-semibold">Tipo <span class="text-danger">*</span></label>
+              <select class="form-select" id="bond_type" name="bond_type" required>
+                {% for bt in bond_types %}
+                <option value="{{ bt }}"
+                  {% if fval('bond_type') == bt %}selected{% endif %}>
+                  {{ bt }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label for="coupon_frequency" class="form-label fw-semibold">Frequenza cedola</label>
+              <select class="form-select" id="coupon_frequency" name="coupon_frequency">
+                <option value="0" {% if fval('coupon_frequency', 0) | string == '0' %}selected{% endif %}>Zero Coupon</option>
+                <option value="1" {% if fval('coupon_frequency', 0) | string == '1' %}selected{% endif %}>Annuale</option>
+                <option value="2" {% if fval('coupon_frequency', 0) | string == '2' %}selected{% endif %}>Semestrale</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Row 3: Data emissione + Data scadenza -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="issue_date" class="form-label fw-semibold">Data emissione <span class="text-danger">*</span></label>
+              <input
+                type="date"
+                class="form-control"
+                id="issue_date"
+                name="issue_date"
+                value="{{ fval('issue_date') }}"
+                required
+              />
+            </div>
+            <div class="col-sm-6">
+              <label for="maturity_date" class="form-label fw-semibold">Data scadenza <span class="text-danger">*</span></label>
+              <input
+                type="date"
+                class="form-control"
+                id="maturity_date"
+                name="maturity_date"
+                value="{{ fval('maturity_date') }}"
+                required
+              />
+            </div>
+          </div>
+
+          <!-- Row 4: Prezzi -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+              <label for="issue_price" class="form-label fw-semibold">Prezzo emissione <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="issue_price"
+                  name="issue_price"
+                  value="{{ fval('issue_price') }}"
+                  step="0.0001"
+                  min="0"
+                  required
+                />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <label for="redemption_price" class="form-label fw-semibold">Prezzo rimborso</label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="redemption_price"
+                  name="redemption_price"
+                  value="{{ fval('redemption_price', 100.0) }}"
+                  step="0.01"
+                  min="0"
+                />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-sm-4">
+              <label for="nominal_rate" class="form-label fw-semibold">Tasso nominale</label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="nominal_rate"
+                  name="nominal_rate"
+                  value="{{ fval('nominal_rate', 0.0) }}"
+                  step="0.001"
+                  min="0"
+                />
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 5: Aliquota fiscale -->
+          <div class="row g-3 mb-4">
+            <div class="col-sm-4">
+              <label for="tax_rate" class="form-label fw-semibold">Aliquota fiscale</label>
+              <div class="input-group">
+                <input
+                  type="number"
+                  class="form-control"
+                  id="tax_rate"
+                  name="tax_rate"
+                  value="{{ fval('tax_rate', 12.5) }}"
+                  step="0.1"
+                  min="0"
+                  max="100"
+                />
+                <span class="input-group-text">%</span>
+              </div>
+              <div class="form-text">12.5% titoli di stato · 26% corporate</div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Salva
+            </button>
+            <a href="{{ url_for('bonds.index') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-circle me-1"></i>Annulla
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div><!-- /card -->
+
+  </div>
+</div>
+{% endblock %}

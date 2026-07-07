@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Elimina BOT — Investitore Intelligente{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-6">
+    <div class="card border-danger shadow-sm">
+      <div class="card-header bg-danger text-white d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        <span class="fw-semibold fs-5">Conferma eliminazione</span>
+      </div>
+      <div class="card-body">
+        <p class="mb-1">Stai per eliminare definitivamente il seguente BOT:</p>
+        <ul class="list-group list-group-flush mb-4">
+          <li class="list-group-item"><strong>Nome:</strong> {{ bond.name }}</li>
+          <li class="list-group-item"><strong>ISIN:</strong> <code>{{ bond.isin }}</code></li>
+          <li class="list-group-item"><strong>Tipo:</strong> {{ bond.bond_type }}</li>
+          <li class="list-group-item"><strong>Scadenza:</strong> {{ bond.maturity_date.strftime('%d/%m/%Y') }}</li>
+        </ul>
+        <p class="text-danger fw-semibold">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          Questa operazione è irreversibile. Tutte le quotazioni associate verranno eliminate.
+        </p>
+        <div class="d-flex gap-2">
+          <form action="{{ url_for('bonds.delete', bond_id=bond.id) }}" method="post">
+            <button type="submit" class="btn btn-danger">
+              <i class="bi bi-trash me-1"></i>Elimina
+            </button>
+          </form>
+          <a href="{{ url_for('bonds.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Annulla
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

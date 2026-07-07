@@ -19,7 +19,6 @@ logger = LoggerManager.get_logger(name="DatabaseSession")
 
 class DatabaseSessionManager:
     def __init__(self) -> None:
-        # Retrieve the typed SQLiteSettings object from Pydantic config
         sqlite_settings = config.database.sqlite
 
         # Ensure the destination directory (e.g. 'data/') exists

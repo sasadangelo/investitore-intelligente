@@ -2,8 +2,6 @@
 # Copyright (c) 2025 Salvatore D'Angelo, Code4Projects
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
-from .config import config
-from .database import DatabaseSessionManager, db_manager
-from .log import setup_logging
+from .bond_controller import bond_bp
 
-__all__ = ["config", "DatabaseSessionManager", "setup_logging", "db_manager"]
+__all__ = ["bond_bp"]
