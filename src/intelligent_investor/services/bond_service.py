@@ -6,7 +6,7 @@ from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from intelligent_investor.core.database import db_manager
+from intelligent_investor.db.session import db_manager
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.dtos import BondDTO
 from intelligent_investor.models.bond import BondDAO

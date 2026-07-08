@@ -8,7 +8,7 @@ from typing import Any
 from sqlalchemy import Column, Date, Float, Integer, String
 from sqlalchemy.orm import relationship
 
-from .base import Base
+from intelligent_investor.db.base import Base
 
 
 class BondDAO(Base):

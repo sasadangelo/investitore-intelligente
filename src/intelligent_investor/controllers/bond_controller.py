@@ -32,18 +32,20 @@ def _parse_date(value: str) -> date:
 
 def _calc_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | None, float | None]:
     """
-    Compute gross and net annualised yield for a zero-coupon BOT using the
-    same compound formula as catalogo-bot.js:
+    Compute gross and net annualised yield for a zero-coupon BOT.
 
         gross = (redemption / last_price) ^ (1 / yearfrac) - 1
-        net   = (redemption / (last_price + imposta_disaggio)) ^ (1 / yearfrac) - 1
+        net   = ((redemption - imposta_disaggio) / last_price) ^ (1 / yearfrac) - 1
 
     where:
-        giorni_totali  = (maturity - issue) in days
-        giorni_residui = (maturity - today) in days
-        disaggio_lordo = (redemption - issue_price) * giorni_residui / giorni_totali
-        imposta        = disaggio_lordo * (tax_rate / 100)
-        yearfrac       = giorni_residui / (366 if leap else 365)
+        giorni_totali    = (maturity - issue) in days
+        giorni_residui   = (maturity - today) in days
+        disaggio_lordo   = (redemption - issue_price) * giorni_residui / giorni_totali
+        imposta_disaggio = disaggio_lordo * (tax_rate / 100)
+        yearfrac         = giorni_residui / (366 if leap else 365)
+
+    The net yield deducts the withholding tax from the redemption amount
+    (i.e. the net cash received at maturity), not from the purchase price.
 
     Returns (gross_pct, net_pct) as percentage values, or (None, None) if the
     data is insufficient.
@@ -57,11 +59,11 @@ def _calc_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float |
     year_days = 366 if _is_leap(bond.maturity_date.year) else 365
     yearfrac = residual_days / year_days
 
-    disaggio_lordo = (bond.redemption_price - bond.issue_price) * residual_days / total_days
+    disaggio_lordo   = (bond.redemption_price - bond.issue_price) * residual_days / total_days
     imposta_disaggio = disaggio_lordo * (bond.tax_rate / 100)
 
     gross = (bond.redemption_price / last_price) ** (1 / yearfrac) - 1
-    net   = (bond.redemption_price / (last_price + imposta_disaggio)) ** (1 / yearfrac) - 1
+    net   = ((bond.redemption_price - imposta_disaggio) / last_price) ** (1 / yearfrac) - 1
 
     return gross * 100, net * 100
 

@@ -46,7 +46,7 @@
             <th>ISIN</th>
             <th>Emissione</th>
             <th>Scadenza</th>
-            <th class="text-end">Prezzo emissione</th>
+            <th class="text-end">Ultimo Prezzo</th>
             <th class="text-end">Rendimento lordo</th>
             <th class="text-end">Rendimento netto</th>
             <th class="text-center">Azioni</th>
@@ -64,7 +64,8 @@
             <td><code>{{ bond.isin }}</code></td>
             <td>{{ bond.issue_date.strftime('%d/%m/%Y') }}</td>
             <td>{{ bond.maturity_date.strftime('%d/%m/%Y') }}</td>
-            <td class="text-end">{{ "%.4f"|format(bond.issue_price) }}</td>
+            {% set q = quotes.get(bond.id) %}
+            <td class="text-end">{% if q %}<strong>{{ "%.4f"|format(q.last_price) }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}</td>
             {% set yld = yields.get(bond.id) %}
             {% if yld and yld[0] is not none %}
               <td class="text-end">{{ "%.2f"|format(yld[0]) }}%</td>

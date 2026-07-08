@@ -7,7 +7,7 @@ from datetime import date
 from sqlalchemy import Column, Date, Float, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
-from .base import Base
+from intelligent_investor.db.base import Base
 
 
 class BondQuoteDAO(Base):

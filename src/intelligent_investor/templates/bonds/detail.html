@@ -159,7 +159,7 @@
                 {% if net_yield is not none %}{{ "%.2f"|format(net_yield) }}%{% else %}<span class="text-muted">—</span>{% endif %}
               </td>
               <td class="ps-4 text-muted small">
-                (Rimborso / (Ultimo prezzo + Imposta disaggio))^(1 / yearfrac) − 1
+                ((Rimborso − Imposta disaggio) / Ultimo prezzo)^(1 / yearfrac) − 1
               </td>
             </tr>
           </tbody>

@@ -2,9 +2,9 @@
 # Copyright (c) 2025 Salvatore D'Angelo, Code4Projects
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
-from intelligent_investor.core.database import db_manager
+from intelligent_investor.db.session import db_manager
 from intelligent_investor.core.log import LoggerManager
-from intelligent_investor.models.base import Base
+from intelligent_investor.db.base import Base
 
 # Import all DAOs here so SQLAlchemy's metadata is aware of every table
 from intelligent_investor.models.bond import BondDAO  # noqa: F401

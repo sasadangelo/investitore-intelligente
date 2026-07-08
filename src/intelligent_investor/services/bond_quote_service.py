@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------
 from sqlalchemy.exc import SQLAlchemyError
 
-from intelligent_investor.core.database import db_manager
+from intelligent_investor.db.session import db_manager
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.dtos import BondQuoteDTO
 from intelligent_investor.models.bond_quotes import BondQuoteDAO
