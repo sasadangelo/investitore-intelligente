@@ -6,16 +6,21 @@ import json
 from collections.abc import Generator
 from datetime import date
 
-from flask import Blueprint, Response, flash, redirect, render_template, request, stream_with_context, url_for
+from flask import (Blueprint, Response, flash, redirect, render_template,
+                   request, stream_with_context, url_for)
+from flask.wrappers import Response
 from pydantic import ValidationError
 
 from intelligent_investor.dtos import BondDTO
-from intelligent_investor.services import BondService, ScraperRegistry
+from intelligent_investor.dtos.bond import BondDTO
+from intelligent_investor.dtos.bond_quote import BondQuoteDTO
+from intelligent_investor.services import BondService, BondSyncService
 from intelligent_investor.services.bond_quote_service import BondQuoteService
 
 bond_bp = Blueprint("bonds", __name__, url_prefix="/bonds")
 _service = BondService()
 _quote_service = BondQuoteService()
+_sync_service = BondSyncService()
 
 # Allowed bond types for dropdowns
 BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
@@ -93,45 +98,45 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
 # Routes
 # ---------------------------------------------------------------------------
 
-@bond_bp.route("/", methods=["GET"])
-def index():
+@bond_bp.route(rule="/", methods=["GET"])
+def index() -> str:
     """List all bonds."""
-    today = date.today()
-    bonds = sorted(
+    today: date = date.today()
+    bonds: list[BondDTO] = sorted(
         (b for b in _service.list_all() if b.maturity_date >= today),
         key=lambda b: b.maturity_date,
     )
-    quotes = {q.bond_id: q for q in _quote_service.list_all()}
+    quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
 
     # Pre-compute yields so the template doesn't need math operations
     yields: dict[int, tuple[float | None, float | None]] = {}
     for bond in bonds:
         if bond.id is not None:
-            quote = quotes.get(bond.id)
+            quote: BondQuoteDTO | None = quotes.get(bond.id)
             if quote is not None:
-                yields[bond.id] = _calc_yields(bond, quote.last_price, today)
+                yields[bond.id] = _calc_yields(bond=bond, last_price=quote.last_price, today=today)
 
-    return render_template("bonds/index.html", bonds=bonds, quotes=quotes, yields=yields)
+    return render_template(template_name_or_list="bonds/index.html", bonds=bonds, quotes=quotes, yields=yields)
 
 
-@bond_bp.route("/refresh-bot-quotes/stream", methods=["GET"])
-def refresh_bot_quotes_stream():
+@bond_bp.route(rule="/refresh-bot-quotes/stream", methods=["GET"])
+def refresh_bot_quotes_stream() -> Response:
     """
-    SSE endpoint — streams scraper progress events to the browser.
+    SSE endpoint — streams bond sync progress events to the browser.
 
-    Each event is a JSON-encoded ScraperEvent:
+    Each event is a JSON-encoded SyncEvent:
         data: {"type": "progress"|"done"|"error", "pct": 0-100, "message": "..."}
     """
     def _event_stream() -> Generator[str, None, None]:
         try:
-            for event in ScraperRegistry.run("teleborsa_bot"):
-                yield f"data: {json.dumps(event)}\n\n"
+            for event in _sync_service.sync(source="teleborsa_bot"):
+                yield f"data: {json.dumps(obj=event)}\n\n"
         except Exception as exc:
             error_event = {"type": "error", "pct": 0, "message": str(exc)}
-            yield f"data: {json.dumps(error_event)}\n\n"
+            yield f"data: {json.dumps(obj=error_event)}\n\n"
 
     return Response(
-        stream_with_context(_event_stream()),
+        stream_with_context(generator_or_function=_event_stream()),
         mimetype="text/event-stream",
         headers={
             "Cache-Control": "no-cache",

@@ -2,15 +2,14 @@
 # Copyright (c) 2025 Salvatore D'Angelo, Code4Projects
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
-from intelligent_investor.db.session import db_manager
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.db.base import Base
-
+from intelligent_investor.db.session import db_manager
 # Import all DAOs here so SQLAlchemy's metadata is aware of every table
 from intelligent_investor.models.bond import BondDAO  # noqa: F401
 from intelligent_investor.models.bond_quotes import BondQuoteDAO  # noqa: F401
 
-logger = LoggerManager.get_logger("DatabaseInitializer")
+logger = LoggerManager.get_logger(name="DatabaseInitializer")
 
 
 class DatabaseInitializer:

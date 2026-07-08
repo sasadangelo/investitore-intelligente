@@ -6,12 +6,13 @@ from datetime import date
 
 from sqlalchemy.exc import SQLAlchemyError
 
-from intelligent_investor.db.session import db_manager
 from intelligent_investor.core.log import LoggerManager
+from intelligent_investor.db.session import db_manager
 from intelligent_investor.dtos import BondDTO
+from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.models.bond import BondDAO
 
-logger = LoggerManager.get_logger("BondService")
+logger = LoggerManager.get_logger(name="BondService")
 
 
 class BondService:
@@ -37,14 +38,14 @@ class BondService:
         logger.info(f"Creating bond ISIN={bond.isin}")
         try:
             with db_manager.get_session() as session:
-                existing = session.query(BondDAO).filter_by(isin=bond.isin).first()
+                existing: BondDAO | None = session.query(BondDAO).filter_by(isin=bond.isin).first()
                 if existing is not None:
                     raise ValueError(f"Bond with ISIN '{bond.isin}' already exists (id={existing.id})")
 
-                dao = BondDAO(**bond.model_dump(exclude={"id"}))
-                session.add(dao)
+                dao: BondDAO = BondDAO(**bond.model_dump(exclude={"id"}))
+                session.add(instance=dao)
                 session.flush()  # populate dao.id before commit
-                result = BondDTO.model_validate(dao)
+                result: BondDTO = BondDTO.model_validate(dao)
             logger.info(f"Bond created: id={result.id}, ISIN={result.isin}")
             return result
         except SQLAlchemyError as e:
@@ -65,8 +66,8 @@ class BondService:
         logger.info(f"Fetching bond id={bond_id}")
         try:
             with db_manager.get_session() as session:
-                dao = session.query(BondDAO).filter_by(id=bond_id).first()
-                return BondDTO.model_validate(dao) if dao is not None else None
+                dao: BondDAO | None = session.query(BondDAO).filter_by(id=bond_id).first()
+                return BondDTO.model_validate(obj=dao) if dao is not None else None
         except SQLAlchemyError as e:
             logger.error(f"Failed to fetch bond id={bond_id}: {e}")
             raise
@@ -81,7 +82,7 @@ class BondService:
         logger.info(f"Fetching bond ISIN={isin}")
         try:
             with db_manager.get_session() as session:
-                dao = session.query(BondDAO).filter_by(isin=isin).first()
+                dao: BondDAO | None = session.query(BondDAO).filter_by(isin=isin).first()
                 return BondDTO.model_validate(dao) if dao is not None else None
         except SQLAlchemyError as e:
             logger.error(f"Failed to fetch bond ISIN={isin}: {e}")
@@ -98,7 +99,7 @@ class BondService:
         try:
             with db_manager.get_session() as session:
                 daos = session.query(BondDAO).all()
-                return [BondDTO.model_validate(dao) for dao in daos]
+                return [BondDTO.model_validate(obj=dao) for dao in daos]
         except SQLAlchemyError as e:
             logger.error(f"Failed to list bonds: {e}")
             raise
@@ -122,12 +123,12 @@ class BondService:
         logger.info(f"Updating bond id={bond.id}")
         try:
             with db_manager.get_session() as session:
-                dao = session.query(BondDAO).filter_by(id=bond.id).first()
+                dao: BondDAO | None = session.query(BondDAO).filter_by(id=bond.id).first()
                 if dao is None:
                     raise ValueError(f"Bond id={bond.id} not found")
-                _apply_dto_to_dao(bond, dao)
+                _apply_dto_to_dao(dto=bond, dao=dao)
                 session.flush()
-                result = BondDTO.model_validate(dao)
+                result = BondDTO.model_validate(obj=dao)
             logger.info(f"Bond updated: id={result.id}")
             return result
         except SQLAlchemyError as e:
@@ -150,8 +151,8 @@ class BondService:
         logger.info(f"Deleting bond id={bond_id}")
         try:
             with db_manager.get_session() as session:
-                count = session.query(BondDAO).filter_by(id=bond_id).delete(synchronize_session=False)
-            deleted = count > 0
+                count: int = session.query(BondDAO).filter_by(id=bond_id).delete(synchronize_session=False)
+            deleted: bool = count > 0
             if deleted:
                 logger.info(f"Bond deleted: id={bond_id}")
             else:
@@ -170,11 +171,11 @@ class BondService:
         Raises:
             SQLAlchemyError: on any database failure.
         """
-        today = date.today()
+        today: date = date.today()
         logger.info(f"Deleting bonds expired before {today}")
         try:
             with db_manager.get_session() as session:
-                count = (
+                count: int = (
                     session.query(BondDAO)
                     .filter(BondDAO.maturity_date < today)
                     .delete(synchronize_session=False)
