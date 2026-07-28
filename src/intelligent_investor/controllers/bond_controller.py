@@ -14,13 +14,16 @@ from pydantic import ValidationError
 from intelligent_investor.dtos import BondDTO
 from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bond_quote import BondQuoteDTO
+from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
 from intelligent_investor.services import BondService, BondSyncService
 from intelligent_investor.services.bond_quote_service import BondQuoteService
+from intelligent_investor.services.bot_calculator_service import BotCalculatorService
 
 bond_bp = Blueprint("bonds", __name__, url_prefix="/bonds")
 _service = BondService()
 _quote_service = BondQuoteService()
 _sync_service = BondSyncService()
+_calculator_service = BotCalculatorService()
 
 # Allowed bond types for dropdowns
 BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
@@ -268,3 +271,84 @@ def delete(bond_id: int):
     else:
         flash("BOT non trovato.", "warning")
     return redirect(url_for("bonds.index"))
+
+
+@bond_bp.route("/calculator", methods=["GET"])
+def calculator():
+    """
+    Show the BOT calculator page.
+
+    An optional ?bond_id=<id> query parameter pre-selects a specific bond
+    (used when navigating here from the bond detail page).
+    Without it, the bond with the nearest maturity date is pre-selected.
+    """
+    today: date = date.today()
+    bonds: list[BondDTO] = sorted(
+        (b for b in _service.list_all() if b.maturity_date >= today),
+        key=lambda b: b.maturity_date,
+    )
+    quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
+    # Pre-select bond_id from query string, falling back to the first in list
+    preselect_id: int | None = request.args.get("bond_id", type=int)
+    bond = (
+        _service.get_by_id(preselect_id)
+        if preselect_id is not None
+        else (bonds[0] if bonds else None)
+    )
+    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond, tx=None, result=None)
+
+
+@bond_bp.route("/calculator", methods=["POST"])
+def calculator_compute():
+    """Receive form data, run the calculator and render the result."""
+    today: date = date.today()
+    bonds: list[BondDTO] = sorted(
+        (b for b in _service.list_all() if b.maturity_date >= today),
+        key=lambda b: b.maturity_date,
+    )
+    quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
+
+    form = request.form
+    bond_id_raw = form.get("bond_id", "").strip()
+    if not bond_id_raw:
+        flash("Seleziona un BOT.", "warning")
+        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None, tx=form, result=None), 422
+
+    bond_id = int(bond_id_raw)
+    bond = _service.get_by_id(bond_id)
+    if bond is None:
+        flash("BOT non trovato.", "warning")
+        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None, tx=form, result=None), 422
+
+    try:
+        has_sale = form.get("has_sale") == "on"
+        sale_date = _parse_date(form["sale_date"]) if has_sale and form.get("sale_date") else None
+        sale_price = float(form["sale_price"]) if has_sale and form.get("sale_price") else None
+        buy_max_raw = form.get("buy_commission_max", "").strip()
+        sell_max_raw = form.get("sell_commission_max", "").strip()
+
+        tx = BotTransactionDTO(
+            bond_id=bond_id,
+            purchase_venue=form["purchase_venue"],
+            purchase_date=_parse_date(form["purchase_date"]),
+            purchase_price=float(form["purchase_price"]),
+            face_value=float(form["face_value"]),
+            buy_commission_pct=float(form.get("buy_commission_pct", 0)),
+            buy_commission_min=float(form.get("buy_commission_min", 0)),
+            buy_commission_max=float(buy_max_raw) if buy_max_raw else None,
+            buy_commission_fixed=float(form.get("buy_commission_fixed", 0)),
+            sale_date=sale_date,
+            sale_price=sale_price,
+            sell_commission_pct=float(form.get("sell_commission_pct", 0)),
+            sell_commission_min=float(form.get("sell_commission_min", 0)),
+            sell_commission_max=float(sell_max_raw) if sell_max_raw else None,
+            sell_commission_fixed=float(form.get("sell_commission_fixed", 0)),
+            stamp_duty_period=form.get("stamp_duty_period", "quarterly"),
+            portfolio_losses=float(form.get("portfolio_losses", 0)),
+        )
+        result = _calculator_service.calculate(tx, bond)
+    except (ValueError, ValidationError) as e:
+        flash(f"Errore nei parametri: {e}", "danger")
+        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond, tx=form, result=None), 422
+
+    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond, tx=form, result=result)

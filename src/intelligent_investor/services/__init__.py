@@ -5,11 +5,13 @@
 from .bond_quote_service import BondQuoteService
 from .bond_service import BondService
 from .bond_sync_service import BondSyncService
+from .bot_calculator_service import BotCalculatorService
 from .db_initializer import DatabaseInitializer
 
 __all__ = [
     "BondService",
     "BondQuoteService",
     "BondSyncService",
+    "BotCalculatorService",
     "DatabaseInitializer",
 ]

@@ -1,0 +1,455 @@
+{% extends "base.html" %}
+
+{% block title %}Calcolatore BOT — Investitore Intelligente{% endblock %}
+
+{% block extra_head %}
+<style>
+  .section-header { background-color: #0d6efd; color: #fff; font-weight: 600; }
+  .result-value   { font-weight: 600; }
+  .mot-only       { display: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">
+    <i class="bi bi-calculator me-2 text-primary"></i>Calcolatore BOT
+  </h2>
+  <a href="{{ url_for('bonds.index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Torna al catalogo
+  </a>
+</div>
+
+<div class="row g-4">
+
+  <!-- ================================================================
+       FORM
+       ================================================================ -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-input-cursor-text fs-5"></i>
+        <span class="fs-5">Parametri transazione</span>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('bonds.calculator_compute') }}" novalidate>
+
+          {# Helper macro: returns submitted form value or falls back to default #}
+          {% macro fval(field, default='') -%}
+            {%- if tx is not none and tx is mapping -%}{{ tx.get(field, default) }}
+            {%- elif tx is not none -%}{{ tx | attr(field) }}
+            {%- else -%}{{ default }}
+            {%- endif -%}
+          {%- endmacro %}
+
+          <!-- BOT selector -->
+          <div class="mb-3">
+            <label for="bond_id" class="form-label fw-semibold">BOT <span class="text-danger">*</span></label>
+            <select class="form-select" id="bond_id" name="bond_id" required>
+              <option value="">— Seleziona un BOT —</option>
+              {% for b in bonds %}
+              {% set q = quotes.get(b.id) %}
+              <option value="{{ b.id }}"
+                data-isin="{{ b.isin }}"
+                data-issue-date="{{ b.issue_date }}"
+                data-maturity-date="{{ b.maturity_date.strftime('%d/%m/%Y') }}"
+                data-issue-price="{{ b.issue_price }}"
+                data-last-price="{{ q.last_price if q else '' }}"
+                {% if bond and bond.id == b.id %}selected{% endif %}>
+                {{ b.name }} (scad. {{ b.maturity_date.strftime('%d/%m/%Y') }})
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <!-- Bond summary strip — shown/updated whenever a bond is selected -->
+          <div id="bond-strip"
+               class="alert alert-primary d-flex flex-wrap gap-3 py-2 mb-3 small
+                      {% if not bond %}d-none{% endif %}">
+            <span>ISIN: <code id="strip-isin">{{ bond.isin if bond else '' }}</code></span>
+            <span>Emissione: <span id="strip-issue-date">{{ bond.issue_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
+            <span>Scadenza: <span id="strip-maturity-date">{{ bond.maturity_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
+            <span>Prezzo emissione: <span id="strip-issue-price">{{ "%.4f"|format(bond.issue_price) if bond else '' }}</span></span>
+          </div>
+
+          <!-- Purchase venue -->
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Mercato di acquisto <span class="text-danger">*</span></label>
+            <div class="d-flex gap-3">
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="purchase_venue" id="venue_asta"
+                       value="asta" {% if fval('purchase_venue', 'asta') == 'asta' %}checked{% endif %}>
+                <label class="form-check-label" for="venue_asta">Asta (mercato primario)</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="purchase_venue" id="venue_mot"
+                       value="mot" {% if fval('purchase_venue') == 'mot' %}checked{% endif %}>
+                <label class="form-check-label" for="venue_mot">MOT (mercato secondario)</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Purchase date + price -->
+          <div class="row g-2 mb-3">
+            <div class="col-sm-6">
+              <label for="purchase_date" class="form-label fw-semibold">Data acquisto <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="purchase_date" name="purchase_date"
+                     value="{{ fval('purchase_date', bond.issue_date if bond else '') }}" required>
+            </div>
+            <div class="col-sm-6">
+              <label for="purchase_price" class="form-label fw-semibold">Prezzo acquisto <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="purchase_price" name="purchase_price"
+                       value="{{ fval('purchase_price', bond.issue_price if bond else '') }}"
+                       step="0.0001" min="0" required>
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Face value (lot) -->
+          <div class="mb-3">
+            <label for="face_value" class="form-label fw-semibold">Lotto nominale <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text">€</span>
+              <input type="number" class="form-control" id="face_value" name="face_value"
+                     value="{{ fval('face_value', 5000) }}" step="100" min="100" required>
+            </div>
+            <div class="form-text">Multiplo di 100 (es. 5000 = 50 BOT)</div>
+          </div>
+
+          <!-- Buy commissions -->
+          <div class="mb-1">
+            <span class="form-label fw-semibold">Commissioni acquisto</span>
+          </div>
+          <div class="row g-2 mb-2">
+            <div class="col-sm-4">
+              <label for="buy_commission_pct" class="form-label form-label-sm">
+                % <span id="lbl_pct" class="text-muted">(su nominale)</span>
+              </label>
+              <div class="input-group input-group-sm">
+                <input type="number" class="form-control" id="buy_commission_pct" name="buy_commission_pct"
+                       value="{{ fval('buy_commission_pct', 0.15) }}" step="0.01" min="0">
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-sm-4 mot-only">
+              <label for="buy_commission_min" class="form-label form-label-sm">Min (€)</label>
+              <input type="number" class="form-control form-control-sm" id="buy_commission_min"
+                     name="buy_commission_min" value="{{ fval('buy_commission_min', 0) }}" step="0.01" min="0">
+            </div>
+            <div class="col-sm-4 mot-only">
+              <label for="buy_commission_max" class="form-label form-label-sm">Max (€)</label>
+              <input type="number" class="form-control form-control-sm" id="buy_commission_max"
+                     name="buy_commission_max" value="{{ fval('buy_commission_max', '') }}"
+                     step="0.01" min="0" placeholder="INF">
+            </div>
+          </div>
+          <div class="row g-2 mb-3 mot-only">
+            <div class="col-sm-5">
+              <label for="buy_commission_fixed" class="form-label form-label-sm">Commissione fissa (€)</label>
+              <input type="number" class="form-control form-control-sm" id="buy_commission_fixed"
+                     name="buy_commission_fixed" value="{{ fval('buy_commission_fixed', 0) }}" step="0.01" min="0">
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- Sale section -->
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="has_sale" name="has_sale"
+                   {% if fval('sale_price') %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="has_sale">Vendita anticipata</label>
+          </div>
+
+          <div id="sale_fields" style="display:none">
+            <div class="row g-2 mb-3">
+              <div class="col-sm-6">
+                <label for="sale_date" class="form-label fw-semibold">Data vendita</label>
+                <input type="date" class="form-control" id="sale_date" name="sale_date"
+                       value="{{ fval('sale_date', '') }}">
+              </div>
+              <div class="col-sm-6">
+                <label for="sale_price" class="form-label fw-semibold">Prezzo vendita</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="sale_price" name="sale_price"
+                         value="{{ fval('sale_price', '') }}" step="0.0001" min="0">
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+            </div>
+            <div class="mb-1">
+              <span class="form-label fw-semibold">Commissioni vendita</span>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-sm-4">
+                <label for="sell_commission_pct" class="form-label form-label-sm">%</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" id="sell_commission_pct"
+                         name="sell_commission_pct" value="{{ fval('sell_commission_pct', 0) }}"
+                         step="0.01" min="0">
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+              <div class="col-sm-4">
+                <label for="sell_commission_min" class="form-label form-label-sm">Min (€)</label>
+                <input type="number" class="form-control form-control-sm" id="sell_commission_min"
+                       name="sell_commission_min" value="{{ fval('sell_commission_min', 0) }}"
+                       step="0.01" min="0">
+              </div>
+              <div class="col-sm-4">
+                <label for="sell_commission_max" class="form-label form-label-sm">Max (€)</label>
+                <input type="number" class="form-control form-control-sm" id="sell_commission_max"
+                       name="sell_commission_max" value="{{ fval('sell_commission_max', '') }}"
+                       step="0.01" min="0" placeholder="INF">
+              </div>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-sm-5">
+                <label for="sell_commission_fixed" class="form-label form-label-sm">Commissione fissa (€)</label>
+                <input type="number" class="form-control form-control-sm" id="sell_commission_fixed"
+                       name="sell_commission_fixed" value="{{ fval('sell_commission_fixed', 0) }}"
+                       step="0.01" min="0">
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- Bank parameters -->
+          <div class="row g-2 mb-3">
+            <div class="col-sm-7">
+              <label for="stamp_duty_period" class="form-label fw-semibold">Periodicità bollo</label>
+              <select class="form-select" id="stamp_duty_period" name="stamp_duty_period">
+                <option value="quarterly" {% if fval('stamp_duty_period', 'quarterly') == 'quarterly' %}selected{% endif %}>Trimestrale</option>
+                <option value="annual"    {% if fval('stamp_duty_period') == 'annual' %}selected{% endif %}>Annuale</option>
+              </select>
+            </div>
+            <div class="col-sm-5">
+              <label for="portfolio_losses" class="form-label fw-semibold">Minusvalenze (€)</label>
+              <div class="input-group">
+                <span class="input-group-text">€</span>
+                <input type="number" class="form-control" id="portfolio_losses" name="portfolio_losses"
+                       value="{{ fval('portfolio_losses', 0) }}" step="0.01" min="0">
+              </div>
+            </div>
+          </div>
+
+          <div class="d-grid">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-calculator me-1"></i>Calcola
+            </button>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div><!-- /form col -->
+
+  <!-- ================================================================
+       RESULTS
+       ================================================================ -->
+  <div class="col-lg-7">
+    {% if result %}
+
+    {# ---- Purchase ---- #}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header section-header"><i class="bi bi-cart me-1"></i>Acquisto</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Quantità BOT</th>
+                <td class="pe-3 text-end result-value">{{ result.quantity | int }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Importo secco</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.dry_amount) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.commission) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.fixed_commission) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Disaggio lordo (per BOT)</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio</th>
+                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.purchase.discount_tax) }}</td></tr>
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold">Totale pagato</th>
+              <td class="pe-3 text-end fw-semibold fs-6">€ {{ "%.2f"|format(result.purchase.total_paid) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# ---- Sale / Redemption ---- #}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header section-header">
+        <i class="bi bi-cash-coin me-1"></i>
+        {% if tx and tx.get('sale_price') %}Vendita{% else %}Rimborso a scadenza{% endif %}
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Importo secco</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.dry_amount) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.commission) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.fixed_commission) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata</th>
+                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.sale.discount_tax) }}</td></tr>
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold">Totale ricevuto</th>
+              <td class="pe-3 text-end fw-semibold fs-6">€ {{ "%.2f"|format(result.sale.total_received) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# ---- Capital Gain (MOT only) ---- #}
+    {% if result.capital_gain %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header section-header"><i class="bi bi-graph-up me-1"></i>Capital Gain</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Prezzo teorico acquisto</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.theoretical_purchase_price) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Prezzo teorico vendita</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.theoretical_sale_price) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Prezzo di carico</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.load_price) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Prezzo di scarico</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.unload_price) }}</td></tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Plus/Minus valenza (per BOT)</th>
+              <td class="pe-3 text-end fw-semibold
+                {% if result.capital_gain.unit_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                {{ "%+.6f"|format(result.capital_gain.unit_gain_loss) }}
+              </td>
+            </tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imponibile</th>
+                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.capital_gain.taxable_base) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta capital gain (26%)</th>
+                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.capital_gain.capital_gain_tax) }}</td></tr>
+            {% if result.capital_gain.remaining_loss > 0 %}
+            <tr><th class="ps-3 text-muted fw-normal">Minus valenza rimanente</th>
+                <td class="pe-3 text-end text-danger">€ {{ "%.4f"|format(result.capital_gain.remaining_loss) }}</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ---- Stamp Duty ---- #}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header section-header"><i class="bi bi-receipt me-1"></i>Imposta di Bollo</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Periodi di possesso</th>
+                <td class="pe-3 text-end">{{ result.stamp_duty.holding_periods }}</td></tr>
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold">Stima bollo</th>
+              <td class="pe-3 text-end fw-semibold">€ {{ "%.2f"|format(result.stamp_duty.estimated_duty) }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {# ---- Summary ---- #}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header section-header"><i class="bi bi-bar-chart-line me-1"></i>Riepilogo</div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Guadagno lordo</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.summary.gross_gain) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Guadagno netto (pre-bollo)</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.summary.net_gain_before_duty) }}</td></tr>
+            <tr class="table-success">
+              <th class="ps-3 fw-semibold">Guadagno netto</th>
+              <td class="pe-3 text-end fw-semibold fs-5">€ {{ "%.2f"|format(result.summary.net_gain) }}</td>
+            </tr>
+            <tr><td colspan="2"><hr class="my-1"></td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Rendimento semplice lordo</th>
+                <td class="pe-3 text-end">{{ "%.2f"|format(result.summary.simple_gross_yield) }}%</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Rendimento semplice netto</th>
+                <td class="pe-3 text-end">{{ "%.2f"|format(result.summary.simple_net_yield) }}%</td></tr>
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold">Rendimento composto lordo</th>
+              <td class="pe-3 text-end fw-semibold">{{ "%.2f"|format(result.summary.compound_gross_yield) }}%</td>
+            </tr>
+            <tr class="table-success">
+              <th class="ps-3 fw-semibold">Rendimento composto netto</th>
+              <td class="pe-3 text-end fw-semibold fs-5">{{ "%.2f"|format(result.summary.compound_net_yield) }}%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% else %}
+    <div class="d-flex align-items-center justify-content-center h-100 text-muted">
+      <div class="text-center py-5">
+        <i class="bi bi-calculator fs-1 d-block mb-2"></i>
+        Seleziona un BOT, inserisci i parametri e premi <strong>Calcola</strong>.
+      </div>
+    </div>
+    {% endif %}
+  </div><!-- /results col -->
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+  // Update purchase_price based on current venue selection and selected bond
+  function updatePurchasePrice() {
+    const opt     = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
+    const isMot   = document.getElementById('venue_mot').checked;
+    const price   = isMot ? (opt.dataset.lastPrice || '') : (opt.dataset.issuePrice || '');
+    if (price) document.getElementById('purchase_price').value = price;
+  }
+
+  // When BOT changes: update strip and form fields
+  document.getElementById('bond_id').addEventListener('change', function() {
+    const opt   = this.options[this.selectedIndex];
+    const strip = document.getElementById('bond-strip');
+    if (opt.value) {
+      document.getElementById('strip-isin').textContent         = opt.dataset.isin         || '';
+      document.getElementById('strip-issue-date').textContent   = opt.dataset.issueDate    || '';
+      document.getElementById('strip-maturity-date').textContent= opt.dataset.maturityDate || '';
+      const ip = parseFloat(opt.dataset.issuePrice);
+      document.getElementById('strip-issue-price').textContent  = isNaN(ip) ? '' : ip.toFixed(4);
+      strip.classList.remove('d-none');
+    } else {
+      strip.classList.add('d-none');
+    }
+    if (opt.dataset.issueDate) document.getElementById('purchase_date').value = opt.dataset.issueDate;
+    updatePurchasePrice();
+  });
+
+  // Show/hide MOT-only fields and update price when venue changes
+  function toggleMot() {
+    const isMot = document.getElementById('venue_mot').checked;
+    document.querySelectorAll('.mot-only').forEach(el => {
+      el.style.display = isMot ? 'block' : 'none';
+    });
+    document.getElementById('lbl_pct').textContent = isMot ? '(su acquisto)' : '(su nominale)';
+    updatePurchasePrice();
+  }
+  document.getElementById('venue_asta').addEventListener('change', toggleMot);
+  document.getElementById('venue_mot').addEventListener('change', toggleMot);
+  toggleMot();
+
+  // Show/hide sale fields
+  function toggleSale() {
+    document.getElementById('sale_fields').style.display =
+      document.getElementById('has_sale').checked ? '' : 'none';
+  }
+  document.getElementById('has_sale').addEventListener('change', toggleSale);
+  toggleSale();
+</script>
+{% endblock %}

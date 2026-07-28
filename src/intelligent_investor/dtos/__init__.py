@@ -4,5 +4,22 @@
 # -----------------------------------------------------------------------------
 from .bond import BondDTO
 from .bond_quote import BondQuoteDTO
+from .bot_calculation_result import (BotCalculationResultDTO,
+                                     CapitalGainResultDTO,
+                                     PurchaseResultDTO,
+                                     SaleResultDTO,
+                                     StampDutyResultDTO,
+                                     SummaryResultDTO)
+from .bot_transaction import BotTransactionDTO
 
-__all__ = ["BondDTO", "BondQuoteDTO"]
+__all__ = [
+    "BondDTO",
+    "BondQuoteDTO",
+    "BotTransactionDTO",
+    "BotCalculationResultDTO",
+    "PurchaseResultDTO",
+    "SaleResultDTO",
+    "CapitalGainResultDTO",
+    "StampDutyResultDTO",
+    "SummaryResultDTO",
+]
