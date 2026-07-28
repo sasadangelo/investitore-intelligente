@@ -37,7 +37,7 @@ except Exception as exc:
 
 from flask import Flask, redirect, url_for
 
-from intelligent_investor.controllers import bond_bp
+from intelligent_investor.controllers import bond_bp, bot_auction_bp
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.services import DatabaseInitializer
 
@@ -60,6 +60,7 @@ def create_app() -> Flask:
 
     # Register Blueprints
     app.register_blueprint(blueprint=bond_bp)
+    app.register_blueprint(blueprint=bot_auction_bp)
 
     # Root redirect → bonds list
     @app.route(rule="/")

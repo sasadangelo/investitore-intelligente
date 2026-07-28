@@ -4,6 +4,7 @@
 # -----------------------------------------------------------------------------
 from .bond import BondDTO
 from .bond_quote import BondQuoteDTO
+from .bot_auction import BotAuctionDTO
 from .bot_calculation_result import (BotCalculationResultDTO,
                                      CapitalGainResultDTO,
                                      PurchaseResultDTO,
@@ -15,6 +16,7 @@ from .bot_transaction import BotTransactionDTO
 __all__ = [
     "BondDTO",
     "BondQuoteDTO",
+    "BotAuctionDTO",
     "BotTransactionDTO",
     "BotCalculationResultDTO",
     "PurchaseResultDTO",

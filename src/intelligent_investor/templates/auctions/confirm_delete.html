@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Elimina Asta — Investitore Intelligente{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-danger">
+      <div class="card-header bg-danger text-white fw-semibold">
+        <i class="bi bi-exclamation-triangle me-1"></i>Conferma eliminazione
+      </div>
+      <div class="card-body">
+        <p>Stai per eliminare l'asta:</p>
+        <ul class="mb-3">
+          <li><strong>Periodo:</strong> {{ period_labels[auction.period] }}</li>
+          <li><strong>Durata:</strong> {{ duration_labels[auction.duration_type] }}</li>
+          <li><strong>Asta:</strong> {{ auction.auction_date.strftime('%d/%m/%Y') }}</li>
+          <li><strong>Regolamento:</strong> {{ auction.settlement_date.strftime('%d/%m/%Y') }}</li>
+          <li><strong>Scadenza:</strong>
+            {% if auction.maturity_date %}{{ auction.maturity_date.strftime('%d/%m/%Y') }}
+            {% else %}t.b.d.{% endif %}
+          </li>
+        </ul>
+        <p class="text-danger fw-semibold">Questa operazione è irreversibile.</p>
+        <div class="d-flex gap-2">
+          <form method="post" action="{{ url_for('auctions.delete', auction_id=auction.id) }}">
+            <button type="submit" class="btn btn-danger">
+              <i class="bi bi-trash me-1"></i>Elimina
+            </button>
+          </form>
+          <a href="{{ url_for('auctions.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Annulla
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

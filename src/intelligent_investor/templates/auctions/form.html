@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} — Investitore Intelligente{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-8">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-calendar-plus fs-5"></i>
+        <span class="fw-semibold fs-5">{{ title }}</span>
+      </div>
+      <div class="card-body">
+
+        {% macro fval(field, default='') -%}
+          {%- if auction is none -%}{{ default }}
+          {%- elif auction is mapping -%}{{ auction.get(field, default) }}
+          {%- else -%}{{ auction | attr(field) }}
+          {%- endif -%}
+        {%- endmacro %}
+
+        <form action="{{ action }}" method="post" novalidate>
+
+          <!-- Period + Duration type -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="period" class="form-label fw-semibold">Periodo <span class="text-danger">*</span></label>
+              <select class="form-select" id="period" name="period" required>
+                {% for val, lbl in period_labels.items() %}
+                <option value="{{ val }}" {% if fval('period') == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label for="duration_type" class="form-label fw-semibold">Durata <span class="text-danger">*</span></label>
+              <select class="form-select" id="duration_type" name="duration_type" required>
+                {% for val, lbl in duration_labels.items() %}
+                <option value="{{ val }}" {% if fval('duration_type') == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+
+          <!-- Dates row 1 -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="announcement_date" class="form-label fw-semibold">Comunicazione al mercato <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="announcement_date" name="announcement_date"
+                     value="{{ fval('announcement_date') }}" required>
+            </div>
+            <div class="col-sm-6">
+              <label for="submission_deadline" class="form-label fw-semibold">Presentazione domande <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="submission_deadline" name="submission_deadline"
+                     value="{{ fval('submission_deadline') }}" required>
+            </div>
+          </div>
+
+          <!-- Dates row 2 -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="auction_date" class="form-label fw-semibold">Data Asta <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="auction_date" name="auction_date"
+                     value="{{ fval('auction_date') }}" required>
+            </div>
+            <div class="col-sm-6">
+              <label for="settlement_date" class="form-label fw-semibold">Regolamento <span class="text-danger">*</span></label>
+              <input type="date" class="form-control" id="settlement_date" name="settlement_date"
+                     value="{{ fval('settlement_date') }}" required>
+            </div>
+          </div>
+
+          <!-- Maturity date -->
+          <div class="row g-3 mb-4">
+            <div class="col-sm-6">
+              <label for="maturity_date" class="form-label fw-semibold">Scadenza</label>
+              <input type="date" class="form-control" id="maturity_date" name="maturity_date"
+                     value="{{ fval('maturity_date', '') }}">
+              <div class="form-text">Lascia vuoto se t.b.d.</div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i>Salva
+            </button>
+            <a href="{{ url_for('auctions.index') }}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-circle me-1"></i>Annulla
+            </a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
