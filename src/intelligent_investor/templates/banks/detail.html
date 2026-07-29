@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ profile.display_name }} — Commissioni{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">
+    <i class="bi bi-bank me-2 text-primary"></i>{{ profile.display_name }}
+  </h2>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('banks.new_commission', profile_id=profile.id) }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>Aggiungi commissione
+    </a>
+    <a href="{{ url_for('banks.edit_profile', profile_id=profile.id) }}" class="btn btn-outline-primary">
+      <i class="bi bi-pencil me-1"></i>Modifica profilo
+    </a>
+    <a href="{{ url_for('banks.index') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Torna alla lista
+    </a>
+  </div>
+</div>
+
+{% if profile.notes or profile.info_url %}
+<div class="alert alert-light border small mb-3 d-flex justify-content-between align-items-center">
+  <span><i class="bi bi-info-circle me-1"></i>{{ profile.notes or '' }}</span>
+  {% if profile.info_url %}
+  <a href="{{ profile.info_url }}" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary ms-3 text-nowrap">
+    <i class="bi bi-file-earmark-text me-1"></i>Foglio informativo
+  </a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% if commissions %}
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover table-sm mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Venue</th>
+          <th>Durata</th>
+          <th class="text-end">Giorni min</th>
+          <th class="text-end">Giorni max</th>
+          <th class="text-end">% comm.</th>
+          <th class="text-end">Min (€)</th>
+          <th class="text-end">Max (€)</th>
+          <th class="text-end">Fisso (€)</th>
+          <th class="text-center">Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in commissions %}
+        <tr>
+          <td>
+            <span class="badge {% if c.venue == 'asta' %}bg-primary{% else %}bg-success{% endif %}">
+              {{ venue_labels[c.venue] }}
+            </span>
+          </td>
+          <td>{{ duration_labels[c.duration_type] }}</td>
+          <td class="text-end">{{ c.days_min if c.days_min is not none else '—' }}</td>
+          <td class="text-end">{{ c.days_max if c.days_max is not none else '—' }}</td>
+          <td class="text-end">{{ "%.4f"|format(c.commission_pct) }}%</td>
+          <td class="text-end">{{ "%.2f"|format(c.commission_min) }}</td>
+          <td class="text-end">{{ "%.2f"|format(c.commission_max) if c.commission_max is not none else 'N.P.' }}</td>
+          <td class="text-end">{{ "%.2f"|format(c.commission_fixed) }}</td>
+          <td class="text-center text-nowrap">
+            <a href="{{ url_for('banks.edit_commission', profile_id=profile.id, commission_id=c.id) }}"
+               class="btn btn-sm btn-outline-primary me-1" title="Modifica">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <form method="post" class="d-inline"
+                  action="{{ url_for('banks.delete_commission', profile_id=profile.id, commission_id=c.id) }}">
+              <button type="submit" class="btn btn-sm btn-outline-danger" title="Elimina"
+                      onclick="return confirm('Eliminare questa commissione?')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer text-muted small">{{ commissions | length }} righe commissione</div>
+</div>
+{% else %}
+<div class="alert alert-warning">
+  Nessuna commissione configurata. <a href="{{ url_for('banks.new_commission', profile_id=profile.id) }}">Aggiungi la prima.</a>
+</div>
+{% endif %}
+{% endblock %}

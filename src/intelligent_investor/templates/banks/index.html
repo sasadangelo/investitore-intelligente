@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Banche e Commissioni — Investitore Intelligente{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0"><i class="bi bi-bank me-2 text-primary"></i>Banche e Commissioni</h2>
+  <a href="{{ url_for('banks.new_profile') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-1"></i>Aggiungi profilo
+  </a>
+</div>
+
+{% if profiles %}
+<div class="card shadow-sm">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0 align-middle">
+      <thead>
+        <tr>
+          <th>Banca</th>
+          <th>Profilo</th>
+          <th class="text-end">Commissioni</th>
+          <th>Note</th>
+          <th class="text-center">Azioni</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in profiles %}
+        <tr>
+          <td class="fw-semibold">{{ p.bank_name }}</td>
+          <td>{{ p.profile_name }}</td>
+          <td class="text-end">
+            <a href="{{ url_for('banks.detail', profile_id=p.id) }}" class="badge bg-primary text-decoration-none">
+              {{ commission_counts[p.id] }} righe
+            </a>
+          </td>
+          <td class="text-muted small">{{ p.notes or '—' }}</td>
+          <td class="text-center text-nowrap">
+            <a href="{{ url_for('banks.detail', profile_id=p.id) }}"
+               class="btn btn-sm btn-outline-info me-1" title="Dettaglio commissioni">
+              <i class="bi bi-list-ul"></i>
+            </a>
+            <a href="{{ url_for('banks.edit_profile', profile_id=p.id) }}"
+               class="btn btn-sm btn-outline-primary me-1" title="Modifica">
+              <i class="bi bi-pencil"></i>
+            </a>
+            <a href="{{ url_for('banks.confirm_delete_profile', profile_id=p.id) }}"
+               class="btn btn-sm btn-outline-danger" title="Elimina">
+              <i class="bi bi-trash"></i>
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer text-muted small">{{ profiles | length }} profili in archivio</div>
+</div>
+{% else %}
+<div class="card shadow-sm text-center py-5">
+  <div class="card-body">
+    <i class="bi bi-bank display-4 text-muted"></i>
+    <p class="mt-3 text-muted fs-5">Nessun profilo banca.</p>
+    <a href="{{ url_for('banks.new_profile') }}" class="btn btn-primary mt-2">
+      <i class="bi bi-plus-circle me-1"></i>Aggiungi il primo profilo
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

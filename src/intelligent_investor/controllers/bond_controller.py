@@ -16,6 +16,7 @@ from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bond_quote import BondQuoteDTO
 from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
 from intelligent_investor.services import BondService, BondSyncService
+from intelligent_investor.services.bank_profile_service import BankProfileService
 from intelligent_investor.services.bond_quote_service import BondQuoteService
 from intelligent_investor.services.bot_calculator_service import BotCalculatorService
 
@@ -23,6 +24,7 @@ bond_bp = Blueprint("bonds", __name__, url_prefix="/bonds")
 _service = BondService()
 _quote_service = BondQuoteService()
 _sync_service = BondSyncService()
+_bank_service = BankProfileService()
 _calculator_service = BotCalculatorService()
 
 # Allowed bond types for dropdowns
@@ -288,14 +290,15 @@ def calculator():
         key=lambda b: b.maturity_date,
     )
     quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
-    # Pre-select bond_id from query string, falling back to the first in list
+    bank_profiles_json = json.dumps(_bank_service.profiles_with_commissions_json())
     preselect_id: int | None = request.args.get("bond_id", type=int)
     bond = (
         _service.get_by_id(preselect_id)
         if preselect_id is not None
         else (bonds[0] if bonds else None)
     )
-    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond, tx=None, result=None)
+    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond,
+                           bank_profiles_json=bank_profiles_json, tx=None, result=None)
 
 
 @bond_bp.route("/calculator", methods=["POST"])
@@ -309,16 +312,19 @@ def calculator_compute():
     quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
 
     form = request.form
+    bank_profiles_json = json.dumps(_bank_service.profiles_with_commissions_json())
     bond_id_raw = form.get("bond_id", "").strip()
     if not bond_id_raw:
         flash("Seleziona un BOT.", "warning")
-        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None, tx=form, result=None), 422
+        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
+                               tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
 
     bond_id = int(bond_id_raw)
     bond = _service.get_by_id(bond_id)
     if bond is None:
         flash("BOT non trovato.", "warning")
-        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None, tx=form, result=None), 422
+        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
+                               tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
 
     try:
         has_sale = form.get("has_sale") == "on"
@@ -349,6 +355,8 @@ def calculator_compute():
         result = _calculator_service.calculate(tx, bond)
     except (ValueError, ValidationError) as e:
         flash(f"Errore nei parametri: {e}", "danger")
-        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond, tx=form, result=None), 422
+        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond,
+                               tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
 
-    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond, tx=form, result=result)
+    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond,
+                           tx=form, result=result, bank_profiles_json=bank_profiles_json)

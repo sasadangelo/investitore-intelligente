@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Elimina Profilo — Investitore Intelligente{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6">
+    <div class="card shadow-sm border-danger">
+      <div class="card-header bg-danger text-white fw-semibold">
+        <i class="bi bi-exclamation-triangle me-1"></i>Conferma eliminazione
+      </div>
+      <div class="card-body">
+        <p>Stai per eliminare il profilo:</p>
+        <ul class="mb-3">
+          <li><strong>Banca:</strong> {{ profile.bank_name }}</li>
+          <li><strong>Profilo:</strong> {{ profile.profile_name }}</li>
+        </ul>
+        <p class="text-danger fw-semibold">Saranno eliminate anche tutte le commissioni associate. Operazione irreversibile.</p>
+        <div class="d-flex gap-2">
+          <form method="post" action="{{ url_for('banks.delete_profile', profile_id=profile.id) }}">
+            <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Elimina</button>
+          </form>
+          <a href="{{ url_for('banks.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i>Annulla
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

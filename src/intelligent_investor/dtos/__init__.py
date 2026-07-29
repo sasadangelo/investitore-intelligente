@@ -2,6 +2,7 @@
 # Copyright (c) 2025 Salvatore D'Angelo, Code4Projects
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
+from .bank_profile import BankCommissionDTO, BankProfileDTO
 from .bond import BondDTO
 from .bond_quote import BondQuoteDTO
 from .bot_auction import BotAuctionDTO
@@ -14,6 +15,8 @@ from .bot_calculation_result import (BotCalculationResultDTO,
 from .bot_transaction import BotTransactionDTO
 
 __all__ = [
+    "BankProfileDTO",
+    "BankCommissionDTO",
     "BondDTO",
     "BondQuoteDTO",
     "BotAuctionDTO",

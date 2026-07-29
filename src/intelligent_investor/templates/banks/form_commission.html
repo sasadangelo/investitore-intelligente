@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}{{ title }} — Investitore Intelligente{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex align-items-center gap-2">
+        <i class="bi bi-percent fs-5"></i>
+        <span class="fw-semibold fs-5">{{ title }} — {{ profile.display_name }}</span>
+      </div>
+      <div class="card-body">
+        {% macro fval(field, default='') -%}
+          {%- if commission is none -%}{{ default }}
+          {%- elif commission is mapping -%}{{ commission.get(field, default) }}
+          {%- else -%}{{ commission | attr(field) if commission | attr(field) is not none else default }}
+          {%- endif -%}
+        {%- endmacro %}
+
+        <form action="{{ action }}" method="post" novalidate>
+          <!-- Venue + Duration -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="venue" class="form-label fw-semibold">Venue <span class="text-danger">*</span></label>
+              <select class="form-select" id="venue" name="venue" required>
+                {% for val, lbl in venue_labels.items() %}
+                <option value="{{ val }}" {% if fval('venue') == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-sm-6">
+              <label for="duration_type" class="form-label fw-semibold">Durata</label>
+              <select class="form-select" id="duration_type" name="duration_type">
+                {% for val, lbl in duration_labels.items() %}
+                <option value="{{ val }}" {% if fval('duration_type', 'any') == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <!-- Days range -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-6">
+              <label for="days_min" class="form-label fw-semibold">Giorni min</label>
+              <input type="number" class="form-control" id="days_min" name="days_min"
+                     value="{{ fval('days_min', '') }}" min="0" placeholder="nessun limite">
+              <div class="form-text">Lascia vuoto = nessun limite inferiore</div>
+            </div>
+            <div class="col-sm-6">
+              <label for="days_max" class="form-label fw-semibold">Giorni max</label>
+              <input type="number" class="form-control" id="days_max" name="days_max"
+                     value="{{ fval('days_max', '') }}" min="0" placeholder="nessun limite">
+              <div class="form-text">Lascia vuoto = nessun limite superiore</div>
+            </div>
+          </div>
+          <!-- Commission fields -->
+          <div class="row g-3 mb-3">
+            <div class="col-sm-3">
+              <label for="commission_pct" class="form-label fw-semibold">% <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <input type="number" class="form-control" id="commission_pct" name="commission_pct"
+                       value="{{ fval('commission_pct', 0) }}" step="0.001" min="0" required>
+                <span class="input-group-text">%</span>
+              </div>
+            </div>
+            <div class="col-sm-3">
+              <label for="commission_min" class="form-label fw-semibold">Min (€)</label>
+              <input type="number" class="form-control" id="commission_min" name="commission_min"
+                     value="{{ fval('commission_min', 0) }}" step="0.01" min="0">
+            </div>
+            <div class="col-sm-3">
+              <label for="commission_max" class="form-label fw-semibold">Max (€)</label>
+              <input type="number" class="form-control" id="commission_max" name="commission_max"
+                     value="{{ fval('commission_max', '') }}" step="0.01" min="0" placeholder="N.P.">
+              <div class="form-text">Vuoto = N.P.</div>
+            </div>
+            <div class="col-sm-3">
+              <label for="commission_fixed" class="form-label fw-semibold">Fisso (€)</label>
+              <input type="number" class="form-control" id="commission_fixed" name="commission_fixed"
+                     value="{{ fval('commission_fixed', 0) }}" step="0.01" min="0">
+            </div>
+          </div>
+          <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-save me-1"></i>Salva</button>
+            <a href="{{ url_for('banks.detail', profile_id=profile.id) }}" class="btn btn-outline-secondary">
+              <i class="bi bi-x-circle me-1"></i>Annulla
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

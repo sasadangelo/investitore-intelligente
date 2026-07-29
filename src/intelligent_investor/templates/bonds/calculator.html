@@ -53,6 +53,7 @@
                 data-isin="{{ b.isin }}"
                 data-issue-date="{{ b.issue_date }}"
                 data-maturity-date="{{ b.maturity_date.strftime('%d/%m/%Y') }}"
+                data-maturity-raw="{{ b.maturity_date }}"
                 data-issue-price="{{ b.issue_price }}"
                 data-last-price="{{ q.last_price if q else '' }}"
                 {% if bond and bond.id == b.id %}selected{% endif %}>
@@ -118,6 +119,21 @@
             <div class="form-text">Multiplo di 100 (es. 5000 = 50 BOT)</div>
           </div>
 
+          <!-- Bank profile preset -->
+          <div class="mb-3">
+            <label for="bank_profile" class="form-label fw-semibold">Profilo bancario</label>
+            <div class="input-group">
+              <select class="form-select" id="bank_profile">
+                <option value="">— Inserisci commissioni manualmente —</option>
+              </select>
+              <a id="bank_info_link" href="#" target="_blank" rel="noopener"
+                 class="btn btn-outline-secondary d-none" title="Apri foglio informativo">
+                <i class="bi bi-file-earmark-text"></i>
+              </a>
+            </div>
+            <div class="form-text">Seleziona la tua banca per precompilare le commissioni.</div>
+          </div>
+
           <!-- Buy commissions -->
           <div class="mb-1">
             <span class="form-label fw-semibold">Commissioni acquisto</span>
@@ -145,7 +161,7 @@
                      step="0.01" min="0" placeholder="INF">
             </div>
           </div>
-          <div class="row g-2 mb-3 mot-only">
+          <div class="row g-2 mb-3">
             <div class="col-sm-5">
               <label for="buy_commission_fixed" class="form-label form-label-sm">Commissione fissa (€)</label>
               <input type="number" class="form-control form-control-sm" id="buy_commission_fixed"
@@ -405,46 +421,176 @@
 
 {% block extra_scripts %}
 <script>
-  // Update purchase_price based on current venue selection and selected bond
+  // -----------------------------------------------------------------------
+  // Bank profiles data (injected from server)
+  // -----------------------------------------------------------------------
+  const BANK_PROFILES = {{ bank_profiles_json | safe }};
+
+  // Populate the bank profile <select> from the JSON data
+  (function buildBankSelect() {
+    const sel = document.getElementById('bank_profile');
+    BANK_PROFILES.forEach(function(p) {
+      const opt = document.createElement('option');
+      opt.value = p.id;
+      opt.textContent = p.display_name;
+      sel.appendChild(opt);
+    });
+  })();
+
+  // -----------------------------------------------------------------------
+  // Commission resolution — mirrors BankProfileService.resolve_commission()
+  // -----------------------------------------------------------------------
+
+  /**
+   * Return the best-matching commission row for the given profile id, venue
+   * and bond duration in days, or null if none found.
+   *
+   * Lookup order:
+   *   1. Row whose days_min/days_max range contains 'days' (for the given venue)
+   *   2. Row with days_min==null && days_max==null (the 'any' fallback)
+   */
+  function resolveCommission(profileId, venue, days) {
+    const profile = BANK_PROFILES.find(p => p.id === profileId);
+    if (!profile) return null;
+
+    const venueRows = profile.commissions.filter(c => c.venue === venue);
+
+    // Step 1: exact days-range match
+    if (days !== null) {
+      for (const row of venueRows) {
+        if (row.days_min !== null || row.days_max !== null) {
+          const aboveMin = (row.days_min === null || days >= row.days_min);
+          const belowMax = (row.days_max === null || days <= row.days_max);
+          if (aboveMin && belowMax) return row;
+        }
+      }
+    }
+
+    // Step 2: fallback to "any" row (both bounds null)
+    return venueRows.find(r => r.days_min === null && r.days_max === null) || null;
+  }
+
+  /**
+   * Compute the number of days between the selected bond's issue date and
+   * maturity date (used to pick the correct MEF commission tier for asta).
+   * Returns null if no bond is selected.
+   */
+  function selectedBondDays() {
+    const opt = document.getElementById('bond_id').options[
+      document.getElementById('bond_id').selectedIndex
+    ];
+    if (!opt.value) return null;
+    const issueStr    = opt.dataset.issueDate;    // YYYY-MM-DD
+    const maturityStr = opt.dataset.maturityDate; // DD/MM/YYYY (formatted for display)
+    if (!issueStr) return null;
+    // maturity is stored as display string; we need the raw value — read from option text
+    // Instead, we store raw maturity on the option as data-maturity-raw (added below)
+    const maturityRaw = opt.dataset.maturityRaw;  // YYYY-MM-DD (added in template)
+    if (!maturityRaw) return null;
+    const ms = new Date(maturityRaw) - new Date(issueStr);
+    return Math.round(ms / 86400000);
+  }
+
+  /**
+   * Apply a commission row to the buy-commission fields.
+   * Passing null clears the fields.
+   */
+  function applyBuyCommission(row) {
+    document.getElementById('buy_commission_pct').value   = row ? parseFloat(row.commission_pct).toFixed(2)   : '';
+    document.getElementById('buy_commission_min').value   = row ? parseFloat(row.commission_min).toFixed(2)   : '';
+    document.getElementById('buy_commission_max').value   = (row && row.commission_max !== null) ? parseFloat(row.commission_max).toFixed(2) : '';
+    document.getElementById('buy_commission_fixed').value = row ? parseFloat(row.commission_fixed).toFixed(2) : '';
+  }
+
+  // Fill commission fields whenever the bank select changes.
+  // When no profile is selected, leave the fields untouched (keep defaults or user-typed values).
+  function applyBankProfile() {
+    const profileId = parseInt(document.getElementById('bank_profile').value);
+    if (isNaN(profileId)) return;
+    const venue = document.getElementById('venue_mot').checked ? 'mot' : 'asta';
+    const days  = selectedBondDays();
+    const row   = resolveCommission(profileId, venue, days);
+    applyBuyCommission(row);
+  }
+
+  document.getElementById('bank_profile').addEventListener('change', function() {
+    applyBankProfile();
+    // Show/hide the info-sheet link next to the select
+    const profileId = parseInt(this.value);
+    const profile   = BANK_PROFILES.find(p => p.id === profileId);
+    const link      = document.getElementById('bank_info_link');
+    if (profile && profile.info_url) {
+      link.href = profile.info_url;
+      link.classList.remove('d-none');
+    } else {
+      link.href = '#';
+      link.classList.add('d-none');
+    }
+  });
+
+  // -----------------------------------------------------------------------
+  // Price helper
+  // -----------------------------------------------------------------------
+
   function updatePurchasePrice() {
-    const opt     = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
-    const isMot   = document.getElementById('venue_mot').checked;
-    const price   = isMot ? (opt.dataset.lastPrice || '') : (opt.dataset.issuePrice || '');
+    const opt   = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
+    const isMot = document.getElementById('venue_mot').checked;
+    const price = isMot ? (opt.dataset.lastPrice || '') : (opt.dataset.issuePrice || '');
     if (price) document.getElementById('purchase_price').value = price;
   }
 
-  // When BOT changes: update strip and form fields
+  // -----------------------------------------------------------------------
+  // Bond selector change
+  // -----------------------------------------------------------------------
+
   document.getElementById('bond_id').addEventListener('change', function() {
     const opt   = this.options[this.selectedIndex];
     const strip = document.getElementById('bond-strip');
     if (opt.value) {
-      document.getElementById('strip-isin').textContent         = opt.dataset.isin         || '';
-      document.getElementById('strip-issue-date').textContent   = opt.dataset.issueDate    || '';
-      document.getElementById('strip-maturity-date').textContent= opt.dataset.maturityDate || '';
+      document.getElementById('strip-isin').textContent          = opt.dataset.isin         || '';
+      document.getElementById('strip-issue-date').textContent    = opt.dataset.issueDate    || '';
+      document.getElementById('strip-maturity-date').textContent = opt.dataset.maturityDate || '';
       const ip = parseFloat(opt.dataset.issuePrice);
-      document.getElementById('strip-issue-price').textContent  = isNaN(ip) ? '' : ip.toFixed(4);
+      document.getElementById('strip-issue-price').textContent   = isNaN(ip) ? '' : ip.toFixed(4);
       strip.classList.remove('d-none');
     } else {
       strip.classList.add('d-none');
     }
     if (opt.dataset.issueDate) document.getElementById('purchase_date').value = opt.dataset.issueDate;
     updatePurchasePrice();
+    applyBankProfile();   // re-resolve commission for the new bond's duration
   });
 
-  // Show/hide MOT-only fields and update price when venue changes
+  // -----------------------------------------------------------------------
+  // Venue radio change
+  // -----------------------------------------------------------------------
+
   function toggleMot() {
     const isMot = document.getElementById('venue_mot').checked;
     document.querySelectorAll('.mot-only').forEach(el => {
       el.style.display = isMot ? 'block' : 'none';
     });
     document.getElementById('lbl_pct').textContent = isMot ? '(su acquisto)' : '(su nominale)';
+
+    // MOT → default purchase date to today; Asta → reset to bond issue date
+    const opt = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
+    if (isMot) {
+      document.getElementById('purchase_date').value = new Date().toISOString().slice(0, 10);
+    } else if (opt.value && opt.dataset.issueDate) {
+      document.getElementById('purchase_date').value = opt.dataset.issueDate;
+    }
+
     updatePurchasePrice();
+    applyBankProfile();   // re-resolve commission for the new venue
   }
   document.getElementById('venue_asta').addEventListener('change', toggleMot);
   document.getElementById('venue_mot').addEventListener('change', toggleMot);
   toggleMot();
 
-  // Show/hide sale fields
+  // -----------------------------------------------------------------------
+  // Sale section toggle
+  // -----------------------------------------------------------------------
+
   function toggleSale() {
     document.getElementById('sale_fields').style.display =
       document.getElementById('has_sale').checked ? '' : 'none';
