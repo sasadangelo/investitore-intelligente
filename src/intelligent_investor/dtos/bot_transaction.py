@@ -27,7 +27,7 @@ class BotTransactionDTO(BaseModel):
     Both fields must be either both present or both absent.
     """
 
-    bond_id: int
+    bond_id: int  # 0 is used as sentinel for manually-entered (non-DB) BOTs
 
     # --- Purchase ---
     purchase_venue: Literal["asta", "mot"]

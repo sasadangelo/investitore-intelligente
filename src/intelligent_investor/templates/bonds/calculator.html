@@ -7,6 +7,7 @@
   .section-header { background-color: #0d6efd; color: #fff; font-weight: 600; }
   .result-value   { font-weight: 600; }
   .mot-only       { display: none; }
+  .manual-only    { display: none; }
 </style>
 {% endblock %}
 
@@ -47,6 +48,10 @@
             <label for="bond_id" class="form-label fw-semibold">BOT <span class="text-danger">*</span></label>
             <select class="form-select" id="bond_id" name="bond_id" required>
               <option value="">— Seleziona un BOT —</option>
+              <option value="manual"
+                {% if tx is not none and (tx is mapping and tx.get('bond_id') == 'manual' or tx is not mapping and tx | attr('bond_id') | string == 'manual') %}selected{% endif %}>
+                ✏️ Inserisci BOT manualmente…
+              </option>
               {% for b in bonds %}
               {% set q = quotes.get(b.id) %}
               <option value="{{ b.id }}"
@@ -63,10 +68,51 @@
             </select>
           </div>
 
+          <!-- Manual BOT fields — shown only when "manual" is selected -->
+          <div id="manual-bot-fields" class="card card-body bg-light mb-3 manual-only">
+            <div class="mb-2 fw-semibold text-muted small">Dati BOT manuale</div>
+            <div class="row g-2 mb-2">
+              <div class="col-sm-6">
+                <label for="manual_issue_date" class="form-label form-label-sm">Data emissione <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-sm" id="manual_issue_date"
+                       name="manual_issue_date"
+                       value="{{ fval('manual_issue_date', '') }}">
+              </div>
+              <div class="col-sm-6">
+                <label for="manual_maturity_date" class="form-label form-label-sm">Data scadenza <span class="text-danger">*</span></label>
+                <input type="date" class="form-control form-control-sm" id="manual_maturity_date"
+                       name="manual_maturity_date"
+                       value="{{ fval('manual_maturity_date', '') }}">
+              </div>
+            </div>
+            <div class="row g-2">
+              <div class="col-sm-6">
+                <label for="manual_issue_price" class="form-label form-label-sm">Prezzo emissione <span class="text-danger">*</span></label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" id="manual_issue_price"
+                         name="manual_issue_price" step="0.0001" min="0" max="100"
+                         value="{{ fval('manual_issue_price', '') }}"
+                         placeholder="es. 98.0000">
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+              <div class="col-sm-6">
+                <label for="manual_redemption_price" class="form-label form-label-sm">Prezzo rimborso</label>
+                <div class="input-group input-group-sm">
+                  <input type="number" class="form-control" id="manual_redemption_price"
+                         name="manual_redemption_price" step="0.0001" min="0" max="100"
+                         value="{{ fval('manual_redemption_price', 100) }}"
+                         placeholder="100">
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <!-- Bond summary strip — shown/updated whenever a bond is selected -->
           <div id="bond-strip"
                class="alert alert-primary d-flex flex-wrap gap-3 py-2 mb-3 small
-                      {% if not bond %}d-none{% endif %}">
+                      {% if not bond or (tx is not none and (tx is mapping and tx.get('bond_id') == 'manual')) %}d-none{% endif %}">
             <span>ISIN: <code id="strip-isin">{{ bond.isin if bond else '' }}</code></span>
             <span>Emissione: <span id="strip-issue-date">{{ bond.issue_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
             <span>Scadenza: <span id="strip-maturity-date">{{ bond.maturity_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
@@ -120,6 +166,10 @@
           </div>
 
           <!-- Bank profile preset -->
+          {# Hidden field so the selected bank profile id survives POST round-trips #}
+          <input type="hidden" id="bank_profile_id_saved" name="bank_profile_id"
+                 value="{{ fval('bank_profile_id', '') }}">
+
           <div class="mb-3">
             <label for="bank_profile" class="form-label fw-semibold">Profilo bancario</label>
             <div class="input-group">
@@ -285,7 +335,7 @@
             <tr><th class="ps-3 text-muted fw-normal">Disaggio lordo (per BOT)</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount) }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio</th>
-                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.purchase.discount_tax) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.discount_tax) }}</td></tr>
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Totale pagato</th>
               <td class="pe-3 text-end fw-semibold fs-6">€ {{ "%.2f"|format(result.purchase.total_paid) }}</td>
@@ -311,7 +361,7 @@
             <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
                 <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.fixed_commission) }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata</th>
-                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.sale.discount_tax) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.discount_tax) }}</td></tr>
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Totale ricevuto</th>
               <td class="pe-3 text-end fw-semibold fs-6">€ {{ "%.2f"|format(result.sale.total_received) }}</td>
@@ -426,15 +476,27 @@
   // -----------------------------------------------------------------------
   const BANK_PROFILES = {{ bank_profiles_json | safe }};
 
-  // Populate the bank profile <select> from the JSON data
+  // Populate the bank profile <select> from the JSON data, then restore any
+  // previously submitted selection (survives POST round-trips via hidden input).
   (function buildBankSelect() {
-    const sel = document.getElementById('bank_profile');
+    const sel     = document.getElementById('bank_profile');
+    const savedId = document.getElementById('bank_profile_id_saved').value;
     BANK_PROFILES.forEach(function(p) {
       const opt = document.createElement('option');
       opt.value = p.id;
       opt.textContent = p.display_name;
+      if (String(p.id) === String(savedId)) opt.selected = true;
       sel.appendChild(opt);
     });
+    // If a profile was restored, show its info link
+    if (savedId) {
+      const profile = BANK_PROFILES.find(p => String(p.id) === String(savedId));
+      const link    = document.getElementById('bank_info_link');
+      if (profile && profile.info_url) {
+        link.href = profile.info_url;
+        link.classList.remove('d-none');
+      }
+    }
   })();
 
   // -----------------------------------------------------------------------
@@ -474,18 +536,24 @@
    * Compute the number of days between the selected bond's issue date and
    * maturity date (used to pick the correct MEF commission tier for asta).
    * Returns null if no bond is selected.
+   * For manual BOT, reads dates from the manual input fields.
    */
   function selectedBondDays() {
-    const opt = document.getElementById('bond_id').options[
-      document.getElementById('bond_id').selectedIndex
-    ];
+    const sel = document.getElementById('bond_id');
+    const opt = sel.options[sel.selectedIndex];
     if (!opt.value) return null;
+
+    if (opt.value === 'manual') {
+      const issueVal    = document.getElementById('manual_issue_date').value;
+      const maturityVal = document.getElementById('manual_maturity_date').value;
+      if (!issueVal || !maturityVal) return null;
+      const ms = new Date(maturityVal) - new Date(issueVal);
+      return Math.round(ms / 86400000);
+    }
+
     const issueStr    = opt.dataset.issueDate;    // YYYY-MM-DD
-    const maturityStr = opt.dataset.maturityDate; // DD/MM/YYYY (formatted for display)
     if (!issueStr) return null;
-    // maturity is stored as display string; we need the raw value — read from option text
-    // Instead, we store raw maturity on the option as data-maturity-raw (added below)
-    const maturityRaw = opt.dataset.maturityRaw;  // YYYY-MM-DD (added in template)
+    const maturityRaw = opt.dataset.maturityRaw;  // YYYY-MM-DD
     if (!maturityRaw) return null;
     const ms = new Date(maturityRaw) - new Date(issueStr);
     return Math.round(ms / 86400000);
@@ -514,6 +582,8 @@
   }
 
   document.getElementById('bank_profile').addEventListener('change', function() {
+    // Keep the hidden input in sync so the selection survives the next POST
+    document.getElementById('bank_profile_id_saved').value = this.value;
     applyBankProfile();
     // Show/hide the info-sheet link next to the select
     const profileId = parseInt(this.value);
@@ -544,8 +614,21 @@
   // -----------------------------------------------------------------------
 
   document.getElementById('bond_id').addEventListener('change', function() {
-    const opt   = this.options[this.selectedIndex];
-    const strip = document.getElementById('bond-strip');
+    const opt      = this.options[this.selectedIndex];
+    const strip    = document.getElementById('bond-strip');
+    const manField = document.getElementById('manual-bot-fields');
+
+    if (opt.value === 'manual') {
+      // Hide the data strip, show manual input fields
+      strip.classList.add('d-none');
+      manField.style.display = 'block';
+      // Make manual fields participate in form-days calculation
+      applyBankProfile();
+      return;
+    }
+
+    manField.style.display = 'none';
+
     if (opt.value) {
       document.getElementById('strip-isin').textContent          = opt.dataset.isin         || '';
       document.getElementById('strip-issue-date').textContent    = opt.dataset.issueDate    || '';
@@ -565,6 +648,10 @@
   // Venue radio change
   // -----------------------------------------------------------------------
 
+  // Track whether toggleMot is running during the initial page-load call so we
+  // can skip date side-effects that would overwrite POST-restored form values.
+  let _toggleMotInit = true;
+
   function toggleMot() {
     const isMot = document.getElementById('venue_mot').checked;
     document.querySelectorAll('.mot-only').forEach(el => {
@@ -572,12 +659,15 @@
     });
     document.getElementById('lbl_pct').textContent = isMot ? '(su acquisto)' : '(su nominale)';
 
-    // MOT → default purchase date to today; Asta → reset to bond issue date
-    const opt = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
-    if (isMot) {
-      document.getElementById('purchase_date').value = new Date().toISOString().slice(0, 10);
-    } else if (opt.value && opt.dataset.issueDate) {
-      document.getElementById('purchase_date').value = opt.dataset.issueDate;
+    // Only set default dates when the user actively changes the venue radio —
+    // skip on the initial page-load call so POST-restored values are preserved.
+    if (!_toggleMotInit) {
+      const opt = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
+      if (isMot) {
+        document.getElementById('purchase_date').value = new Date().toISOString().slice(0, 10);
+      } else if (opt.value && opt.dataset.issueDate) {
+        document.getElementById('purchase_date').value = opt.dataset.issueDate;
+      }
     }
 
     updatePurchasePrice();
@@ -585,7 +675,8 @@
   }
   document.getElementById('venue_asta').addEventListener('change', toggleMot);
   document.getElementById('venue_mot').addEventListener('change', toggleMot);
-  toggleMot();
+  toggleMot();          // initial call — date side-effects suppressed
+  _toggleMotInit = false;
 
   // -----------------------------------------------------------------------
   // Sale section toggle
@@ -597,5 +688,16 @@
   }
   document.getElementById('has_sale').addEventListener('change', toggleSale);
   toggleSale();
+
+  // -----------------------------------------------------------------------
+  // Restore manual-bot-fields visibility on page load (after POST error/result)
+  // -----------------------------------------------------------------------
+  (function restoreManualFields() {
+    const sel = document.getElementById('bond_id');
+    const opt = sel.options[sel.selectedIndex];
+    if (opt && opt.value === 'manual') {
+      document.getElementById('manual-bot-fields').style.display = 'block';
+    }
+  })();
 </script>
 {% endblock %}

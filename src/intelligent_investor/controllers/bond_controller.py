@@ -319,12 +319,32 @@ def calculator_compute():
         return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
                                tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
 
-    bond_id = int(bond_id_raw)
-    bond = _service.get_by_id(bond_id)
-    if bond is None:
-        flash("BOT non trovato.", "warning")
-        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
-                               tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
+    # ---- Resolve bond (from DB or from manual form fields) ----
+    if bond_id_raw == "manual":
+        try:
+            bond = BondDTO(
+                id=None,
+                name="BOT Manuale",
+                isin="N/D",
+                bond_type="BOT",
+                issue_date=_parse_date(form["manual_issue_date"]),
+                maturity_date=_parse_date(form["manual_maturity_date"]),
+                issue_price=float(form["manual_issue_price"]),
+                redemption_price=float(form.get("manual_redemption_price") or 100.0),
+                tax_rate=12.5,
+            )
+        except (KeyError, ValueError) as e:
+            flash(f"Dati BOT manuale non validi: {e}", "danger")
+            return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
+                                   tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
+        bond_id = 0  # sentinel for manual BOT
+    else:
+        bond_id = int(bond_id_raw)
+        bond = _service.get_by_id(bond_id)
+        if bond is None:
+            flash("BOT non trovato.", "warning")
+            return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
+                                   tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
 
     try:
         has_sale = form.get("has_sale") == "on"
