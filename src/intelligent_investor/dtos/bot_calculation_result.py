@@ -48,27 +48,38 @@ class CapitalGainResultDTO(BaseModel):
 
     The theoretical price is the point on the straight line between
     (issue_date, issue_price) and (maturity_date, 100).
-    If load_price < theoretical_purchase_price a capital gain arises and is
-    taxed at 26% on the taxable base (reduced by 48.08% for government bonds).
 
-    unit_gain_loss > 0  → capital gain  (taxed)
-    unit_gain_loss < 0  → capital loss  (enters the fiscal backpack)
-    remaining_loss      → portion of capital loss not offset by portfolio_losses
+    Sequence (mirrors the Excel calcolatore-bot.ods):
+      1. unit_gain_loss      = unload_price - load_price          (per single BOT)
+      2. total_gain_loss     = unit_gain_loss × quantity           (D34 in Excel)
+      3. tds_reduction       = total_gain_loss × 48.08%           (C35 — TdS reduction)
+      4. gross_tax           = total_gain_loss × 12.5%  (if >0)   (D33)
+      5. net_taxable         = max(0, total_gain_loss - tds_reduction - portfolio_losses_equiv)
+      6. capital_gain_tax    = net_taxable × 12.5%                (E37 scaled)
+      7. remaining_loss      = zainetto residuo (if gain) or minus da aggiungere allo zainetto (if loss)
     """
 
     theoretical_purchase_price: float
     theoretical_sale_price: float
-    # load_price  = purchase_price + purchase_commissions / quantity
+    # load_price  = (secco + comm + fisso) / qty − (prezzo_teorico_acquisto − prezzo_emissione)
     load_price: float
-    # unload_price = sale_price - sale_commissions / quantity
+    # unload_price = (secco_vendita − comm − fisso) / qty − (prezzo_teorico_vendita − prezzo_emissione)
     unload_price: float
-    # gain/loss per single BOT unit: unload_price - load_price
+    # gain/loss per single BOT unit: unload_price − load_price
     unit_gain_loss: float
-    # taxable base: unit_gain_loss × quantity × (1 - 0.4808)  — 0 if unit_gain_loss <= 0
-    taxable_base: float
-    # capital gain tax: 26% × taxable_base  — 0 if unit_gain_loss <= 0
+    # total_gain_loss = unit_gain_loss × quantity  (Plus/Minus Realizzata in €)
+    total_gain_loss: float
+    # tds_reduction = total_gain_loss × 48.08%  (Riduzione Imponibile per TdS)
+    tds_reduction: float
+    # gross_tax = total_gain_loss × 12.5%  (Imposta lorda, 0 if minus)
+    gross_tax: float
+    # net_taxable = imponibile netto dopo zainetto fiscale (0 if fully offset or if minus)
+    net_taxable: float
+    # capital_gain_tax = net_taxable × 12.5%  (Imposta netta sulla Plusvalenza)
     capital_gain_tax: float
-    # capital loss not offset by the portfolio_losses provided by the user — 0 if gain
+    # remaining_loss:
+    #   if gain → zainetto fiscale residuo dopo compensazione (€, in termini 26%-equiv)
+    #   if loss → minus valenza da aggiungere allo zainetto   (€, in termini 26%-equiv)
     remaining_loss: float
 
 
@@ -90,26 +101,26 @@ class SummaryResultDTO(BaseModel):
     """
     Final gains and yields.
 
-    gross_gain              = total_received - total_paid
-                              (before capital gain tax and stamp duty)
-    net_gain_before_duty    = gross_gain - capital_gain_tax
+    gross_gain              = dry_sale - dry_purchase  (no comm, no taxes)
+    net_gain_before_duty    = total_received - total_paid - capital_gain_tax
     net_gain                = net_gain_before_duty - estimated_duty
-    effective_total_received = total_received - capital_gain_tax
 
-    Simple yields are computed on total_paid.
-    Compound yields are annualised:
-        (final / initial) ^ (365 / holding_days) - 1
+    All yields use dry_purchase as base and actual/365 yearfrac (mirrors Excel).
+    Three pairs (gross, net pre-bollo, net):
+        simple   = gain / dry_purchase / yearfrac
+        compound = (redemption / dry_purchase) ^ (1/yearfrac) - 1  (= XIRR)
     """
 
     gross_gain: float
     net_gain_before_duty: float
     net_gain: float
-    effective_total_received: float
 
-    simple_gross_yield: float       # %
-    simple_net_yield: float         # %
-    compound_gross_yield: float     # % annualised
-    compound_net_yield: float       # % annualised
+    simple_gross_yield: float               # % lordo
+    compound_gross_yield: float             # % lordo annualised
+    simple_net_yield_before_duty: float     # % netto pre-bollo
+    compound_net_yield_before_duty: float   # % netto pre-bollo annualised
+    simple_net_yield: float                 # % netto
+    compound_net_yield: float               # % netto annualised
 
 
 class BotCalculationResultDTO(BaseModel):

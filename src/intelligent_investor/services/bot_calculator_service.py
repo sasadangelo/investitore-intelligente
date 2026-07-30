@@ -179,24 +179,47 @@ class BotCalculatorService:
             bond.issue_price + (bond.redemption_price - bond.issue_price) * days_from_issue_to_sale / total_days
         )
 
-        # Load/unload prices include commissions spread per unit
-        load_price: float = tx.purchase_price + (purchase.commission + purchase.fixed_commission) / quantity
-        unload_price: float = sale_price - (sale.commission + sale.fixed_commission) / quantity
+        # Load/unload prices: commissions spread per unit, minus the discount
+        # accrued from issue date to purchase/sale date (that portion of the
+        # disaggio was already "priced in" and is not a capital gain/loss).
+        load_price: float = (
+            tx.purchase_price
+            + (purchase.commission + purchase.fixed_commission) / quantity
+            - (theoretical_purchase_price - bond.issue_price)
+        )
+        unload_price: float = (
+            sale_price
+            - (sale.commission + sale.fixed_commission) / quantity
+            - (theoretical_sale_price - bond.issue_price)
+        )
 
         unit_gain_loss: float = unload_price - load_price
+        tax_rate: float = bond.tax_rate / 100  # 0.125 for TdS
 
-        if unit_gain_loss > 0:
-            # Plus valenza: taxable base reduced by 48.08% for government bonds
-            taxable_base: float = unit_gain_loss * quantity * (1 - _TDS_REDUCTION)
-            # Offset against portfolio losses from fiscal backpack
-            net_taxable: float = max(0.0, taxable_base - tx.portfolio_losses)
-            capital_gain_tax: float = net_taxable * _CAPITAL_GAIN_RATE
-            remaining_loss: float = 0.0
+        # Step 1 — Plus/Minus Realizzata (D34 in Excel)
+        total_gain_loss: float = unit_gain_loss * quantity
+
+        # Step 2 — Riduzione Imponibile per TdS (C35)
+        tds_reduction: float = total_gain_loss * _TDS_REDUCTION
+
+        # Step 3 — Imposta lorda (D33): only when plus valenza
+        gross_tax: float = total_gain_loss * tax_rate if total_gain_loss > 0 else 0.0
+
+        if total_gain_loss > 0:
+            # Imponibile netto = plus realizzata − riduzione TdS − zainetto già usato
+            # Portfolio losses are at 26%-equivalent; scale to 12.5% to compare
+            scaled_losses: float = tx.portfolio_losses * tax_rate / _CAPITAL_GAIN_RATE
+            net_taxable: float = max(0.0, total_gain_loss - tds_reduction - scaled_losses)
+            capital_gain_tax: float = net_taxable * tax_rate
+            # Zainetto residuo: parte dello zainetto non consumata dalla plus (B36/D38)
+            plus_after_tds: float = total_gain_loss - tds_reduction
+            consumed: float = min(tx.portfolio_losses * tax_rate / _CAPITAL_GAIN_RATE, plus_after_tds)
+            remaining_loss: float = max(0.0, tx.portfolio_losses - consumed * _CAPITAL_GAIN_RATE / tax_rate)
         else:
-            taxable_base = 0.0
+            net_taxable = 0.0
             capital_gain_tax = 0.0
-            # Minus valenza available after consuming portfolio_losses
-            remaining_loss = max(0.0, abs(unit_gain_loss) * quantity - tx.portfolio_losses)
+            # Minus da aggiungere allo zainetto: abs(total) × 48.08% (C35 Excel quando minus)
+            remaining_loss = abs(tds_reduction)
 
         return CapitalGainResultDTO(
             theoretical_purchase_price=theoretical_purchase_price,
@@ -204,7 +227,10 @@ class BotCalculatorService:
             load_price=load_price,
             unload_price=unload_price,
             unit_gain_loss=unit_gain_loss,
-            taxable_base=taxable_base,
+            total_gain_loss=total_gain_loss,
+            tds_reduction=tds_reduction,
+            gross_tax=gross_tax,
+            net_taxable=net_taxable,
             capital_gain_tax=capital_gain_tax,
             remaining_loss=remaining_loss,
         )
@@ -215,14 +241,25 @@ class BotCalculatorService:
         sale_date: date,
         purchase: PurchaseResultDTO,
     ) -> StampDutyResultDTO:
+        # Base = average between purchase dry amount and face value (redemption)
+        # mirrors Excel: (C25 + C20) / 2
+        duty_base: float = (purchase.dry_amount + tx.face_value) / 2
+
         if tx.stamp_duty_period == "annual":
             periods: int = (sale_date.year - tx.purchase_date.year) * 12 + (sale_date.month - tx.purchase_date.month)
-            estimated_duty: float = purchase.total_paid * _STAMP_DUTY_RATE * periods / 12
+            estimated_duty: float = duty_base * _STAMP_DUTY_RATE * periods / 12
         else:  # quarterly
-            start_quarter: int = (tx.purchase_date.month - 1) // 3
-            end_quarter: int = (sale_date.month - 1) // 3 + (sale_date.year - tx.purchase_date.year) * 4
-            periods = end_quarter - start_quarter
-            estimated_duty = purchase.total_paid * _STAMP_DUTY_RATE * periods / 4
+            # Count calendar quarter boundaries crossed, mirroring Excel B33:
+            # QUOTIENT(MONTH(purchase)-1 + months_held, 3) - QUOTIENT(MONTH(purchase)-1, 3)
+            months_held: int = (
+                (sale_date.year - tx.purchase_date.year) * 12
+                + (sale_date.month - tx.purchase_date.month)
+            )
+            periods = (
+                (tx.purchase_date.month - 1 + months_held) // 3
+                - (tx.purchase_date.month - 1) // 3
+            )
+            estimated_duty = duty_base * _STAMP_DUTY_RATE * periods / 4
 
         return StampDutyResultDTO(
             holding_periods=max(0, periods),
@@ -240,28 +277,41 @@ class BotCalculatorService:
     ) -> SummaryResultDTO:
         capital_gain_tax: float = capital_gain.capital_gain_tax if capital_gain else 0.0
 
-        gross_gain: float = sale.total_received - purchase.total_paid
-        net_gain_before_duty: float = gross_gain - capital_gain_tax
+        # Gross gain = pure cash flow without commissions, taxes or stamp duty
+        # mirrors Excel C37 = SUM(J5:J6) = −dry_purchase + redemption_dry
+        gross_gain: float = sale.dry_amount - purchase.dry_amount
+        # Net gain before duty = total received − total paid − capital gain tax
+        net_gain_before_duty: float = (sale.total_received - purchase.total_paid) - capital_gain_tax
         net_gain: float = net_gain_before_duty - stamp_duty.estimated_duty
-        effective_total_received: float = sale.total_received - capital_gain_tax
 
         holding_days: int = (sale_date - purchase_date).days or 1
+        year_frac: float = holding_days / 365
+        dry_purchase: float = purchase.dry_amount
+        total_paid: float = purchase.total_paid
 
-        simple_gross_yield: float = gross_gain / purchase.total_paid * 100
-        simple_net_yield: float = net_gain / purchase.total_paid * 100
-        compound_gross_yield = (effective_total_received / purchase.total_paid) ** (365 / holding_days) * 100 - 100
-        compound_net_yield = ((effective_total_received - stamp_duty.estimated_duty) / purchase.total_paid) ** (
-            365 / holding_days
-        ) * 100 - 100
+        # Lordo: base = dry_purchase  (mirrors Excel C41 / XIRR J5:J6)
+        simple_gross_yield: float = gross_gain / dry_purchase / year_frac * 100
+        compound_gross_yield: float = (sale.dry_amount / dry_purchase) ** (1 / year_frac) * 100 - 100
+
+        # Netto pre-bollo: base = total_paid  (mirrors Excel B42 / XIRR K5:K6)
+        net_pre_redemption: float = sale.total_received - capital_gain_tax
+        simple_net_yield_before_duty: float = net_gain_before_duty / total_paid / year_frac * 100
+        compound_net_yield_before_duty: float = (net_pre_redemption / total_paid) ** (1 / year_frac) * 100 - 100
+
+        # Netto: base = total_paid  (mirrors Excel B43 / XIRR L5:L6)
+        net_redemption: float = net_pre_redemption - stamp_duty.estimated_duty
+        simple_net_yield: float = net_gain / total_paid / year_frac * 100
+        compound_net_yield: float = (net_redemption / total_paid) ** (1 / year_frac) * 100 - 100
 
         return SummaryResultDTO(
             gross_gain=gross_gain,
             net_gain_before_duty=net_gain_before_duty,
             net_gain=net_gain,
-            effective_total_received=effective_total_received,
             simple_gross_yield=simple_gross_yield,
-            simple_net_yield=simple_net_yield,
             compound_gross_yield=compound_gross_yield,
+            simple_net_yield_before_duty=simple_net_yield_before_duty,
+            compound_net_yield_before_duty=compound_net_yield_before_duty,
+            simple_net_yield=simple_net_yield,
             compound_net_yield=compound_net_yield,
         )
 

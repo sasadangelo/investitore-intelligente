@@ -139,9 +139,10 @@
           <!-- Purchase date + price -->
           <div class="row g-2 mb-3">
             <div class="col-sm-6">
-              <label for="purchase_date" class="form-label fw-semibold">Data acquisto <span class="text-danger">*</span></label>
+              <label for="purchase_date" class="form-label fw-semibold">Data regolamento <span class="text-danger">*</span></label>
               <input type="date" class="form-control" id="purchase_date" name="purchase_date"
                      value="{{ fval('purchase_date', bond.issue_date if bond else '') }}" required>
+              <div class="form-text">Per il MOT: data esecuzione ordine + 2 giorni lavorativi (T+2).</div>
             </div>
             <div class="col-sm-6">
               <label for="purchase_price" class="form-label fw-semibold">Prezzo acquisto <span class="text-danger">*</span></label>
@@ -379,27 +380,47 @@
         <table class="table table-sm mb-0">
           <tbody>
             <tr><th class="ps-3 text-muted fw-normal w-50">Prezzo teorico acquisto</th>
-                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.theoretical_purchase_price) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Prezzo teorico vendita</th>
-                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.theoretical_sale_price) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Prezzo di carico</th>
-                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.load_price) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Prezzo di scarico</th>
-                <td class="pe-3 text-end">{{ "%.6f"|format(result.capital_gain.unload_price) }}</td></tr>
+                <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.theoretical_purchase_price) }}</td></tr>
+             <tr><th class="ps-3 text-muted fw-normal">Prezzo teorico vendita</th>
+                 <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.theoretical_sale_price) }}</td></tr>
+             <tr><th class="ps-3 text-muted fw-normal">Prezzo di carico</th>
+                 <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.load_price) }}</td></tr>
+             <tr><th class="ps-3 text-muted fw-normal">Prezzo di scarico</th>
+                 <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.unload_price) }}</td></tr>
             <tr>
               <th class="ps-3 text-muted fw-normal">Plus/Minus valenza (per BOT)</th>
               <td class="pe-3 text-end fw-semibold
                 {% if result.capital_gain.unit_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
-                {{ "%+.6f"|format(result.capital_gain.unit_gain_loss) }}
+                {{ "%+.5f"|format(result.capital_gain.unit_gain_loss) }}
               </td>
             </tr>
-            <tr><th class="ps-3 text-muted fw-normal">Imponibile</th>
-                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.capital_gain.taxable_base) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Imposta capital gain (26%)</th>
-                <td class="pe-3 text-end">€ {{ "%.4f"|format(result.capital_gain.capital_gain_tax) }}</td></tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Plus/Minus realizzata</th>
+              <td class="pe-3 text-end fw-semibold
+                {% if result.capital_gain.total_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
+                € {{ "%.2f"|format(result.capital_gain.total_gain_loss) }}
+              </td>
+            </tr>
+            <tr><th class="ps-3 text-muted fw-normal">Riduzione imponibile TdS (48.08%)</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.capital_gain.tds_reduction) }}</td></tr>
+            {% if result.capital_gain.total_gain_loss > 0 %}
+            <tr><th class="ps-3 text-muted fw-normal">Imposta lorda (12.5%)</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.capital_gain.gross_tax) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imponibile netto (dopo zainetto)</th>
+                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.capital_gain.net_taxable) }}</td></tr>
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold">Imposta sulla plusvalenza</th>
+              <td class="pe-3 text-end fw-semibold">€ {{ "%.2f"|format(result.capital_gain.capital_gain_tax) }}</td>
+            </tr>
             {% if result.capital_gain.remaining_loss > 0 %}
-            <tr><th class="ps-3 text-muted fw-normal">Minus valenza rimanente</th>
-                <td class="pe-3 text-end text-danger">€ {{ "%.4f"|format(result.capital_gain.remaining_loss) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Zainetto fiscale residuo</th>
+                <td class="pe-3 text-end text-success">€ {{ "%.2f"|format(result.capital_gain.remaining_loss) }}</td></tr>
+            {% endif %}
+            {% else %}
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold">Minus valenza da zainetto</th>
+              <td class="pe-3 text-end fw-semibold text-danger">€ {{ "%.2f"|format(result.capital_gain.remaining_loss) }}</td>
+            </tr>
             {% endif %}
           </tbody>
         </table>
@@ -439,17 +460,32 @@
               <td class="pe-3 text-end fw-semibold fs-5">€ {{ "%.2f"|format(result.summary.net_gain) }}</td>
             </tr>
             <tr><td colspan="2"><hr class="my-1"></td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Rendimento semplice lordo</th>
-                <td class="pe-3 text-end">{{ "%.2f"|format(result.summary.simple_gross_yield) }}%</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Rendimento semplice netto</th>
-                <td class="pe-3 text-end">{{ "%.2f"|format(result.summary.simple_net_yield) }}%</td></tr>
-            <tr class="table-light">
-              <th class="ps-3 fw-semibold">Rendimento composto lordo</th>
-              <td class="pe-3 text-end fw-semibold">{{ "%.2f"|format(result.summary.compound_gross_yield) }}%</td>
+            <tr><th class="ps-3 text-muted fw-normal" colspan="2" style="padding-bottom:2px">
+              <small class="text-uppercase text-muted" style="font-size:.7rem;letter-spacing:.05em">Semplice &nbsp;/&nbsp; Composto</small>
+            </th></tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Rendimento lordo</th>
+              <td class="pe-3 text-end">
+                {{ "%.2f"|format(result.summary.simple_gross_yield) }}%
+                &nbsp;<span class="text-muted">/</span>&nbsp;
+                <span class="fw-semibold">{{ "%.2f"|format(result.summary.compound_gross_yield) }}%</span>
+              </td>
+            </tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Rendimento netto (pre-bollo)</th>
+              <td class="pe-3 text-end">
+                {{ "%.2f"|format(result.summary.simple_net_yield_before_duty) }}%
+                &nbsp;<span class="text-muted">/</span>&nbsp;
+                <span class="fw-semibold">{{ "%.2f"|format(result.summary.compound_net_yield_before_duty) }}%</span>
+              </td>
             </tr>
             <tr class="table-success">
-              <th class="ps-3 fw-semibold">Rendimento composto netto</th>
-              <td class="pe-3 text-end fw-semibold fs-5">{{ "%.2f"|format(result.summary.compound_net_yield) }}%</td>
+              <th class="ps-3 fw-semibold">Rendimento netto</th>
+              <td class="pe-3 text-end fw-semibold fs-5">
+                {{ "%.2f"|format(result.summary.simple_net_yield) }}%
+                &nbsp;<span class="text-muted">/</span>&nbsp;
+                {{ "%.2f"|format(result.summary.compound_net_yield) }}%
+              </td>
             </tr>
           </tbody>
         </table>
