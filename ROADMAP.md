@@ -12,38 +12,23 @@
 
 ### 1.1 — Banks to add
 
-| # | Bank | Profiles | Priority | Notes |
-|---|---|---|---|---|
-| 1.1 | **BPER Banca** | Filiale, Internet Banking | 🔴 | Strong in Central-North Italy, absorbed many local savings banks |
-| 1.2 | **Poste Italiane / BancoPosta** | Sportello, Online | 🔴 | Huge retail customer base; BOT commissions typically higher than banks |
-| 1.3 | **ING Italia** | Internet Banking | 🔴 | Popular with self-directed investors |
-| 1.4 | **Widiba** | Internet Banking | 🔴 | MPS Group online bank; competitive fees |
-| 1.5 | **Banca Sella** | Internet Banking | 🟡 | Well-regarded by digital investors |
-| 1.6 | **CheBanca! (Mediobanca)** | Internet Banking | 🟡 | Similar target audience to Fineco |
-| 1.7 | **Mediolanum** | Internet Banking | 🟡 | Wide customer base via financial advisors |
-| 1.8 | **Credem (Credito Emiliano)** | Filiale, Internet Banking | 🟡 | Strong in Emilia-Romagna |
-| 1.9 | **Banco di Sardegna** | Filiale, Internet Banking | 🟢 | Relevant in Sardinia |
-| 1.10 | **Cassa Depositi e Prestiti / CDP** | — | 🟢 | Issues BTP but no retail brokerage |
-| 1.11 | **Trade Republic** | App | 🟢 | Growing among younger investors; BOT support limited |
+| #    | Bank | Profiles | Priority | Notes |
+|------|---|---|---|---|
+| 1.1  | **Poste Italiane / BancoPosta** | Sportello, Online | 🔴 | Huge retail customer base; BOT commissions typically higher than banks |
+| 1.2  | **ING Italia** | Internet Banking | 🔴 | Popular with self-directed investors |
+| 1.3  | **Widiba** | Internet Banking | 🔴 | MPS Group online bank; competitive fees |
+| 1.4  | **Banca Sella** | Internet Banking | 🟡 | Well-regarded by digital investors |
+| 1.5  | **CheBanca! (Mediobanca)** | Internet Banking | 🟡 | Similar target audience to Fineco |
+| 1.6  | **Mediolanum** | Internet Banking | 🟡 | Wide customer base via financial advisors |
+| 1.7  | **Credem (Credito Emiliano)** | Filiale, Internet Banking | 🟡 | Strong in Emilia-Romagna |
+| 1.8  | **Banco di Sardegna** | Filiale, Internet Banking | 🟢 | Relevant in Sardinia |
+| 1.9  | **Cassa Depositi e Prestiti / CDP** | — | 🟢 | Issues BTP but no retail brokerage |
+| 1.10 | **Trade Republic** | App | 🟢 | Growing among younger investors; BOT support limited |
 | 1.12 | **Revolut** | App | 🟢 | Large user base but limited Italian government bond support |
 | 1.13 | **Degiro** | Online | 🟢 | Popular discount broker; MOT access available |
 | 1.14 | **Flatex** | Online | 🟢 | German broker with Italian MOT access |
 
 > **Note:** for each profile, collect the official information sheet and set `info_url`.
-
----
-
-## Milestone 2 — Auction calendar: price and yield forecast
-> Goal: enrich the BOT auction calendar with estimated issue prices and expected yields
-> based on recent auction history.
-
-| # | Feature | Notes | Priority |
-|---|---|---|---|
-| 2.1 | Historical auction results | New `bot_auction_result` table: settlement price, gross/net yield, amount issued | 🔴 |
-| 2.2 | Automatic import of MEF/BdI results | Scraper or MEF post-auction press release parser | 🟡 |
-| 2.3 | Next auction price forecast | Moving average of last N results for the same duration (quarterly/semi-annual/annual) | 🔴 |
-| 2.4 | Expected gross/net yield forecast | Derived from forecast price using existing calculator formulas | 🔴 |
-| 2.5 | Historical chart in calendar | Mini sparkline and results table per duration | 🟡 |
 
 ---
 

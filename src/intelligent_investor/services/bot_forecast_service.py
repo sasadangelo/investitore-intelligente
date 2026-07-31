@@ -116,7 +116,7 @@ class BotForecastService:
         """
         today = date.today()
         auctions = sorted(
-            [a for a in self._auction_svc.list_all() if a.auction_date > today],
+            [a for a in self._auction_svc.list_all() if a.settlement_date >= today],
             key=lambda a: a.auction_date,
         )
         bonds = self._bond_svc.list_all()
