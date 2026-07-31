@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Forecast Prezzo Emissione BOT — Investitore Intelligente{% endblock %}
+
+{% block extra_head %}
+<style>
+  .forecast-card          { border-left: 4px solid #0d6efd; }
+  .forecast-card.semi     { border-left-color: #198754; }
+  .forecast-card.tbd      { border-left-color: #6c757d; }
+  .yield-gross            { color: #0d6efd; font-weight: 600; }
+  .yield-net              { color: #198754; font-weight: 700; font-size: 1.15rem; }
+  .datapoint-row          { font-size: 0.82rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">
+    <i class="bi bi-graph-up-arrow me-2 text-primary"></i>Forecast Prezzo Emissione BOT
+  </h2>
+  <div class="d-flex gap-2">
+    <!-- Link to guide -->
+    <a href="{{ url_for('guides.detail', slug='forecast') }}" target="_blank" class="btn btn-outline-info">
+      <i class="bi bi-info-circle me-1"></i>Come funziona
+    </a>
+    <a href="{{ url_for('auctions.index') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-calendar3 me-1"></i>Calendario aste
+    </a>
+  </div>
+</div>
+
+<!-- ── Forecast cards ────────────────────────────────────────────────────── -->
+{% if results %}
+<div class="row g-3">
+  {% for r in results %}
+  {% set is_annual = r.auction.duration_type == 'annual' %}
+  {% set is_semi   = r.auction.duration_type == 'semiannual' %}
+
+  <div class="col-md-6 col-xl-4">
+    <div class="card shadow-sm h-100 forecast-card {% if is_semi %}semi{% elif not r.available %}tbd{% endif %}">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span class="fw-semibold">
+          <i class="bi bi-calendar-event me-1"></i>
+          Asta {{ r.auction.auction_date.strftime('%d/%m/%Y') }}
+        </span>
+        <span class="badge {% if is_annual %}bg-primary{% elif is_semi %}bg-success{% else %}bg-secondary{% endif %}">
+          {{ duration_labels[r.auction.duration_type] }}
+        </span>
+      </div>
+
+      <div class="card-body">
+
+        <!-- Key auction dates -->
+        <div class="small text-muted mb-3">
+          <div class="row g-1">
+            <div class="col-6">Regolamento:</div>
+            <div class="col-6 fw-semibold">{{ r.auction.settlement_date.strftime('%d/%m/%Y') }}</div>
+            <div class="col-6">Scadenza:</div>
+            <div class="col-6 fw-semibold">
+              {% if r.auction.maturity_date %}{{ r.auction.maturity_date.strftime('%d/%m/%Y') }}
+              {% else %}<span class="text-muted">t.b.d.</span>{% endif %}
+            </div>
+            {% if r.days_target %}
+            <div class="col-6">Durata:</div>
+            <div class="col-6 fw-semibold">{{ r.days_target }} giorni</div>
+            {% endif %}
+          </div>
+        </div>
+
+        {% if r.available %}
+        <!-- Forecast results -->
+        <hr class="my-2">
+        <div class="text-center mb-3">
+          <div class="text-muted small mb-1">Prezzo emissione stimato</div>
+          <div class="fs-3 fw-bold">{{ "%.4f"|format(r.estimated_price) }}</div>
+        </div>
+        <div class="row text-center g-2 mb-3">
+          <div class="col-6 border-end">
+            <div class="text-muted small">Rend. lordo</div>
+            <div class="yield-gross">{{ "%.3f"|format(r.gross_yield_pct) }}%</div>
+          </div>
+          <div class="col-6">
+            <div class="text-muted small">Rend. netto</div>
+            <div class="yield-net">{{ "%.3f"|format(r.net_yield_pct) }}%</div>
+          </div>
+        </div>
+
+        <!-- Data points used -->
+        <details class="mt-2">
+          <summary class="small text-muted" style="cursor:pointer">
+            <i class="bi bi-table me-1"></i>{{ r.data_points|length }} BOT usati per il calcolo
+          </summary>
+          <table class="table table-sm mt-2 mb-0 datapoint-row">
+            <thead>
+              <tr>
+                <th>BOT</th>
+                <th class="text-end">GG</th>
+                <th class="text-end">Last</th>
+                <th class="text-end">Rend.%</th>
+                <th class="text-end">Peso</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for dp in r.data_points %}
+              <tr>
+                <td class="text-truncate" style="max-width:110px" title="{{ dp.name }}">{{ dp.name }}</td>
+                <td class="text-end">{{ dp.days_to_maturity }}</td>
+                <td class="text-end">{{ "%.4f"|format(dp.last_price) }}</td>
+                <td class="text-end">{{ "%.3f"|format(dp.implied_yield * 100) }}%</td>
+                <td class="text-end">{{ "%.1f"|format(dp.weight * 100) }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          <div class="text-end small text-muted mt-1">
+            Rendimento medio ponderato: <strong>{{ "%.3f"|format(r.avg_implied_yield_pct) }}%</strong>
+          </div>
+        </details>
+
+        {% else %}
+        <!-- Not available -->
+        <div class="alert alert-secondary small mb-0 mt-2">
+          <i class="bi bi-exclamation-circle me-1"></i>
+          {% if r.auction.duration_type == 'tbd' %}
+            Durata non ancora definita dal MEF — forecast non disponibile.
+          {% elif r.data_points|length < 2 %}
+            Dati insufficienti: trovati {{ r.data_points|length }} BOT
+            (minimo 2 richiesti).
+          {% else %}
+            Forecast non disponibile.
+          {% endif %}
+        </div>
+        {% endif %}
+
+      </div><!-- /card-body -->
+    </div><!-- /card -->
+  </div><!-- /col -->
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card shadow-sm text-center py-5">
+  <div class="card-body text-muted">
+    <i class="bi bi-calendar-x display-4 d-block mb-2"></i>
+    Nessuna asta futura in calendario.
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

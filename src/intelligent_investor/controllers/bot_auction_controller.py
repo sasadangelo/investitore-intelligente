@@ -11,9 +11,11 @@ from pydantic import ValidationError
 
 from intelligent_investor.dtos.bot_auction import BotAuctionDTO
 from intelligent_investor.services.bot_auction_service import BotAuctionService
+from intelligent_investor.services.bot_forecast_service import BotForecastService
 
 bot_auction_bp = Blueprint("auctions", __name__, url_prefix="/auctions")
 _service = BotAuctionService()
+_forecast_service = BotForecastService()
 
 PERIOD_LABELS = {"mid_month": "Metà mese", "end_month": "Fine mese"}
 DURATION_LABELS = {"annual": "Annuale", "semiannual": "Semestrale", "tbd": "t.b.d."}
@@ -66,6 +68,17 @@ def _group_by_month(auctions):
         label = f"{MONTH_NAMES_IT[month]} {year}"
         groups.append((label, list(group)))
     return groups
+
+
+@bot_auction_bp.route("/forecast", methods=["GET"])
+def forecast() -> str:
+    """Show issue-price forecasts for upcoming BOT auctions."""
+    results = _forecast_service.forecast_all()
+    return render_template(
+        "auctions/forecast.html",
+        results=results,
+        duration_labels=DURATION_LABELS,
+    )
 
 
 @bot_auction_bp.route("/", methods=["GET"])

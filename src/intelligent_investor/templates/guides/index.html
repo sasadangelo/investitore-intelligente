@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}Guide — Investitore Intelligente{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">
+    <i class="bi bi-book me-2 text-primary"></i>Guide
+  </h2>
+</div>
+
+{% if guides %}
+<div class="row g-3">
+  {% for g in guides %}
+  <div class="col-md-6">
+    <a href="{{ url_for('guides.detail', slug=g.slug) }}" class="text-decoration-none">
+      <div class="card shadow-sm h-100 guide-card">
+        <div class="card-body d-flex gap-3 align-items-start">
+          <div class="fs-2 text-primary">
+            <i class="bi {{ g.icon }}"></i>
+          </div>
+          <div>
+            <h5 class="card-title mb-1">{{ g.title }}</h5>
+            <p class="card-text text-muted small mb-0">{{ g.description }}</p>
+          </div>
+        </div>
+        <div class="card-footer text-end small text-muted bg-transparent border-0">
+          Leggi la guida <i class="bi bi-arrow-right ms-1"></i>
+        </div>
+      </div>
+    </a>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">Nessuna guida disponibile.</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_head %}
+<style>
+  .guide-card { transition: box-shadow .15s; border-left: 4px solid #0d6efd; }
+  .guide-card:hover { box-shadow: 0 .5rem 1rem rgba(0,0,0,.1) !important; }
+</style>
+{% endblock %}

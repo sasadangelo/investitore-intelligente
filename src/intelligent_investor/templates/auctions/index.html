@@ -5,9 +5,14 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h2 class="mb-0"><i class="bi bi-calendar3 me-2 text-primary"></i>Calendario Aste BOT</h2>
-  <a href="{{ url_for('auctions.new') }}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-1"></i>Aggiungi
-  </a>
+  <div class="d-flex gap-2">
+    <a href="{{ url_for('auctions.forecast') }}" class="btn btn-outline-primary">
+      <i class="bi bi-graph-up-arrow me-1"></i>Forecast prezzi
+    </a>
+    <a href="{{ url_for('auctions.new') }}" class="btn btn-primary">
+      <i class="bi bi-plus-circle me-1"></i>Aggiungi
+    </a>
+  </div>
 </div>
 
 <!-- External reference links -->

@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}{{ guide.meta.title }} — Investitore Intelligente{% endblock %}
+
+{% block extra_head %}
+<style>
+  /* Guide content typography */
+  .guide-body h1 { font-size: 1.6rem; font-weight: 700; margin-top: 0; margin-bottom: 1rem; border-bottom: 2px solid #0d6efd; padding-bottom: .4rem; }
+  .guide-body h2 { font-size: 1.25rem; font-weight: 600; margin-top: 2rem; margin-bottom: .6rem; color: #0d6efd; }
+  .guide-body h3 { font-size: 1.05rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: .4rem; }
+  .guide-body p  { line-height: 1.7; margin-bottom: .85rem; }
+  .guide-body ul, .guide-body ol { margin-bottom: .85rem; padding-left: 1.4rem; }
+  .guide-body li { margin-bottom: .3rem; }
+  .guide-body table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: .9rem; }
+  .guide-body th { background-color: #0d6efd; color: #fff; padding: .45rem .75rem; text-align: left; }
+  .guide-body td { padding: .4rem .75rem; border-bottom: 1px solid #e5e7eb; }
+  .guide-body tr:nth-child(even) td { background-color: #f7f8fa; }
+  .guide-body code { background: #f0f4ff; color: #0d47a1; padding: .1rem .35rem; border-radius: .25rem; font-size: .88em; }
+  .guide-body pre  { background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: .4rem; padding: 1rem; overflow-x: auto; margin-bottom: 1rem; }
+  .guide-body pre code { background: none; color: inherit; padding: 0; font-size: .88rem; }
+  .guide-body blockquote { border-left: 4px solid #0d6efd; padding: .5rem 1rem; background: #f0f4ff; margin: 1rem 0; border-radius: 0 .4rem .4rem 0; color: #1f2328; }
+  .guide-body a { color: #0d6efd; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2 class="mb-0">
+    <i class="bi {{ guide.meta.icon }} me-2 text-primary"></i>{{ guide.meta.title }}
+  </h2>
+  <a href="{{ url_for('guides.index') }}" class="btn btn-outline-secondary">
+    <i class="bi bi-arrow-left me-1"></i>Tutte le guide
+  </a>
+</div>
+
+<div class="row">
+  <div class="col-lg-9">
+    <div class="card shadow-sm">
+      <div class="card-body px-4 py-4">
+        <div class="guide-body">
+          {{ guide.html_content | safe }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar: other guides -->
+  <div class="col-lg-3 mt-3 mt-lg-0">
+    <div class="card shadow-sm">
+      <div class="card-header py-2 small fw-semibold">
+        <i class="bi bi-book me-1"></i>Altre guide
+      </div>
+      <div class="list-group list-group-flush">
+        {% set all_guides = guides_list if guides_list is defined else [] %}
+        {% if all_guides %}
+          {% for g in all_guides %}
+          <a href="{{ url_for('guides.detail', slug=g.slug) }}"
+             class="list-group-item list-group-item-action small py-2
+                    {% if g.slug == guide.meta.slug %}active{% endif %}">
+            <i class="bi {{ g.icon }} me-1"></i>{{ g.title }}
+          </a>
+          {% endfor %}
+        {% else %}
+          <a href="{{ url_for('guides.index') }}" class="list-group-item list-group-item-action small py-2">
+            <i class="bi bi-grid me-1"></i>Vedi tutte le guide
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

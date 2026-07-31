@@ -1,142 +1,146 @@
 # Roadmap — Investitore Intelligente
 
-> Stato attuale (baseline): applicazione Flask con supporto **BOT** (emissioni,
-> quotazioni Teleborsa, calcolatore acquisto/vendita, profili commissioni banca).
+## Priority legend
+- 🔴 High — core feature or frequently requested
+- 🟡 Medium — significantly improves user experience
+- 🟢 Low — nice-to-have, completes the offering
 
 ---
 
-## Fase 1 — Ampliamento dati di mercato BOT *(breve termine)*
+## Milestone 1 — Bank profile data completion
+> Goal: cover the banks most used by Italian retail investors for BOT purchases.
 
-### 1.1 Aggiunta nuove banche
-- Aggiungere profili commissioni preconfigurati per le principali banche italiane
-  (es. Intesa Sanpaolo, UniCredit, Fineco, Banca Mediolanum, ING, Widiba, …).
-- Validazione automatica delle fasce commissioni (es. min ≤ max).
+### 1.1 — Banks to add
 
-### 1.2 Forecast prezzo BOT in emissione
-- Dato un nuovo BOT in asta (ISIN, data emissione, scadenza, prezzo nominale 100),
-  stimare il **prezzo di emissione atteso** interpolando la curva dei rendimenti
-  dei BOT già quotati a scadenze comparabili.
-- Input: durata residua, curve tassi attuali.
-- Output: rendimento stimato, prezzo teorico di emissione, confronto con aste precedenti della stessa scadenza.
+| # | Bank | Profiles | Priority | Notes |
+|---|---|---|---|---|
+| 1.1 | **BPER Banca** | Filiale, Internet Banking | 🔴 | Strong in Central-North Italy, absorbed many local savings banks |
+| 1.2 | **Poste Italiane / BancoPosta** | Sportello, Online | 🔴 | Huge retail customer base; BOT commissions typically higher than banks |
+| 1.3 | **ING Italia** | Internet Banking | 🔴 | Popular with self-directed investors |
+| 1.4 | **Widiba** | Internet Banking | 🔴 | MPS Group online bank; competitive fees |
+| 1.5 | **Banca Sella** | Internet Banking | 🟡 | Well-regarded by digital investors |
+| 1.6 | **CheBanca! (Mediobanca)** | Internet Banking | 🟡 | Similar target audience to Fineco |
+| 1.7 | **Mediolanum** | Internet Banking | 🟡 | Wide customer base via financial advisors |
+| 1.8 | **Credem (Credito Emiliano)** | Filiale, Internet Banking | 🟡 | Strong in Emilia-Romagna |
+| 1.9 | **Banco di Sardegna** | Filiale, Internet Banking | 🟢 | Relevant in Sardinia |
+| 1.10 | **Cassa Depositi e Prestiti / CDP** | — | 🟢 | Issues BTP but no retail brokerage |
+| 1.11 | **Trade Republic** | App | 🟢 | Growing among younger investors; BOT support limited |
+| 1.12 | **Revolut** | App | 🟢 | Large user base but limited Italian government bond support |
+| 1.13 | **Degiro** | Online | 🟢 | Popular discount broker; MOT access available |
+| 1.14 | **Flatex** | Online | 🟢 | German broker with Italian MOT access |
 
----
-
-## Fase 2 — Supporto BTP a cedola fissa *(medio termine)*
-
-### 2.1 Modello dati BTP
-- Estendere `BondDAO` / `BondDTO` con i campi cedola: `nominal_rate`,
-  `coupon_frequency` (semestrale per BTP standard), `first_coupon_date`.
-- Nuovo `bond_type = "BTP"`.
-- Scraper (o import manuale) delle quotazioni BTP da Teleborsa / Borsa Italiana.
-
-### 2.2 Calcolatore BTP
-- Nuovo `BtpCalculatorService` che calcola:
-  - Prezzo secco + rateo cedola → **prezzo tel quel**.
-  - Rendimento a scadenza (**YTM**) con Newton-Raphson o scipy.
-  - Rendimento netto (aliquota 12,5 % su cedole e capital gain TdS).
-  - Durata finanziaria (Duration di Macaulay e Modified Duration).
-  - Imposta di bollo e tasse sul capital gain (logica analoga a BOT).
-- UI: form calcolatore dedicato BTP, riuso template `bonds/calculator.html`.
+> **Note:** for each profile, collect the official information sheet and set `info_url`.
 
 ---
 
-## Fase 3 — Autenticazione e ruoli *(medio termine)*
+## Milestone 2 — Auction calendar: price and yield forecast
+> Goal: enrich the BOT auction calendar with estimated issue prices and expected yields
+> based on recent auction history.
 
-### 3.1 Sistema di login
-- Integrare **Flask-Login** con due ruoli: `admin` e `user`.
-- Registrazione/login con email + password (hash bcrypt).
-- Protezione delle route sensibili con `@login_required`.
-
-### 3.2 Ruolo admin
-- Gestione utenti (lista, blocco, reset password).
-- Avvio manuale sync quotazioni (attualmente esposto a tutti).
-- Visualizzazione log applicazione.
-
-### 3.3 Ruolo utente normale
-- Accesso al proprio portafoglio (vedi Fase 4).
-- Sola lettura su dati di mercato e calcolatori.
+| # | Feature | Notes | Priority |
+|---|---|---|---|
+| 2.1 | Historical auction results | New `bot_auction_result` table: settlement price, gross/net yield, amount issued | 🔴 |
+| 2.2 | Automatic import of MEF/BdI results | Scraper or MEF post-auction press release parser | 🟡 |
+| 2.3 | Next auction price forecast | Moving average of last N results for the same duration (quarterly/semi-annual/annual) | 🔴 |
+| 2.4 | Expected gross/net yield forecast | Derived from forecast price using existing calculator formulas | 🔴 |
+| 2.5 | Historical chart in calendar | Mini sparkline and results table per duration | 🟡 |
 
 ---
 
-## Fase 4 — Gestione portafoglio *(medio termine)*
+## Milestone 3 — BTP support (fixed-rate)
+> Goal: extend the calculator to standard fixed-coupon BTPs.
 
-- Nuovo modello `PortfolioPosition`: utente, bond, quantità, prezzo di carico,
-  data acquisto, banca/profilo commissioni.
-- Dashboard portafoglio con:
-  - Valore corrente (mark-to-market usando ultima quotazione).
-  - Guadagno/perdita latente (lordo e netto tasse + bollo).
-  - Rendimento medio ponderato del portafoglio.
-  - Scadenzario (BOT/BTP in scadenza nei prossimi 30/90/180 giorni).
-- Storico operazioni (acquisti, vendite, cedole incassate).
-- Export portafoglio in CSV/PDF.
-
----
-
-## Fase 5 — BTP Valore e BTP a step *(medio-lungo termine)*
-
-- Supporto per BTP con struttura cedola crescente a gradini (es. BTP Valore):
-  - Modello `CouponSchedule`: lista di `(data_inizio, data_fine, tasso)`.
-  - Calcolo YTM con flussi cedolari non uniformi.
-  - Calcolo del **premio fedeltà** (extra % a scadenza per chi detiene dall'emissione).
-- Scraper dedicato alle schede BTP Valore su Borsa Italiana / MEF.
-- Calcolatore con timeline cedole e simulazione reinvestimento.
+| # | Feature | Notes | Priority |
+|---|---|---|---|
+| 3.1 | BTP data model | Extend `BondDTO` / new entity with coupon, frequency, maturity | 🔴 |
+| 3.2 | BTP calculator | Dirty price, accrued interest, YTM gross/net, modified duration | 🔴 |
+| 3.3 | BTP catalogue | Active BTPs with MOT quotes and current yield | 🔴 |
+| 3.4 | Discount/premium tax | 12.5% withholding on discount; coupon not subject to capital gain tax | 🟡 |
+| 3.5 | Capital gain on early sale | Purchase load price vs sale price, 26% tax | 🟡 |
+| 3.6 | Bank commissions for BTP | Reuse existing bank profiles (government bond section) | 🟡 |
 
 ---
 
-## Fase 6 — Dati macroeconomici *(lungo termine)*
+## Milestone 4 — Step-up BTP (BTP Valore / BTP Italia / BTP Più)
+> Goal: support BTPs with increasing or inflation-linked coupons.
 
-### 6.1 Inflazione
-- Fonte dati: **ISTAT** (Italia) e **BLS / FRED** (USA) via API pubblica o scraping.
-- Storico mensile CPI Italia e USA.
-- Visualizzazione grafico inflazione vs rendimento netto BOT/BTP → rendimento
-  **reale** al netto dell'inflazione.
-
-### 6.2 PIL
-- Fonte dati: **ISTAT** (Italia) e **BEA / FRED** (USA).
-- Storico PIL reale YoY.
-- Dashboard macro: PIL + Inflazione + Tassi su unico grafico.
-
-### 6.3 Tassi di interesse
-- Tassi BCE (refi rate, deposit facility) da **BCE Statistical Data Warehouse** API.
-- Tassi Fed Funds da **FRED** API.
-- Curva dei rendimenti (yield curve) italiana da MEF/Banca d'Italia.
-- Visualizzazione curva e storico tassi → contesto per valutare convenienza BOT/BTP rispetto ai tassi risk-free.
+| # | Feature | Notes | Priority |
+|---|---|---|---|
+| 4.1 | BTP Valore | Step-up coupon (increasing each semester), loyalty bonus at maturity | 🔴 |
+| 4.2 | BTP Italia | Semi-annual coupon + FOIEX capital revaluation, loyalty bonus | 🟡 |
+| 4.3 | BTP Più | Step-up coupon with early redemption option at year 4 | 🟡 |
+| 4.4 | Future coupon calculator | Table of expected coupons per year/semester with net amounts | 🔴 |
+| 4.5 | BOT vs BTP comparison | Net annualised yield on the same time horizon | 🟡 |
 
 ---
 
-## Fase 7 — Corporate Bond *(lungo termine)*
+## Milestone 5 — Corporate bonds
+> Goal: support Italian and foreign corporate bonds listed on MOT/EuroTLX.
 
-- Nuovo `bond_type = "Corporate"` con campi aggiuntivi:
-  - Emittente, settore, rating (S&P / Moody's / Fitch).
-  - Aliquota fiscale 26 % (no agevolazione TdS).
-  - Eventuale clausola callable/putable.
-- Scraper quotazioni obbligazioni corporate da MOT/ExtraMOT (Borsa Italiana).
-- Calcolatore con spread rispetto al BTP benchmark (Z-spread).
-- Filtro per rating, scadenza, rendimento minimo.
-
----
-
-## Suggerimenti tecnici aggiuntivi (Bob's recommendations)
-
-| Area | Proposta |
-|---|---|
-| **API REST** | Esporre i calcolatori come endpoint JSON (`/api/v1/bonds/{isin}/calculate`) per integrazioni future (app mobile, spreadsheet). |
-| **Task scheduler** | Sostituire il sync manuale con **APScheduler** o **Celery** per aggiornare quotazioni ogni giorno in automatico. |
-| **Cache quotazioni** | Aggiungere TTL cache (Redis o `cachetools`) per evitare scraping eccessivo verso Teleborsa. |
-| **Test coverage** | Aumentare la copertura unitaria di `BotCalculatorService` e futura `BtpCalculatorService` con `pytest-parametrize` su casi edge. |
-| **Alert scadenze** | Notifica email/Telegram quando un BOT/BTP in portafoglio scade entro N giorni. |
-| **Benchmark** | Sezione comparativa: rendimento netto BOT/BTP vs conto deposito, ETF obbligazionario, inflazione. |
+| # | Feature | Notes | Priority |
+|---|---|---|---|
+| 5.1 | Corporate bond data model | Rating, issuer, ISIN, coupon, maturity, subordination level | 🔴 |
+| 5.2 | Corporate bond calculator | YTM, spread vs BTP, 26% taxation (no 12.5% relief) | 🔴 |
+| 5.3 | Corporate bond catalogue | With MOT/EuroTLX quotes | 🟡 |
+| 5.4 | Issuer risk indicator | Credit rating display (S&P / Moody's / Fitch) | 🟢 |
 
 ---
 
-## Priorità riepilogativa
+## Milestone 6 — Macroeconomic data dashboard
+> Goal: provide key macro context to help users interpret bond yields.
 
-```
-Fase 1  ████████████████████  (quick wins, estende funzionalità esistenti)
-Fase 2  ████████████████      (valore alto per l'utente medio)
-Fase 3  ████████████          (necessaria prima di Fase 4)
-Fase 4  ████████████          (feature differenziante)
-Fase 5  ████████              (nicchia BTP Valore)
-Fase 6  ██████                (contesto macro)
-Fase 7  ████                  (mercato più complesso)
-```
+| # | Indicator | Source | Priority |
+|---|---|---|---|
+| 6.1 | **ECB interest rate** (deposit facility) | ECB Data Portal API | 🔴 |
+| 6.2 | **Fed Funds Rate** | FRED (Federal Reserve St. Louis) API | 🔴 |
+| 6.3 | **Italian inflation (IPCA / FOI)** | ISTAT / Eurostat | 🔴 |
+| 6.4 | **US inflation (CPI)** | FRED API | 🟡 |
+| 6.5 | **Italian GDP growth (YoY)** | ISTAT / Eurostat | 🟡 |
+| 6.6 | **US GDP growth (YoY)** | FRED / BEA API | 🟡 |
+| 6.7 | **EUR/USD exchange rate** | ECB or open exchange rates | 🟡 |
+| 6.8 | **10Y BTP yield** | MOT / MTS data | 🟡 |
+| 6.9 | **BTP-Bund spread** | Derived from 10Y BTP and 10Y Bund | 🟡 |
+| 6.10 | **Real yield** (BTP yield − inflation) | Derived | 🟢 |
+| 6.11 | Macro dashboard page | Cards with current values, trend arrows, last-updated timestamp | 🔴 |
+| 6.12 | Historical charts | 1Y / 3Y / 5Y chart for each indicator | 🟢 |
+
+---
+
+## Milestone 7 — Authentication and user profiles
+> Goal: make the service multi-user with distinct roles.
+
+| # | Feature | Notes | Priority |
+|---|---|---|---|
+| 7.1 | Authentication | Flask session login/logout, bcrypt password hashing | 🔴 |
+| 7.2 | User registration | Registration form with email confirmation | 🔴 |
+| 7.3 | Admin role | Full CRUD on bonds, banks, auctions, users | 🔴 |
+| 7.4 | User role | Calculator access, personal portfolio, read-only catalogue | 🔴 |
+| 7.5 | Password reset | Via email (time-limited token) | 🟡 |
+| 7.6 | User management (admin) | User list, enable/disable, role change | 🟡 |
+
+---
+
+## Milestone 8 — Portfolio management
+> Goal: allow users to track their purchases and monitor their portfolio.
+
+| # | Feature | Notes | Priority |
+|---|---|---|---|
+| 8.1 | Record a purchase | Save BOT transaction (date, price, lot, commissions, bank) | 🔴 |
+| 8.2 | Active portfolio | Open positions with current value, accrued yield, days to maturity | 🔴 |
+| 8.3 | Transaction history | All closed trades with realised net gain | 🔴 |
+| 8.4 | Summary dashboard | Total invested, expected return, upcoming maturities, asset allocation | 🔴 |
+| 8.5 | Maturity alerts | In-app or email notification N days before a BOT matures | 🟡 |
+| 8.6 | CSV / Excel export | Portfolio and history export for tax return preparation | 🟡 |
+| 8.7 | Multi-instrument portfolio | BOT + BTP + Corporate Bond in a single view | 🟢 |
+
+---
+
+## Cross-cutting technical items
+
+| Topic | Description | Priority |
+|---|---|---|
+| **DB migrations** | Introduce Alembic for controlled schema migrations | 🔴 |
+| **Unit tests** | pytest coverage for all calculation services | 🔴 |
+| **REST API** | JSON API endpoints for future mobile clients or external integrations | 🟡 |
+| **Production deploy** | gunicorn + nginx + HTTPS, environment variables, Docker image | 🟡 |
+| **i18n** | Optional multilingual support (Italian / English) | 🟢 |
