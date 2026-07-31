@@ -5,7 +5,7 @@
 from datetime import date
 from typing import Any
 
-from sqlalchemy import Column, Date, Float, Integer, String
+from sqlalchemy import Column, Date, Float, Integer, String, Text
 from sqlalchemy.orm import relationship
 
 from intelligent_investor.db.base import Base
@@ -39,6 +39,9 @@ class BondDAO(Base):
 
     # Fiscal regime
     tax_rate = Column(Float, nullable=False, default=12.5)             # 12.5 govt bonds, 26.0 corporate
+
+    # Optional link to the MEF auction result PDF
+    auction_result_url = Column(Text, nullable=True, default=None)
 
     # One-to-many relationship with BondQuoteDAO
     quotes = relationship(

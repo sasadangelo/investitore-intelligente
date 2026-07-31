@@ -61,6 +61,7 @@
                 data-maturity-raw="{{ b.maturity_date }}"
                 data-issue-price="{{ b.issue_price }}"
                 data-last-price="{{ q.last_price if q else '' }}"
+                data-mef-url="{{ b.mef_auction_result_url or '' }}"
                 {% if bond and bond.id == b.id %}selected{% endif %}>
                 {{ b.name }} (scad. {{ b.maturity_date.strftime('%d/%m/%Y') }})
               </option>
@@ -117,6 +118,15 @@
             <span>Emissione: <span id="strip-issue-date">{{ bond.issue_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
             <span>Scadenza: <span id="strip-maturity-date">{{ bond.maturity_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
             <span>Prezzo emissione: <span id="strip-issue-price">{{ "%.4f"|format(bond.issue_price) if bond else '' }}</span></span>
+            {% if bond and bond.mef_auction_result_url %}
+            <span><a id="strip-mef-link" href="{{ bond.mef_auction_result_url }}" target="_blank" rel="noopener" class="text-white fw-semibold">
+              <i class="bi bi-file-earmark-pdf me-1"></i>Risultato asta MEF
+            </a></span>
+            {% else %}
+            <span id="strip-mef-link-wrap" class="d-none"><a id="strip-mef-link" href="#" target="_blank" rel="noopener" class="text-white fw-semibold">
+              <i class="bi bi-file-earmark-pdf me-1"></i>Risultato asta MEF
+            </a></span>
+            {% endif %}
           </div>
 
           <!-- Purchase venue -->
@@ -466,25 +476,25 @@
             <tr>
               <th class="ps-3 text-muted fw-normal">Rendimento lordo</th>
               <td class="pe-3 text-end">
-                {{ "%.2f"|format(result.summary.simple_gross_yield) }}%
+                {{ "%.3f"|format(result.summary.simple_gross_yield) }}%
                 &nbsp;<span class="text-muted">/</span>&nbsp;
-                <span class="fw-semibold">{{ "%.2f"|format(result.summary.compound_gross_yield) }}%</span>
+                <span class="fw-semibold">{{ "%.3f"|format(result.summary.compound_gross_yield) }}%</span>
               </td>
             </tr>
             <tr>
               <th class="ps-3 text-muted fw-normal">Rendimento netto (pre-bollo)</th>
               <td class="pe-3 text-end">
-                {{ "%.2f"|format(result.summary.simple_net_yield_before_duty) }}%
+                {{ "%.3f"|format(result.summary.simple_net_yield_before_duty) }}%
                 &nbsp;<span class="text-muted">/</span>&nbsp;
-                <span class="fw-semibold">{{ "%.2f"|format(result.summary.compound_net_yield_before_duty) }}%</span>
+                <span class="fw-semibold">{{ "%.3f"|format(result.summary.compound_net_yield_before_duty) }}%</span>
               </td>
             </tr>
             <tr class="table-success">
               <th class="ps-3 fw-semibold">Rendimento netto</th>
               <td class="pe-3 text-end fw-semibold fs-5">
-                {{ "%.2f"|format(result.summary.simple_net_yield) }}%
+                {{ "%.3f"|format(result.summary.simple_net_yield) }}%
                 &nbsp;<span class="text-muted">/</span>&nbsp;
-                {{ "%.2f"|format(result.summary.compound_net_yield) }}%
+                {{ "%.3f"|format(result.summary.compound_net_yield) }}%
               </td>
             </tr>
           </tbody>
@@ -671,6 +681,18 @@
       document.getElementById('strip-maturity-date').textContent = opt.dataset.maturityDate || '';
       const ip = parseFloat(opt.dataset.issuePrice);
       document.getElementById('strip-issue-price').textContent   = isNaN(ip) ? '' : ip.toFixed(4);
+      // Update MEF auction result link
+      const mefLink = document.getElementById('strip-mef-link');
+      const mefWrap = document.getElementById('strip-mef-link-wrap');
+      if (mefLink) {
+        const mefUrl = opt.dataset.mefUrl || '';
+        if (mefUrl) {
+          mefLink.href = mefUrl;
+          if (mefWrap) mefWrap.classList.remove('d-none');
+        } else {
+          if (mefWrap) mefWrap.classList.add('d-none');
+        }
+      }
       strip.classList.remove('d-none');
     } else {
       strip.classList.add('d-none');

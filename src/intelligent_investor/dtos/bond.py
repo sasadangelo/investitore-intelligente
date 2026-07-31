@@ -2,7 +2,7 @@
 # Copyright (c) 2025 Salvatore D'Angelo, Code4Projects
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
-from datetime import date
+from datetime import date, timedelta
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -41,4 +41,50 @@ class BondDTO(BaseModel):
     # Fiscal regime
     tax_rate: float = 12.5            # 12.5 govt bonds, 26.0 corporate
 
+    # Optional stored link to the MEF auction result PDF.
+    # When None the UI falls back to the computed formula via mef_auction_result_url.
+    auction_result_url: str | None = None
+
     model_config = ConfigDict(from_attributes=True)
+
+    @property
+    def mef_auction_result_url(self) -> str | None:
+        """
+        Return the stored auction_result_url if present, otherwise derive it
+        automatically from issue_date / maturity_date.
+
+        The MEF publishes results under:
+          https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/
+            debito_pubblico/risultati_aste/risultati_aste_bot_{folder}/
+            BOT-{label}-Risultati-Asta-{D1}-{D2}.{MM}.{YYYY}.pdf
+
+        Where:
+          settlement_date = issue_date (value date of the bond)
+          D2              = settlement_date - 1 day (auction date)
+          D1              = settlement_date - 2 days (announcement date)
+          duration        = (maturity_date - issue_date).days
+          folder/label    = '6_mesi' / '6-Mesi'   when duration <= 200 days
+                          = 'annuali' / 'Annuale'  otherwise
+
+        Only applies to BOT bonds.
+        """
+        if self.auction_result_url:
+            return self.auction_result_url
+        if self.bond_type != "BOT":
+            return None
+        settlement = self.issue_date
+        d2 = settlement - timedelta(days=1)
+        d1 = settlement - timedelta(days=2)
+        duration = (self.maturity_date - self.issue_date).days
+        if duration <= 200:
+            folder = "6_mesi"
+            label = "6-Mesi"
+        else:
+            folder = "annuali"
+            label = "Annuale"
+        filename = (
+            f"BOT-{label}-Risultati-Asta-"
+            f"{d1.day:02d}-{d2.day:02d}.{d2.month:02d}.{d2.year}.pdf"
+        )
+        base = "https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it"
+        return f"{base}/debito_pubblico/risultati_aste/risultati_aste_bot_{folder}/{filename}"

@@ -144,7 +144,7 @@ class BondSyncService:
         existing = self._bond_service.get_by_isin(dto.isin)
         if existing is None:
             return self._bond_service.create(dto)
-        # Refresh mutable fields; preserve fiscal fields from the existing record
+        # Refresh mutable fields; preserve fiscal fields and any manually set URL
         return self._bond_service.update(BondDTO(
             id=existing.id,
             name=dto.name,
@@ -157,6 +157,7 @@ class BondSyncService:
             nominal_rate=existing.nominal_rate,
             coupon_frequency=existing.coupon_frequency,
             tax_rate=existing.tax_rate,
+            auction_result_url=existing.auction_result_url,
         ))
 
     def _upsert_quote(self, dto: BondQuoteDTO, bond_id: int) -> BondQuoteDTO:
