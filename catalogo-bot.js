@@ -42,7 +42,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
           // Creazione dell'intestazione della tabella
           const headerRow = thead.insertRow();
-          const headers = ['Nome BOT', 'ISIN', 'Ultimo Prezzo', 'Data Emissione', 'Prezzo Emissione', 'Scadenza', 'Disaggio Lordo', 'Imposta Disaggio Lordo', 'Rendimento Lordo', 'Rendimento Netto'];
+          const headers = ['Nome', 'ISIN', 'Emissione', 'Scadenza', 'Ultimo Prezzo', 'Rendimento lordo', 'Rendimento netto', 'Azioni'];
           headers.forEach(headerText => {
             const th = document.createElement('th');
             th.textContent = headerText;
@@ -120,7 +120,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Crea una riga per i dati
             const tr = tbody.insertRow();
-            [nomeBotCell, isinBotCell, ultimoPrezzoCell, dataEmissioneCell, prezzoEmissioneCell, scadenzaCell, disaggioLordo, importaDisaggioLordo, rendimentoLordo, rendimentoNetto].forEach(text => {
+            [nomeBotCell, isinBotCell, dataEmissioneCell, scadenzaCell, ultimoPrezzoCell, rendimentoLordo, rendimentoNetto, '...'].forEach(text => {
               const td = tr.insertCell();
               td.textContent = text;
             });

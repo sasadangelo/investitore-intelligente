@@ -7,28 +7,36 @@ order: 2
 
 # Calcolatore BOT
 
-Il **Calcolatore BOT** permette di simulare l'acquisto (e l'eventuale vendita anticipata) di un BOT,
-tenendo conto di commissioni bancarie, imposta di bollo e tassazione sul capital gain.
+Dopo aver scelto il BOT da acquistare nel **[Catalogo BOT](/guides/catalogo)**, usa il **Calcolatore BOT** per sapere con esattezza i guadagni e i rendimenti lordi e netti.
+
+Il calcolatore tiene conto di:
+- Commissioni bancarie (diverse per asta e mercato secondario)
+- Imposta di bollo
+- Tassazione sul capital gain (solo per vendita anticipata sul MOT)
+
+In questo modo conoscerai l'esatta misura dei soldi che metterai in tasca al rimborso a scadenza o alla vendita anticipata.
+
+Se intendi vendere il titolo prima della scadenza, il calcolatore ti permette di simulare l'operazione con i dati di vendita per verificare la convenienza della transazione prima di eseguirla.
 
 ## Parametri di input
+
+Per simulare un acquisto, o un acquisto seguito da una vendita anticipata, è necessario compilare i campi descritti di seguito. La maggior parte verrà prepopolata con valori di default in base alle scelte effettuate (BOT selezionato, mercato, profilo bancario), ma tutti i campi rimangono modificabili manualmente.
 
 ### BOT e mercato
 
 - **BOT**: seleziona il BOT dal menu a tendina. I dati (ISIN, date, prezzo) si aggiornano automaticamente.
 - **Mercato di acquisto**:
-  - **Asta (mercato primario)**: acquisto direttamente all'emissione tramite la propria banca. Il prezzo
-    viene precompilato con il prezzo di emissione.
-  - **MOT (mercato secondario)**: acquisto sul mercato dopo l'emissione. Il prezzo viene precompilato
-    con l'ultima quotazione disponibile.
-- **Data acquisto**: per l'asta corrisponde alla data di regolamento dell'emissione; per il MOT
-  si imposta automaticamente a oggi.
-- **Prezzo acquisto**: espresso in percentuale del valore nominale (es. `98.50` = 98,50%).
+    - **Asta (mercato primario)**: acquisto direttamente all'emissione tramite la propria banca. Il prezzo
+      viene precompilato con il prezzo di emissione.
+    - **MOT (mercato secondario)**: acquisto sul mercato dopo l'emissione. Il prezzo viene precompilato
+      con l'ultima quotazione disponibile.
+- **Data regolamento**: per l'asta corrisponde alla data di regolamento o emissione; per il MOT si imposta automaticamente a oggi ma va inserito la data di acquisto del BOT + 2gg.
+- **Prezzo acquisto**: prezzo in euro per ogni 100€ di valore nominale (es. `98.50` = 98,50€ ogni 100€). Per l'asta è il prezzo di emissione; per il MOT è l'ultimo prezzo.
 - **Lotto nominale**: importo nominale in euro (multiplo di 100, es. `5000` = 50 BOT da €100 ciascuno).
 
 ### Profilo bancario
 
-Seleziona la tua banca dal menu **Profilo bancario** per precompilare automaticamente i campi
-commissione in base al mercato selezionato e alla durata del BOT.
+Seleziona la tua banca dal menu **Profilo bancario** per precompilare automaticamente i campi commissione in base al mercato selezionato e alla durata del BOT.
 
 Se la tua banca non è presente, seleziona *"Inserisci commissioni manualmente"* e compila i campi.
 
@@ -55,6 +63,18 @@ Se non si attiva, il calcolo assume il rimborso a scadenza a 100.
 - **Minusvalenze (€)**: eventuali perdite pregresse nel portafoglio che possono compensare il capital gain
   (solo per acquisti sul MOT).
 
+## Nota sull'acquisto in Asta per BOT già emessi
+
+Selezionare il mercato **Asta** per un BOT già emesso è utile principalmente per **analisi storiche**: ad esempio per ricostruire il rendimento che si sarebbe ottenuto acquistando a una determinata asta passata.
+
+Per simulare un **acquisto all'asta futuro**, il flusso corretto è diverso:
+
+1. Consulta il **[Calendario Aste MEF](/auctions/)**: date di emissione e scadenza dei prossimi BOT sono già pubblicate.
+2. Vai alla pagina delle **[Previsioni](/auctions/forecast)** per ottenere il prezzo di emissione stimato del BOT prossimo all'emissione.
+3. Inserisci manualmente nel calcolatore la data di emissione, scadenza e il prezzo stimato al posto del prezzo di emissione ufficiale.
+
+In questo modo otterrai una simulazione prospettica realistica, pur con la consapevolezza che il prezzo definitivo verrà stabilito solo il giorno dell'asta.
+
 ## Risultati
 
 Il calcolatore produce 4 sezioni di risultato:
@@ -62,18 +82,19 @@ Il calcolatore produce 4 sezioni di risultato:
 ### Acquisto
 
 Mostra il costo totale dell'operazione:
-- **Importo secco**: `quantità × prezzo acquisto / 100`
-- **Commissioni** e **commissioni fisse**
-- **Disaggio lordo per BOT** e **imposta disaggio** (12,5% del disaggio pro-quota)
-- **Totale pagato**: tutto compreso
+- **Quantità**: `Lotto nominale / 100`
+- **Importo secco**: `Quantità × Prezzo Acquisto`
+- **Commissioni**: calcolate come percentuale sull'importo nominale (asta) o sull'importo secco (MOT); si applicano poi i valori minimo e massimo e si sommano gli eventuali costi fissi.
+- **Imposta disaggio**: il calcolo è più articolato — per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Totale pagato**: somma di importo secco, commissioni e imposta disaggio.
 
 ### Vendita / Rimborso
 
 Mostra il ricavato dell'operazione:
 - **Importo secco**: controvalore alla vendita o al rimborso
-- **Commissioni** di vendita (zero se rimborso a scadenza)
-- **Imposta disaggio rimborsata** (pro-quota se vendita anticipata)
-- **Totale ricevuto**
+- **Commissioni** di vendita: calcolate con la stessa logica dell'acquisto (zero se rimborso a scadenza).
+- **Imposta disaggio rimborsata**: per i dettagli sul calcolo consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Totale ricevuto**: somma di importo secco, al netto di commissioni e imposta disaggio.
 
 ### Capital Gain (solo MOT)
 

@@ -24,9 +24,7 @@ Benvenuto su **Investitore Intelligente**, il sito che ti aiuta a **simulare con
 
 Se non hai mai sentito parlare di BOT o non sai cosa sia un'obbligazione, inizia da qui.
 
-In breve: un BOT è un **prestito che fai allo Stato italiano**, della durata massima di un anno. Lo Stato si impegna a rimborsarti 100 € per ogni BOT acquistato alla scadenza. Poiché lo acquisti a un prezzo inferiore (ad esempio 97,50 €), il tuo guadagno lordo è la differenza — in questo caso 2,50 € per BOT.
-
-> 📖 **[Leggi la guida completa → Cos'è un BOT](/guides/cosa-e-un-bot)**  
+> 📖 **[Leggi la guida completa → Cos'è un BOT](/guides/cosa-e-un-bot)**
 > Troverai: obbligazioni, Titoli di Stato, Corporate Bond, tassazione al 12,5%, rendimento lordo e netto.
 
 ---
@@ -37,21 +35,23 @@ Il primo strumento concreto da usare è il **[Catalogo BOT](/bonds/)**.
 
 Il catalogo mostra in tempo reale tutti i BOT attualmente in circolazione sul mercato, con:
 
-- **Scadenza** e giorni residui
-- **Prezzo di emissione** (il prezzo pagato all'asta) e **Last Price** (la quotazione attuale sul mercato secondario MOT)
+- **Scadenza**
+- **Ultimo Prezzo** (la quotazione attuale sul mercato secondario MOT)
 - **Rendimento lordo** e **rendimento netto** annualizzati
 
 ### Come scegliere il BOT giusto
 
 La scelta dipende principalmente da due fattori:
 
-1. **Orizzonte temporale** — per quanto tempo vuoi immobilizzare i tuoi soldi?  
-   - Hai liquidità da parcheggiare per 3 mesi? Guarda i BOT trimestrali.  
-   - Puoi aspettare 6 mesi? Considera i BOT semestrali.  
-   - Vuoi massimizzare il rendimento entro l'anno? Scegli un BOT annuale.  
+1. **Orizzonte temporale** — per quanto tempo vuoi immobilizzare i tuoi soldi?
+   - Hai liquidità da parcheggiare per 3 mesi? Guarda i BOT trimestrali.
+   - Puoi aspettare 6 mesi? Considera i BOT semestrali.
+   - Vuoi massimizzare il rendimento entro l'anno? Scegli un BOT annuale.
    In linea generale, **più lungo è l'orizzonte, maggiore è il rendimento offerto**.
 
-2. **Rendimento netto desiderato** — ordina la colonna "Rend. netto" per trovare il BOT più redditizio nella fascia di durata che ti interessa.
+2. **Rendimento netto desiderato** — il Catalogo è ordinato per data di scadenza crescente, quindi i BOT con scadenza più vicina appaiono in cima e quelli più lontani in fondo. Confronta la colonna "Rendimento netto" tra i BOT della fascia di durata che ti interessa e scegli quello con il rendimento più alto.
+
+   > **Attenzione ai BOT in scadenza imminente.** Un BOT che scade tra pochi giorni può mostrare un rendimento annualizzato apparentemente attraente: la formula annualizza un guadagno minuscolo su una finestra temporale brevissima, gonfiando la percentuale. In pratica, l'importo netto che incasseresti sarebbe così piccolo da essere interamente eroso dalle commissioni bancarie. La regola è semplice: **prima di prendere qualsiasi decisione, porta sempre il BOT scelto nel [Calcolatore BOT](/bonds/calculator)** — solo lì vedrai i numeri reali in euro, commissioni e imposte incluse.
 
 > Il limite naturale dei BOT è **12 mesi**: per investire su orizzonti più lunghi esistono i **BTP** (Buoni del Tesoro Poliennali), che pagano cedole semestrali e hanno scadenze fino a 50 anni.
 
@@ -61,7 +61,12 @@ Un BOT non è uno strumento "bloccato" fino alla scadenza. Se dopo l'acquisto ha
 
 ### Il Catalogo è solo il punto di partenza
 
-Il Catalogo ti serve per fare una **prima scrematura**: scegli il BOT che si avvicina al tuo orizzonte temporale e al rendimento che cerchi. I rendimenti mostrati però sono **indicativi** — non tengono conto delle commissioni della tua banca, dell'imposta di bollo né di eventuali plusvalenze da vendita anticipata. Per sapere con precisione **quanti euro incasserai davvero**, una volta scelto il BOT devi portarlo nel Calcolatore BOT (Passo 2 o Passo 3, a seconda di dove decidi di acquistare).
+Il Catalogo ti serve per fare una **prima scrematura**: scegli il BOT che si avvicina al tuo orizzonte temporale e al rendimento che cerchi. I rendimenti mostrati però sono **indicativi** — non tengono conto delle commissioni della tua banca, dell'imposta di bollo né di eventuali plusvalenze da vendita anticipata. Per sapere con precisione **quanti euro incasserai davvero**, una volta scelto il BOT devi portarlo nel **[Calcolatore BOT](/bonds/calculator)**.
+
+A questo punto hai due opzioni **mutuamente esclusive** — scegli una sola:
+
+- **Passo 2 — Acquisto sul MOT**: hai deciso di comprare il BOT subito sul mercato secondario, al prezzo di mercato corrente.
+- **Passo 3 — Acquisto in Asta**: preferisci aspettare la prossima asta MEF per spuntare commissioni più basse e un possibile prezzo leggermente migliore.
 
 ---
 
@@ -86,100 +91,93 @@ Il risultato è un riepilogo completo con:
 
 ---
 
-## Passo 3 — Acquisto in Asta: risparmia sulle commissioni e simula con i Forecast
-
-**Passo 2 e Passo 3 sono mutuamente esclusivi**: scegli uno dei due canali di acquisto — MOT o Asta — e usa il Calcolatore di conseguenza. Se hai già deciso di comprare sul MOT, puoi saltare questo passo.
+## Passo 3 — Acquisto in Asta: risparmia sulle commissioni e stima il rendimento con le Previsioni
 
 Acquistare all'**asta primaria** significa comprare il BOT direttamente al momento dell'emissione, tramite la propria banca che trasmette l'ordine al MEF.
 
 ### Perché l'asta può convenire
 
-- Alcune banche applicano **commissioni ridotte o nulle** sugli acquisti in asta.
+- Per legge, le banche applicano sugli acquisti in asta **commissioni fisse regolamentate**, determinate dalla durata del BOT (es. BOT annuale, semestrale, trimestrale). Queste commissioni sono tipicamente **inferiori** a quelle applicate sul mercato secondario (MOT), dove invece valgono le tariffe negoziazione della banca.
 - Il prezzo di emissione è spesso leggermente più conveniente rispetto al MOT.
-- È possibile avere un **piccolo vantaggio di rendimento** rispetto all'acquisto sul secondario.
+- È possibile avere un **piccolo vantaggio di rendimento** rispetto all'acquisto sul secondario, perché all'asta si detiene il BOT per l'intera sua durata di vita — dal giorno di regolamento alla scadenza — senza perdere giorni sul mercato secondario.
 
-### Il problema del prezzo ignoto — e come risolverlo con i Forecast
+### Il problema del prezzo ignoto — e come risolverlo con le Previsioni
 
-Simulare un acquisto in asta nel Calcolatore BOT ha però un limite pratico: quando si vuole comprare all'asta, **la data di emissione e la scadenza sono già noti** (il MEF li pubblica qualche giorno prima), ma il **prezzo di emissione è ancora sconosciuto** — viene fissato dal MEF solo il giorno stesso dell'asta, dopo le 13:00.
+Simulare un acquisto in asta nel Calcolatore BOT ha però un limite pratico: **la data di emissione e la scadenza sono già noti** fin dall'inizio dell'anno, perché il MEF pubblica il **[Calendario delle Aste](/auctions/)** a dicembre dell'anno precedente con tutte le date pianificate. Quello che manca è il **prezzo di emissione** — viene fissato dal MEF solo il giorno stesso dell'asta, dopo le 13:00.
 
-Per aggirare questo problema puoi usare la pagina **[Forecast Prezzi BOT](/auctions/forecast)**, che calcola una **stima del prezzo di emissione e del rendimento atteso** basandosi sulle quotazioni di mercato dei BOT della stessa durata già in circolazione.
+Per aggirare questo problema puoi usare la pagina **[Previsione Prezzi BOT](/auctions/forecast)**, che calcola una **stima del prezzo di emissione e del rendimento atteso** basandosi sulle quotazioni di mercato dei BOT della stessa durata già in circolazione.
 
 Procedura consigliata prima di un'asta:
 
-1. Vai su **[Forecast Prezzi BOT](/auctions/forecast)** e annota il prezzo stimato e i rendimenti lordo/netto per l'asta che ti interessa.
-2. Apri il **[Calcolatore BOT](/bonds/calculator)**, seleziona il mercato **Asta** e inserisci il prezzo stimato al posto del prezzo di emissione.
-3. Il risultato ti darà un'**idea realistica del guadagno netto atteso e del rendimento**, tenendo conto delle commissioni della tua banca.
+1. Vai su **[Previsione Prezzi BOT](/auctions/forecast)** e annota il prezzo stimato per la prossima asta.
+2. Apri il **[Calcolatore BOT](/bonds/calculator)**, seleziona il mercato **Asta** e inserisci il prezzo stimato nei campi **Prezzo Emissione** e **Prezzo Acquisto**.
+3. Inserisci il lotto nominale che vuoi acquistare (es. 1.000 €, 2.000 €, 5.000 €, 10.000 €, …).
+4. Seleziona la tua banca dal menu **Profilo bancario** per caricare automaticamente le commissioni, oppure inseriscile manualmente.
+5. Il risultato ti darà un'**idea realistica del guadagno netto atteso e del rendimento**, tenendo conto delle commissioni della tua banca.
 
 > ⚠️ Si tratta comunque di una **stima indicativa**: il prezzo reale dell'asta può differire, e con esso il guadagno finale.
 
-> 📖 **[Leggi la guida completa → Forecast Prezzo Emissione BOT](/guides/forecast)**
+> 📖 **[Leggi la guida completa → Previsione Prezzo Emissione BOT](/guides/forecast)**
 
-### Come funziona il ciclo di aste
+---
 
-Il MEF pubblica ogni anno a dicembre il **calendario delle aste** per l'anno successivo. Lo schema è regolare:
+## Come funzionano le aste?
 
-- **Metà mese** (circa il 10–14): asta di BOT **annuali** (12 mesi)
-- **Fine mese** (circa il 25–28): asta di BOT **semestrali** (6 mesi) e, meno frequentemente, **trimestrali**
-
-In un anno si possono quindi avere fino a **12 BOT annuali** e **6 BOT semestrali** in circolazione contemporaneamente, anche se il numero effettivo è un po' inferiore a causa dei mesi festivi (agosto e fine anno).
-
-### Le date da conoscere
-
-Per ogni asta ci sono 4 date fondamentali:
-
-| Data | Cosa succede |
-|---|---|
-| **Comunicazione** | Il MEF pubblica ISIN, quantità offerta e date dell'asta |
-| **Presentazione** | Termine entro cui la tua banca deve ricevere il tuo ordine (spesso il giorno prima dell'asta!) |
-| **Data Asta** | Il MEF assegna i titoli e fissa il prezzo di emissione |
-| **Regolamento** | Il pagamento avviene e i BOT entrano nel tuo portafoglio (solitamente T+2) |
-
-> ⚠️ **Attenzione:** dai l'ordine alla tua banca entro la data di **Presentazione**, non di asta.  
-> Alcune banche richiedono l'ordine con un giorno di anticipo rispetto al termine di presentazione.
+Per tutti i dettagli sul ciclo di emissione, le date fondamentali (Comunicazione, Presentazione, Asta, Regolamento) e come dare l'ordine alla tua banca in tempo, consulta la guida dedicata.
 
 > 📖 **[Leggi la guida completa → Calendario Aste BOT](/guides/calendario)**
+
+---
+
+## Come si acquista un BOT tramite la tua Banca?
+
+Per comprare un BOT — sia in asta che sul mercato secondario — oltre al normale conto corrente è necessario disporre di un **Conto Deposito Titoli (Deposito Amministrato)**, il conto su cui vengono custoditi i titoli acquistati. Alcune banche lo offrono a **canone zero**; altre applicano un canone annuo: verifica le condizioni della tua banca prima di procedere.
+
+Dal punto di vista fiscale, tutto è gestito automaticamente dalla banca:
+
+- **Imposta sostitutiva (12,5%)** — viene trattenuta direttamente dalla banca al momento dell'acquisto. Non è necessaria alcuna dichiarazione aggiuntiva da parte dell'investitore.
+- **Imposta di bollo (0,20% annuo)** — è applicata per legge sul controvalore dei titoli in portafoglio. Viene addebitata **trimestralmente** (per i conti titoli con giacenza superiore a determinate soglie) oppure **annualmente**, in base all'ammontare di BOT posseduti alla data di calcolo. Anche questa è trattenuta automaticamente dalla banca.
 
 ---
 
 ## Riepilogo del flusso consigliato
 
 ```
-1. Leggi cos'è un BOT              →  /guides/cosa-e-un-bot
-2. Consulta il Catalogo            →  /bonds/
-3. Scegli il BOT (durata + resa)   →  /bonds/
-4. Decidi come acquistare          →  /auctions/
-5. Simula con il Calcolatore       →  /bonds/calculator
+1. Leggi cos'è un BOT
+2. Consulta il Catalogo
+3. Scegli il BOT (durata + resa)
+4. Decidi come acquistare (Asta o MOT)
 
-   ┌─ Acquisto sul MOT ──────────────────────────────────────────────┐
-   │  5a: Calcolatore BOT (mercato MOT, last price)                  │
-   │      →  /bonds/calculator                                       │
-   └─────────────────────────────────────────────────────────────────┘
-                               oppure
-   ┌─ Acquisto in Asta ──────────────────────────────────────────────┐
-   │  5a: Stima prezzo di emissione  →  /auctions/forecast           │
-   │  5b: Calcolatore BOT (mercato Asta, prezzo stimato)             │
-   │      →  /bonds/calculator                                       │
-   │  5c: Ordine alla banca entro data Presentazione                 │
-   └─────────────────────────────────────────────────────────────────┘
+   ┌─ Acquisto sul MOT ──────────────────────────────────────────┐
+   │  4a: Consulta il Catalogo per l'Ultimo Prezzo corrente      │
+   └─────────────────────────────────────────────────────────────┘
+                            oppure
+   ┌─ Acquisto in Asta ──────────────────────────────────────────┐
+   │  4a: Consulta le Previsioni per il prezzo stimato           │
+   │  4b: Usa il prezzo stimato come Prezzo Emissione e Acquisto │
+   │  4c: Dai l'ordine alla banca entro la data di Presentazione │
+   └─────────────────────────────────────────────────────────────┘
+
+5. Simula con il Calcolatore BOT
 ```
 
 ---
 
 ## Domande frequenti
 
-**Posso perdere i soldi investiti in BOT?**  
+**1. Posso perdere i soldi investiti in BOT?**
 I BOT sono garantiti dallo Stato italiano. Il rischio di credito (insolvenza) è considerato molto basso. Tuttavia, se vendi prima della scadenza sul MOT, il prezzo potrebbe essere inferiore a quello pagato — quindi potresti realizzare una minusvalenza.
 
-**Quanto devo investire al minimo?**  
+**2. Quanto devo investire al minimo?**
 Il lotto minimo è generalmente **1.000 € nominali** (10 BOT da 100 € ciascuno), acquistabile per multipli di 1.000 €.
 
-**Dove compro i BOT?**  
+**3. Dove compro i BOT?**
 Tramite la tua banca o broker abilitato, sia in asta che sul MOT (Mercato Telematico delle Obbligazioni di Borsa Italiana).
 
-**Qual è la tassazione?**
+**4. Qual è la tassazione?**
 L'imposta sostitutiva sul disaggio (guadagno) è del **12,5%** — la più bassa tra gli strumenti finanziari italiani. È già trattenuta automaticamente dalla banca al momento del rimborso o della vendita.
 
-**Oltre al prezzo di acquisto, quali altre spese devo considerare?**
+**5. Oltre al prezzo di acquisto, quali altre spese devo considerare?**
 Tre voci si sommano al costo del BOT:
 
 - **Commissioni bancarie** — applicate al momento dell'acquisto (e dell'eventuale vendita anticipata). La percentuale e il minimo variano da banca a banca; alcune banche non applicano commissioni sugli acquisti in asta. Usa il [Calcolatore BOT](/bonds/calculator) con il profilo della tua banca per vedere l'impatto esatto.

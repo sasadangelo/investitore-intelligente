@@ -9,7 +9,7 @@ order: 0
 
 ## Partiamo dall'inizio: cos'è un'obbligazione
 
-Un'**obbligazione** è, nella sua forma più semplice, un prestito. Invece di andare in banca, un'azienda o uno Stato emette un titolo che chiunque può comprare: il compratore presta i soldi, e l'emittente si impegna a restituirli alla scadenza, aggiungendo una remunerazione per il prestito.
+Un'**obbligazione** è, nella sua forma più semplice, un prestito. Invece di andare in banca, un'azienda o uno Stato emette un titolo che chiunque può comprare: il compratore presta i soldi, e l'emittente si impegna a restituirli alla scadenza, aggiungendo una remunerazione (interesse) per il prestito.
 
 - Se l'obbligazione è emessa dallo **Stato italiano** si chiama **Titolo di Stato**.
 - Se è emessa da un'**azienda privata** si chiama **Corporate Bond** (*bond* è semplicemente la parola inglese per *obbligazione*).
@@ -35,13 +35,12 @@ Il **Buono Ordinario del Tesoro (BOT)** è un titolo di Stato a brevissimo termi
 - È uno strumento **zero-coupon**: **non paga cedole** durante la vita del titolo.
 - Il guadagno deriva esclusivamente dal **disaggio**, cioè dalla differenza tra il prezzo a cui lo si acquista (sempre inferiore a 100) e il valore di rimborso fisso di **100 euro** per ogni BOT.
 
-> **Esempio:** acquisti un BOT annuale a 97,20 €. Alla scadenza il MEF ti rimborsa 100,00 €.  
+> **Esempio:** acquisti un BOT annuale a 97,20 €. Alla scadenza il MEF ti rimborsa 100,00 €.
 > Il tuo guadagno **lordo** è 2,80 € per ogni BOT.
 
 ### Taglio minimo e lotti
 
-Ogni BOT ha un **valore nominale di 100 €**. Le banche impongono un **lotto minimo di 1.000 €**
-(10 BOT), acquistabile per multipli di 1.000 €.
+Ogni BOT ha un **valore nominale di 100 €**. Le banche impongono un **lotto minimo di 1.000 €** (10 BOT), acquistabile per multipli di 1.000 €.
 
 ## Rendimento lordo e rendimento netto
 
@@ -71,8 +70,9 @@ imposta_disaggio = disaggio_lordo × 12,5%
 rendimento_netto = ((100 − imposta_disaggio) / prezzo_acquisto) ^ (365 / giorni_a_scadenza) − 1
 ```
 
-> Il **Catalogo BOT** mostra sia il rendimento lordo che quello netto per ogni BOT in circolazione.  
-> Il **Calcolatore BOT** aggiunge commissioni bancarie e imposta di bollo per ottenere il guadagno reale in euro.
+> Il **Catalogo BOT** mostra sia il rendimento lordo che quello netto per ogni BOT in circolazione. È pensato per una scelta rapida: ti permette di confrontare i BOT disponibili in base all'orizzonte temporale e al rendimento indicativo.
+>
+> Per un calcolo più preciso — che includa le commissioni bancarie, l'imposta di bollo e tutti i dettagli del tuo investimento — usa il **Calcolatore BOT** con il BOT che hai scelto dal catalogo.
 
 ## Per orizzonti più lunghi: i BTP
 

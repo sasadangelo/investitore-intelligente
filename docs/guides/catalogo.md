@@ -11,12 +11,7 @@ Il **Catalogo BOT** è il punto di partenza dell'applicazione. Mostra tutti i Bu
 
 ## Cos'è un BOT
 
-Un **Buono Ordinario del Tesoro** è un titolo di Stato italiano a breve termine (durata massima 12 mesi),
-emesso dal Ministero dell'Economia e delle Finanze (MEF) tramite asta competitiva.
-
-- È uno **strumento zero-coupon**: non paga cedole periodiche.
-- Il rendimento è dato dalla **differenza tra il valore di rimborso (100) e il prezzo di acquisto**.
-- L'aliquota fiscale agevolata è del **12,5%** (come tutti i titoli di Stato italiani).
+Se non conosci ancora i BOT, leggi la guida completa: **[Cos'è un BOT](/guides/cosa-e-un-bot)**
 
 ## Come leggere la tabella
 
@@ -24,12 +19,12 @@ emesso dal Ministero dell'Economia e delle Finanze (MEF) tramite asta competitiv
 |---|---|
 | **Nome** | Identificativo del BOT (es. `Bot Zc Nov26 A Eur` = zero-coupon, scadenza novembre 2026, annuale) |
 | **ISIN** | Codice identificativo internazionale |
-| **Scadenza** | Data di rimborso a 100 |
-| **GG residui** | Giorni mancanti alla scadenza da oggi |
-| **Prezzo emissione** | Prezzo al quale il MEF ha emesso il BOT in asta |
-| **Last price** | Ultima quotazione disponibile sul mercato secondario (MOT) |
-| **Rend. lordo** | Rendimento annualizzato lordo calcolato sul last price |
-| **Rend. netto** | Rendimento annualizzato netto (al netto del 12,5% sul disaggio) |
+| **Data Emissione** | Data di emissione del BOT |
+| **Data Scadenza** | Data di rimborso a 100 |
+| **Ultimo Prezzo** | Ultima quotazione disponibile sul mercato secondario (MOT) |
+| **Rendimento lordo** | Rendimento annualizzato lordo calcolato sull'ultimo prezzo |
+| **Rendimento netto** | Rendimento annualizzato netto (al netto del 12,5% sul disaggio) |
+| **Azioni** | Pulsanti per accedere al dettaglio o al calcolatore |
 
 ## Come vengono calcolati i rendimenti
 
@@ -47,7 +42,7 @@ imposta_disaggio = disaggio_lordo × 12,5%
 rendimento_netto = ((100 - imposta_disaggio) / last_price) ^ (365 / giorni_residui) - 1
 ```
 
-> **Nota:** l'anno è considerato di 365 giorni (366 negli anni bisestili).
+> **Nota:** l'anno è considerato di 365 giorni (366 negli anni bisestili). Per annualizzare il rendimento usiamo il metodo **Act/Act**, uno dei sistemi standard per calcolare i giorni effettivi in un anno. Questo metodo consente di normalizzare i rendimenti e renderli comparabili fra titoli con scadenze diverse.
 
 ## Aggiornamento quotazioni
 
