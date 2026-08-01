@@ -42,7 +42,7 @@ class BondDTO(BaseModel):
     tax_rate: float = 12.5            # 12.5 govt bonds, 26.0 corporate
 
     # Optional stored link to the MEF auction result PDF.
-    # When None the UI falls back to the computed formula via mef_auction_result_url.
+    # When empty/None the UI falls back to the computed formula via mef_auction_result_url.
     auction_result_url: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -68,7 +68,7 @@ class BondDTO(BaseModel):
 
         Only applies to BOT bonds.
         """
-        if self.auction_result_url:
+        if self.auction_result_url:  # non-empty/non-None string wins over auto-computed
             return self.auction_result_url
         if self.bond_type != "BOT":
             return None

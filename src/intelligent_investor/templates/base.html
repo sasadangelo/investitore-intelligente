@@ -47,6 +47,12 @@
     <div class="collapse navbar-collapse" id="navMain">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item">
+          <a class="nav-link {% if request.endpoint == 'guides.detail' and request.view_args and request.view_args.get('slug') == 'inizia-qui' %}active{% endif %}"
+             href="{{ url_for('guides.detail', slug='inizia-qui') }}">
+            <i class="bi bi-rocket-takeoff me-1"></i>Sei Nuovo? Inizia Qui
+          </a>
+        </li>
+        <li class="nav-item">
           <a class="nav-link {% if request.endpoint == 'bonds.index' %}active{% endif %}"
              href="{{ url_for('bonds.index') }}">
             <i class="bi bi-list-ul me-1"></i>Catalogo

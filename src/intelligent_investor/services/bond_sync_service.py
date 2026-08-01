@@ -157,7 +157,7 @@ class BondSyncService:
             nominal_rate=existing.nominal_rate,
             coupon_frequency=existing.coupon_frequency,
             tax_rate=existing.tax_rate,
-            auction_result_url=existing.auction_result_url,
+            auction_result_url=existing.auction_result_url or None,
         ))
 
     def _upsert_quote(self, dto: BondQuoteDTO, bond_id: int) -> BondQuoteDTO:

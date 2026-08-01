@@ -97,7 +97,7 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
         nominal_rate=float(form.get("nominal_rate", 0.0)),
         coupon_frequency=int(form.get("coupon_frequency", 0)),
         tax_rate=float(form.get("tax_rate", 12.5)),
-        auction_result_url=url,
+        auction_result_url=url,  # None = use auto-computed URL
     )
 
 

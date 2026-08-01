@@ -57,6 +57,7 @@
               <option value="{{ b.id }}"
                 data-isin="{{ b.isin }}"
                 data-issue-date="{{ b.issue_date }}"
+                data-issue-date-display="{{ b.issue_date.strftime('%d/%m/%Y') }}"
                 data-maturity-date="{{ b.maturity_date.strftime('%d/%m/%Y') }}"
                 data-maturity-raw="{{ b.maturity_date }}"
                 data-issue-price="{{ b.issue_price }}"
@@ -677,8 +678,8 @@
 
     if (opt.value) {
       document.getElementById('strip-isin').textContent          = opt.dataset.isin         || '';
-      document.getElementById('strip-issue-date').textContent    = opt.dataset.issueDate    || '';
-      document.getElementById('strip-maturity-date').textContent = opt.dataset.maturityDate || '';
+      document.getElementById('strip-issue-date').textContent    = opt.dataset.issueDateDisplay || '';
+      document.getElementById('strip-maturity-date').textContent = opt.dataset.maturityDate     || '';
       const ip = parseFloat(opt.dataset.issuePrice);
       document.getElementById('strip-issue-price').textContent   = isNaN(ip) ? '' : ip.toFixed(4);
       // Update MEF auction result link
