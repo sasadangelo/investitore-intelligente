@@ -105,10 +105,9 @@ class SummaryResultDTO(BaseModel):
     net_gain_before_duty    = total_received - total_paid - capital_gain_tax
     net_gain                = net_gain_before_duty - estimated_duty
 
-    All yields use dry_purchase as base and actual/365 yearfrac (mirrors Excel).
-    Three pairs (gross, net pre-bollo, net):
-        simple   = gain / dry_purchase / yearfrac
-        compound = (redemption / dry_purchase) ^ (1/yearfrac) - 1  (= XIRR)
+    Yields are computed by YieldCalculator (start=purchase_date, end=sale_date):
+        simple   = gain / capital / YEARFRAC(basis=ACT_ACT)
+        compound = (proceeds / capital) ^ (365/days) - 1    (= XIRR, days/365 convention)
     """
 
     gross_gain: float

@@ -28,7 +28,7 @@ Se non conosci ancora i BOT, leggi la guida completa: **[Cos'è un BOT](/guides/
 
 ## Come vengono calcolati i rendimenti
 
-I rendimenti sono calcolati con la formula **composta** (non semplice):
+I rendimenti sono calcolati con la formula **composta** (XIRR), identica a quella usata da Excel:
 
 ```
 rendimento_lordo = (100 / last_price) ^ (365 / giorni_residui) - 1
@@ -42,7 +42,7 @@ imposta_disaggio = disaggio_lordo × 12,5%
 rendimento_netto = ((100 - imposta_disaggio) / last_price) ^ (365 / giorni_residui) - 1
 ```
 
-> **Nota:** l'anno è considerato di 365 giorni (366 negli anni bisestili). Per annualizzare il rendimento usiamo il metodo **Act/Act**, uno dei sistemi standard per calcolare i giorni effettivi in un anno. Questo metodo consente di normalizzare i rendimenti e renderli comparabili fra titoli con scadenze diverse.
+> **Nota:** il denominatore dell'esponente è sempre **365 giorni fissi** (convenzione XIRR di Excel/LibreOffice), indipendentemente dall'anno bisestile. Questo rende i rendimenti direttamente comparabili con quelli riportati da Bloomberg, Borsa Italiana e dai fogli di calcolo standard.
 
 ## Aggiornamento quotazioni
 

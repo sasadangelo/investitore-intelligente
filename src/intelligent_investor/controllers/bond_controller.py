@@ -10,6 +10,7 @@ from flask import Blueprint, Response, flash, redirect, render_template, request
 from pydantic import ValidationError
 
 from intelligent_investor.dtos import BondDTO
+from intelligent_investor.utils.yield_calculator import YieldCalculator
 from intelligent_investor.dtos.bond_quote import BondQuoteDTO
 from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
 from intelligent_investor.services import BondService, BondSyncService
@@ -39,21 +40,11 @@ def _parse_date(value: str) -> date:
 
 
 def _calc_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | None, float | None]:
-    """
-    Compute gross and net annualised yield for a zero-coupon BOT.
+    """Compute gross and net annualised compound yield for a zero-coupon BOT.
 
-        gross = (redemption / last_price) ^ (1 / yearfrac) - 1
-        net   = ((redemption - imposta_disaggio) / last_price) ^ (1 / yearfrac) - 1
-
-    where:
-        giorni_totali    = (maturity - issue) in days
-        giorni_residui   = (maturity - today) in days
-        disaggio_lordo   = (redemption - issue_price) * giorni_residui / giorni_totali
-        imposta_disaggio = disaggio_lordo * (tax_rate / 100)
-        yearfrac         = giorni_residui / (366 if leap else 365)
-
-    The net yield deducts the withholding tax from the redemption amount
-    (i.e. the net cash received at maturity), not from the purchase price.
+    Uses YieldCalculator with ACT_ACT (YEARFRAC basis 1), qty=1:
+        gross = compound(redemption_price, last_price)
+        net   = compound(redemption_price - imposta_disaggio, last_price)
 
     Returns (gross_pct, net_pct) as percentage values, or (None, None) if the
     data is insufficient.
@@ -64,20 +55,14 @@ def _calc_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float |
     if residual_days <= 0 or total_days <= 0 or last_price <= 0:
         return None, None
 
-    year_days = 366 if _is_leap(bond.maturity_date.year) else 365
-    yearfrac = residual_days / year_days
-
     disaggio_lordo = (bond.redemption_price - bond.issue_price) * residual_days / total_days
     imposta_disaggio = disaggio_lordo * (bond.tax_rate / 100)
 
-    gross = (bond.redemption_price / last_price) ** (1 / yearfrac) - 1
-    net = ((bond.redemption_price - imposta_disaggio) / last_price) ** (1 / yearfrac) - 1
+    yc = YieldCalculator(today, bond.maturity_date)
+    gross = yc.compound(bond.redemption_price, last_price)
+    net = yc.compound(bond.redemption_price - imposta_disaggio, last_price)
 
-    return gross * 100, net * 100
-
-
-def _is_leap(year: int) -> bool:
-    return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
+    return gross, net
 
 
 def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:

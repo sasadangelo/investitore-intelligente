@@ -5,8 +5,8 @@ import pytest
 from sqlalchemy import Engine, create_engine
 from sqlalchemy.orm import sessionmaker
 
-import intelligent_investor.core.database as _db_module
-from intelligent_investor.models.base import Base
+import intelligent_investor.db.session as _db_module
+from intelligent_investor.db.base import Base
 from intelligent_investor.models.bond import BondDAO  # noqa: F401 — registers table in Base metadata
 from intelligent_investor.models.bond_quotes import BondQuoteDAO  # noqa: F401 — registers table in Base metadata
 

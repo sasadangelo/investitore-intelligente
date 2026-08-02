@@ -15,7 +15,7 @@ from intelligent_investor.dtos.bot_calculation_result import (
     SummaryResultDTO,
 )
 from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
-from intelligent_investor.utils.date_utils import yearfrac_act_act
+from intelligent_investor.utils.yield_calculator import YieldCalculator
 
 # Reduction factor applied to the capital gain taxable base for government bonds
 # (TdS): 12.5% tax / 26% standard rate = 0.4808 reduction → effective rate = 12.5%
@@ -303,26 +303,21 @@ class BotCalculatorService:
             Decimal(str(net_gain_before_duty)) - Decimal(str(stamp_duty.estimated_duty))
         )
 
-        holding_days: int = (sale_date - purchase_date).days or 1
-        # Simple yields use YEARFRAC ACT/ACT (Excel basis 1 = days / avg year length).
-        # Compound (IRR) yields use the raw days/365 ratio — this matches XIRR behaviour
-        # and produces values identical to the reference spreadsheet's TIR column.
-        year_frac_simple: float = yearfrac_act_act(purchase_date, sale_date)
-        year_frac_compound: float = holding_days / 365
+        yc = YieldCalculator(purchase_date, sale_date)
         total_paid: float = purchase.total_paid
         dry_purchase: float = purchase.dry_amount
 
-        # Lordo: base = dry_purchase (ODS: guadagno titolo / importo secco)
-        simple_gross_yield: float = gross_gain / dry_purchase / year_frac_simple * 100
-        compound_gross_yield: float = (sale.dry_amount / dry_purchase) ** (1 / year_frac_compound) * 100 - 100
+        # Lordo: base = dry_purchase (guadagno titolo / importo secco)
+        simple_gross_yield: float = yc.simple(gross_gain, dry_purchase)
+        compound_gross_yield: float = yc.compound(sale.dry_amount, dry_purchase)
 
         net_pre_redemption: float = sale.total_received - capital_gain_tax
-        simple_net_yield_before_duty: float = net_gain_before_duty / total_paid / year_frac_simple * 100
-        compound_net_yield_before_duty: float = (net_pre_redemption / total_paid) ** (1 / year_frac_compound) * 100 - 100
+        simple_net_yield_before_duty: float = yc.simple(net_gain_before_duty, total_paid)
+        compound_net_yield_before_duty: float = yc.compound(net_pre_redemption, total_paid)
 
         net_redemption: float = net_pre_redemption - stamp_duty.estimated_duty
-        simple_net_yield: float = net_gain / total_paid / year_frac_simple * 100
-        compound_net_yield: float = (net_redemption / total_paid) ** (1 / year_frac_compound) * 100 - 100
+        simple_net_yield: float = yc.simple(net_gain, total_paid)
+        compound_net_yield: float = yc.compound(net_redemption, total_paid)
 
         return SummaryResultDTO(
             gross_gain=gross_gain,

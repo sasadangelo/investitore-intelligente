@@ -112,10 +112,10 @@ periodo di detenzione (trimestrale o annuale).
 
 ### Riepilogo
 
-- **Guadagno lordo**: ricevuto − pagato
+- **Guadagno lordo**: importo secco ricevuto − importo secco pagato
 - **Guadagno netto**: al netto di tutte le imposte e commissioni
-- **Rendimento semplice lordo/netto**: guadagno / totale pagato
-- **Rendimento composto lordo/netto**: tasso annualizzato con capitalizzazione composta
+- **Rendimento semplice**: guadagno / capitale × (YEARFRAC ACT/ACT)⁻¹ — base lordo = importo secco, base netti = totale pagato
+- **Rendimento composto (TIR/XIRR)**: (incasso finale / capitale)^(365/giorni) − 1 — stesso criterio di Excel XIRR
 
 ## Esempio completo
 
