@@ -69,9 +69,9 @@ pubblicato. Le date vengono aggiornate manualmente non appena il MEF le rende di
 - [Risultati aste — Banca d'Italia](https://www.bancaditalia.it/compiti/operazioni-mef/risultati-aste/index.html)
 - [Annunci titoli — Banca d'Italia](https://www.bancaditalia.it/compiti/operazioni-mef/annunci-operazioni/)
 
-## Forecast del prezzo di emissione
+## Previsione del prezzo di emissione
 
-Dalla pagina **Forecast prezzi** è possibile ottenere una stima del prezzo e del rendimento atteso
+Dalla pagina **[Previsione prezzi](/auctions/forecast)** è possibile ottenere una stima del prezzo e del rendimento atteso
 per le prossime aste, basata sulle quotazioni di mercato dei BOT già in circolazione.
 
-Vedi la guida [Forecast Prezzo Emissione](/guides/forecast) per i dettagli sul metodo di calcolo.
+Vedi la guida [Previsione Prezzo Emissione](/guides/forecast) per i dettagli sul metodo di calcolo.

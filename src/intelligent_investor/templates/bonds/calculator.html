@@ -236,7 +236,7 @@
           <!-- Sale section -->
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="has_sale" name="has_sale"
-                   {% if fval('sale_price') %}checked{% endif %}>
+                   {% if tx and tx.get('has_sale') == 'on' %}checked{% endif %}>
             <label class="form-check-label fw-semibold" for="has_sale">Vendita anticipata</label>
           </div>
 
@@ -339,18 +339,20 @@
             <tr><th class="ps-3 text-muted fw-normal w-50">Quantità BOT</th>
                 <td class="pe-3 text-end result-value">{{ result.quantity | int }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Importo secco</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.dry_amount) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.purchase.dry_amount | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.commission) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.purchase.commission | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.fixed_commission) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Disaggio lordo (per BOT)</th>
+                <td class="pe-3 text-end">€ {{ result.purchase.fixed_commission | r2 }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Disaggio pro-quota</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio pro-quota</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount * 0.125) }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.purchase.discount_tax) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.purchase.discount_tax | r2 }}</td></tr>
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Totale pagato</th>
-              <td class="pe-3 text-end fw-semibold fs-6">€ {{ "%.2f"|format(result.purchase.total_paid) }}</td>
+              <td class="pe-3 text-end fw-semibold fs-6">€ {{ result.purchase.total_paid | r2 }}</td>
             </tr>
           </tbody>
         </table>
@@ -361,22 +363,22 @@
     <div class="card shadow-sm mb-3">
       <div class="card-header section-header">
         <i class="bi bi-cash-coin me-1"></i>
-        {% if tx and tx.get('sale_price') %}Vendita{% else %}Rimborso a scadenza{% endif %}
+        {% if tx and tx.get('sale_price') %}Vendita anticipata{% else %}Rimborso a scadenza o vendita anticipata{% endif %}
       </div>
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <tbody>
             <tr><th class="ps-3 text-muted fw-normal w-50">Importo secco</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.dry_amount) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.sale.dry_amount | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.commission) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.sale.commission | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.fixed_commission) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.sale.fixed_commission | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.sale.discount_tax) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.sale.discount_tax | r2 }}</td></tr>
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Totale ricevuto</th>
-              <td class="pe-3 text-end fw-semibold fs-6">€ {{ "%.2f"|format(result.sale.total_received) }}</td>
+              <td class="pe-3 text-end fw-semibold fs-6">€ {{ result.sale.total_received | r2 }}</td>
             </tr>
           </tbody>
         </table>
@@ -409,28 +411,28 @@
               <th class="ps-3 text-muted fw-normal">Plus/Minus realizzata</th>
               <td class="pe-3 text-end fw-semibold
                 {% if result.capital_gain.total_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
-                € {{ "%.2f"|format(result.capital_gain.total_gain_loss) }}
+                € {{ result.capital_gain.total_gain_loss | r2 }}
               </td>
             </tr>
             <tr><th class="ps-3 text-muted fw-normal">Riduzione imponibile TdS (48.08%)</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.capital_gain.tds_reduction) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.capital_gain.tds_reduction | r2 }}</td></tr>
             {% if result.capital_gain.total_gain_loss > 0 %}
             <tr><th class="ps-3 text-muted fw-normal">Imposta lorda (12.5%)</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.capital_gain.gross_tax) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.capital_gain.gross_tax | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Imponibile netto (dopo zainetto)</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.capital_gain.net_taxable) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.capital_gain.net_taxable | r2 }}</td></tr>
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Imposta sulla plusvalenza</th>
-              <td class="pe-3 text-end fw-semibold">€ {{ "%.2f"|format(result.capital_gain.capital_gain_tax) }}</td>
+              <td class="pe-3 text-end fw-semibold">€ {{ result.capital_gain.capital_gain_tax | r2 }}</td>
             </tr>
             {% if result.capital_gain.remaining_loss > 0 %}
             <tr><th class="ps-3 text-muted fw-normal">Zainetto fiscale residuo</th>
-                <td class="pe-3 text-end text-success">€ {{ "%.2f"|format(result.capital_gain.remaining_loss) }}</td></tr>
+                <td class="pe-3 text-end text-success">€ {{ result.capital_gain.remaining_loss | r2 }}</td></tr>
             {% endif %}
             {% else %}
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Minus valenza da zainetto</th>
-              <td class="pe-3 text-end fw-semibold text-danger">€ {{ "%.2f"|format(result.capital_gain.remaining_loss) }}</td>
+              <td class="pe-3 text-end fw-semibold text-danger">€ {{ result.capital_gain.remaining_loss | r2 }}</td>
             </tr>
             {% endif %}
           </tbody>
@@ -449,7 +451,7 @@
                 <td class="pe-3 text-end">{{ result.stamp_duty.holding_periods }}</td></tr>
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Stima bollo</th>
-              <td class="pe-3 text-end fw-semibold">€ {{ "%.2f"|format(result.stamp_duty.estimated_duty) }}</td>
+              <td class="pe-3 text-end fw-semibold">€ {{ result.stamp_duty.estimated_duty | r2 }}</td>
             </tr>
           </tbody>
         </table>
@@ -463,12 +465,12 @@
         <table class="table table-sm mb-0">
           <tbody>
             <tr><th class="ps-3 text-muted fw-normal w-50">Guadagno lordo</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.summary.gross_gain) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.summary.gross_gain | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Guadagno netto (pre-bollo)</th>
-                <td class="pe-3 text-end">€ {{ "%.2f"|format(result.summary.net_gain_before_duty) }}</td></tr>
+                <td class="pe-3 text-end">€ {{ result.summary.net_gain_before_duty | r2 }}</td></tr>
             <tr class="table-success">
               <th class="ps-3 fw-semibold">Guadagno netto</th>
-              <td class="pe-3 text-end fw-semibold fs-5">€ {{ "%.2f"|format(result.summary.net_gain) }}</td>
+              <td class="pe-3 text-end fw-semibold fs-5">€ {{ result.summary.net_gain | r2 }}</td>
             </tr>
             <tr><td colspan="2"><hr class="my-1"></td></tr>
             <tr><th class="ps-3 text-muted fw-normal" colspan="2" style="padding-bottom:2px">

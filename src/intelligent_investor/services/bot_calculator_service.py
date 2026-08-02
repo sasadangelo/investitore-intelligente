@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
 from datetime import date
+from decimal import Decimal
 
 from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bot_calculation_result import (
@@ -14,6 +15,7 @@ from intelligent_investor.dtos.bot_calculation_result import (
     SummaryResultDTO,
 )
 from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
+from intelligent_investor.utils.date_utils import yearfrac_act_act
 
 # Reduction factor applied to the capital gain taxable base for government bonds
 # (TdS): 12.5% tax / 26% standard rate = 0.4808 reduction → effective rate = 12.5%
@@ -99,7 +101,12 @@ class BotCalculatorService:
     ) -> PurchaseResultDTO:
         days_held_at_purchase: int = (bond.maturity_date - tx.purchase_date).days
         unit_discount: float = (bond.redemption_price - bond.issue_price) * days_held_at_purchase / total_days
-        discount_tax: float = unit_discount * (bond.tax_rate / 100) * quantity
+        discount_tax: float = float(
+            (Decimal(str(bond.redemption_price)) - Decimal(str(bond.issue_price)))
+            * Decimal(days_held_at_purchase) / Decimal(total_days)
+            * Decimal(str(bond.tax_rate)) / Decimal("100")
+            * Decimal(str(quantity))
+        )
 
         dry_amount: float = tx.purchase_price * quantity
         commission: float = _calc_commission(
@@ -133,7 +140,12 @@ class BotCalculatorService:
         # (0 when held to maturity: sale_date == maturity_date)
         days_remaining_at_sale: int = (bond.maturity_date - sale_date).days
         unit_discount: float = (bond.redemption_price - bond.issue_price) * days_remaining_at_sale / total_days
-        discount_tax: float = unit_discount * (bond.tax_rate / 100) * quantity
+        discount_tax: float = float(
+            (Decimal(str(bond.redemption_price)) - Decimal(str(bond.issue_price)))
+            * Decimal(days_remaining_at_sale) / Decimal(total_days)
+            * Decimal(str(bond.tax_rate)) / Decimal("100")
+            * Decimal(str(quantity))
+        )
 
         dry_amount: float = sale_price * quantity
         commission: float = _calc_commission(
@@ -278,30 +290,39 @@ class BotCalculatorService:
         capital_gain_tax: float = capital_gain.capital_gain_tax if capital_gain else 0.0
 
         # Gross gain = pure cash flow without commissions, taxes or stamp duty
-        # mirrors Excel C37 = SUM(J5:J6) = −dry_purchase + redemption_dry
         gross_gain: float = sale.dry_amount - purchase.dry_amount
-        # Net gain before duty = total received − total paid − capital gain tax
-        net_gain_before_duty: float = (sale.total_received - purchase.total_paid) - capital_gain_tax
-        net_gain: float = net_gain_before_duty - stamp_duty.estimated_duty
+        # Net gain before duty = total received − total paid − capital gain tax.
+        # Use Decimal to avoid float subtraction errors on midpoint values (e.g. 144.575
+        # must round to 144.58 via ROUND_HALF_UP, not 144.57 due to float imprecision).
+        net_gain_before_duty: float = float(
+            Decimal(str(sale.total_received))
+            - Decimal(str(purchase.total_paid))
+            - Decimal(str(capital_gain_tax))
+        )
+        net_gain: float = float(
+            Decimal(str(net_gain_before_duty)) - Decimal(str(stamp_duty.estimated_duty))
+        )
 
         holding_days: int = (sale_date - purchase_date).days or 1
-        year_frac: float = holding_days / 365
-        dry_purchase: float = purchase.dry_amount
+        # Simple yields use YEARFRAC ACT/ACT (Excel basis 1 = days / avg year length).
+        # Compound (IRR) yields use the raw days/365 ratio — this matches XIRR behaviour
+        # and produces values identical to the reference spreadsheet's TIR column.
+        year_frac_simple: float = yearfrac_act_act(purchase_date, sale_date)
+        year_frac_compound: float = holding_days / 365
         total_paid: float = purchase.total_paid
+        dry_purchase: float = purchase.dry_amount
 
-        # Lordo: base = dry_purchase  (mirrors Excel C41 / XIRR J5:J6)
-        simple_gross_yield: float = gross_gain / dry_purchase / year_frac * 100
-        compound_gross_yield: float = (sale.dry_amount / dry_purchase) ** (1 / year_frac) * 100 - 100
+        # Lordo: base = dry_purchase (ODS: guadagno titolo / importo secco)
+        simple_gross_yield: float = gross_gain / dry_purchase / year_frac_simple * 100
+        compound_gross_yield: float = (sale.dry_amount / dry_purchase) ** (1 / year_frac_compound) * 100 - 100
 
-        # Netto pre-bollo: base = total_paid  (mirrors Excel B42 / XIRR K5:K6)
         net_pre_redemption: float = sale.total_received - capital_gain_tax
-        simple_net_yield_before_duty: float = net_gain_before_duty / total_paid / year_frac * 100
-        compound_net_yield_before_duty: float = (net_pre_redemption / total_paid) ** (1 / year_frac) * 100 - 100
+        simple_net_yield_before_duty: float = net_gain_before_duty / total_paid / year_frac_simple * 100
+        compound_net_yield_before_duty: float = (net_pre_redemption / total_paid) ** (1 / year_frac_compound) * 100 - 100
 
-        # Netto: base = total_paid  (mirrors Excel B43 / XIRR L5:L6)
         net_redemption: float = net_pre_redemption - stamp_duty.estimated_duty
-        simple_net_yield: float = net_gain / total_paid / year_frac * 100
-        compound_net_yield: float = (net_redemption / total_paid) ** (1 / year_frac) * 100 - 100
+        simple_net_yield: float = net_gain / total_paid / year_frac_simple * 100
+        compound_net_yield: float = (net_redemption / total_paid) ** (1 / year_frac_compound) * 100 - 100
 
         return SummaryResultDTO(
             gross_gain=gross_gain,

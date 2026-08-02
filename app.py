@@ -13,6 +13,7 @@ Usage:
 
 import os
 import sys
+from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 from flask.app import Flask
@@ -63,6 +64,15 @@ def create_app() -> Flask:
     app.register_blueprint(blueprint=bot_auction_bp)
     app.register_blueprint(blueprint=bank_bp)
     app.register_blueprint(blueprint=guide_bp)
+
+    # Custom Jinja2 filter: round to 2 decimals with ROUND_HALF_UP, returns formatted string
+    @app.template_filter("r2")
+    def round2_filter(value: float) -> str:
+        try:
+            rounded = Decimal(str(value)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            return f"{rounded:.2f}"
+        except Exception:
+            return str(value)
 
     # Root redirect → bonds list
     @app.route(rule="/")

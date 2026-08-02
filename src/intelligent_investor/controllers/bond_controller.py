@@ -6,13 +6,10 @@ import json
 from collections.abc import Generator
 from datetime import date
 
-from flask import (Blueprint, Response, flash, redirect, render_template,
-                   request, stream_with_context, url_for)
-from flask.wrappers import Response
+from flask import Blueprint, Response, flash, redirect, render_template, request, stream_with_context, url_for
 from pydantic import ValidationError
 
 from intelligent_investor.dtos import BondDTO
-from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bond_quote import BondQuoteDTO
 from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
 from intelligent_investor.services import BondService, BondSyncService
@@ -34,6 +31,7 @@ BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_date(value: str) -> date:
     """Parse a date string in YYYY-MM-DD format (HTML date input)."""
@@ -69,11 +67,11 @@ def _calc_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float |
     year_days = 366 if _is_leap(bond.maturity_date.year) else 365
     yearfrac = residual_days / year_days
 
-    disaggio_lordo   = (bond.redemption_price - bond.issue_price) * residual_days / total_days
+    disaggio_lordo = (bond.redemption_price - bond.issue_price) * residual_days / total_days
     imposta_disaggio = disaggio_lordo * (bond.tax_rate / 100)
 
     gross = (bond.redemption_price / last_price) ** (1 / yearfrac) - 1
-    net   = ((bond.redemption_price - imposta_disaggio) / last_price) ** (1 / yearfrac) - 1
+    net = ((bond.redemption_price - imposta_disaggio) / last_price) ** (1 / yearfrac) - 1
 
     return gross * 100, net * 100
 
@@ -105,6 +103,7 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
 # Routes
 # ---------------------------------------------------------------------------
 
+
 @bond_bp.route(rule="/", methods=["GET"])
 def index() -> str:
     """List all bonds."""
@@ -134,6 +133,7 @@ def refresh_bot_quotes_stream() -> Response:
     Each event is a JSON-encoded SyncEvent:
         data: {"type": "progress"|"done"|"error", "pct": 0-100, "message": "..."}
     """
+
     def _event_stream() -> Generator[str, None, None]:
         try:
             for event in _sync_service.sync(source="teleborsa_bot"):
@@ -147,7 +147,7 @@ def refresh_bot_quotes_stream() -> Response:
         mimetype="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",   # disable Nginx buffering
+            "X-Accel-Buffering": "no",  # disable Nginx buffering
         },
     )
 
@@ -162,9 +162,7 @@ def detail(bond_id: int):
         return redirect(url_for("bonds.index"))
 
     quote = _quote_service.get_by_bond_id(bond_id)
-    gross_yield, net_yield = (
-        _calc_yields(bond, quote.last_price, today) if quote else (None, None)
-    )
+    gross_yield, net_yield = _calc_yields(bond, quote.last_price, today) if quote else (None, None)
     residual_days = (bond.maturity_date - today).days if bond.maturity_date >= today else 0
     total_days = (bond.maturity_date - bond.issue_date).days
 
@@ -294,13 +292,16 @@ def calculator():
     quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
     bank_profiles_json = json.dumps(_bank_service.profiles_with_commissions_json())
     preselect_id: int | None = request.args.get("bond_id", type=int)
-    bond = (
-        _service.get_by_id(preselect_id)
-        if preselect_id is not None
-        else (bonds[0] if bonds else None)
+    bond = _service.get_by_id(preselect_id) if preselect_id is not None else (bonds[0] if bonds else None)
+    return render_template(
+        "bonds/calculator.html",
+        bonds=bonds,
+        quotes=quotes,
+        bond=bond,
+        bank_profiles_json=bank_profiles_json,
+        tx=None,
+        result=None,
     )
-    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond,
-                           bank_profiles_json=bank_profiles_json, tx=None, result=None)
 
 
 @bond_bp.route("/calculator", methods=["POST"])
@@ -318,8 +319,15 @@ def calculator_compute():
     bond_id_raw = form.get("bond_id", "").strip()
     if not bond_id_raw:
         flash("Seleziona un BOT.", "warning")
-        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
-                               tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
+        return render_template(
+            "bonds/calculator.html",
+            bonds=bonds,
+            quotes=quotes,
+            bond=None,
+            tx=form,
+            result=None,
+            bank_profiles_json=bank_profiles_json,
+        ), 422
 
     # ---- Resolve bond (from DB or from manual form fields) ----
     if bond_id_raw == "manual":
@@ -337,48 +345,116 @@ def calculator_compute():
             )
         except (KeyError, ValueError) as e:
             flash(f"Dati BOT manuale non validi: {e}", "danger")
-            return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
-                                   tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
+            return render_template(
+                "bonds/calculator.html",
+                bonds=bonds,
+                quotes=quotes,
+                bond=None,
+                tx=form,
+                result=None,
+                bank_profiles_json=bank_profiles_json,
+            ), 422
         bond_id = 0  # sentinel for manual BOT
     else:
         bond_id = int(bond_id_raw)
         bond = _service.get_by_id(bond_id)
         if bond is None:
             flash("BOT non trovato.", "warning")
-            return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=None,
-                                   tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
+            return render_template(
+                "bonds/calculator.html",
+                bonds=bonds,
+                quotes=quotes,
+                bond=None,
+                tx=form,
+                result=None,
+                bank_profiles_json=bank_profiles_json,
+            ), 422
+
+    _FIELD_LABELS: dict[str, str] = {
+        "purchase_price": "Prezzo acquisto",
+        "face_value": "Lotto nominale",
+        "buy_commission_pct": "Commissione acquisto %",
+        "buy_commission_min": "Commissione acquisto min",
+        "buy_commission_max": "Commissione acquisto max",
+        "buy_commission_fixed": "Commissione acquisto fissa",
+        "sale_price": "Prezzo vendita",
+        "sell_commission_pct": "Commissione vendita %",
+        "sell_commission_min": "Commissione vendita min",
+        "sell_commission_max": "Commissione vendita max",
+        "sell_commission_fixed": "Commissione vendita fissa",
+        "portfolio_losses": "Minusvalenze",
+    }
+
+    def _f(field: str, default: str = "0") -> float:
+        raw = (form.get(field, default) or default).strip()
+        try:
+            return float(raw)
+        except ValueError:
+            label = _FIELD_LABELS.get(field, field)
+            raise ValueError(f"Il campo «{label}» non è un numero valido (valore ricevuto: «{raw}»)")
 
     try:
         has_sale = form.get("has_sale") == "on"
         sale_date = _parse_date(form["sale_date"]) if has_sale and form.get("sale_date") else None
-        sale_price = float(form["sale_price"]) if has_sale and form.get("sale_price") else None
         buy_max_raw = form.get("buy_commission_max", "").strip()
         sell_max_raw = form.get("sell_commission_max", "").strip()
 
+        sale_price: float | None = None
+        if has_sale and form.get("sale_price"):
+            sale_price = _f("sale_price")
+
         tx = BotTransactionDTO(
             bond_id=bond_id,
-            purchase_venue=form["purchase_venue"],
+            purchase_venue=form["purchase_venue"],  # type: ignore[arg-type]
             purchase_date=_parse_date(form["purchase_date"]),
-            purchase_price=float(form["purchase_price"]),
-            face_value=float(form["face_value"]),
-            buy_commission_pct=float(form.get("buy_commission_pct", 0)),
-            buy_commission_min=float(form.get("buy_commission_min", 0)),
+            purchase_price=_f("purchase_price"),
+            face_value=_f("face_value"),
+            buy_commission_pct=_f("buy_commission_pct"),
+            buy_commission_min=_f("buy_commission_min"),
             buy_commission_max=float(buy_max_raw) if buy_max_raw else None,
-            buy_commission_fixed=float(form.get("buy_commission_fixed", 0)),
+            buy_commission_fixed=_f("buy_commission_fixed"),
             sale_date=sale_date,
             sale_price=sale_price,
-            sell_commission_pct=float(form.get("sell_commission_pct", 0)),
-            sell_commission_min=float(form.get("sell_commission_min", 0)),
+            sell_commission_pct=_f("sell_commission_pct"),
+            sell_commission_min=_f("sell_commission_min"),
             sell_commission_max=float(sell_max_raw) if sell_max_raw else None,
-            sell_commission_fixed=float(form.get("sell_commission_fixed", 0)),
+            sell_commission_fixed=_f("sell_commission_fixed"),
             stamp_duty_period=form.get("stamp_duty_period", "quarterly"),
-            portfolio_losses=float(form.get("portfolio_losses", 0)),
+            portfolio_losses=_f("portfolio_losses"),
         )
         result = _calculator_service.calculate(tx, bond)
-    except (ValueError, ValidationError) as e:
+    except ValidationError as e:
+        # Extract the first human-readable Pydantic error message
+        first = e.errors()[0]
+        msg = first.get("msg", str(e)).removeprefix("Value error, ")
+        flash(f"Errore: {msg}", "danger")
+        return render_template(
+            "bonds/calculator.html",
+            bonds=bonds,
+            quotes=quotes,
+            bond=bond,
+            tx=form,
+            result=None,
+            bank_profiles_json=bank_profiles_json,
+        ), 422
+    except ValueError as e:
         flash(f"Errore nei parametri: {e}", "danger")
-        return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond,
-                               tx=form, result=None, bank_profiles_json=bank_profiles_json), 422
+        return render_template(
+            "bonds/calculator.html",
+            bonds=bonds,
+            quotes=quotes,
+            bond=bond,
+            tx=form,
+            result=None,
+            bank_profiles_json=bank_profiles_json,
+        ), 422
 
-    return render_template("bonds/calculator.html", bonds=bonds, quotes=quotes, bond=bond,
-                           tx=form, result=result, bank_profiles_json=bank_profiles_json)
+    return render_template(
+        "bonds/calculator.html",
+        bonds=bonds,
+        quotes=quotes,
+        bond=bond,
+        tx=form,
+        result=result,
+        bank_profiles_json=bank_profiles_json,
+    )

@@ -30,7 +30,7 @@ Per simulare un acquisto, o un acquisto seguito da una vendita anticipata, è ne
       viene precompilato con il prezzo di emissione.
     - **MOT (mercato secondario)**: acquisto sul mercato dopo l'emissione. Il prezzo viene precompilato
       con l'ultima quotazione disponibile.
-- **Data regolamento**: per l'asta corrisponde alla data di regolamento o emissione; per il MOT si imposta automaticamente a oggi ma va inserito la data di acquisto del BOT + 2gg.
+- **Data acquisto**: per l'asta corrisponde alla data di regolamento o emissione; per il MOT si imposta automaticamente a oggi.
 - **Prezzo acquisto**: prezzo in euro per ogni 100€ di valore nominale (es. `98.50` = 98,50€ ogni 100€). Per l'asta è il prezzo di emissione; per il MOT è l'ultimo prezzo.
 - **Lotto nominale**: importo nominale in euro (multiplo di 100, es. `5000` = 50 BOT da €100 ciascuno).
 
@@ -85,7 +85,9 @@ Mostra il costo totale dell'operazione:
 - **Quantità**: `Lotto nominale / 100`
 - **Importo secco**: `Quantità × Prezzo Acquisto`
 - **Commissioni**: calcolate come percentuale sull'importo nominale (asta) o sull'importo secco (MOT); si applicano poi i valori minimo e massimo e si sommano gli eventuali costi fissi.
-- **Imposta disaggio**: il calcolo è più articolato — per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Disaggio pro-quota**: quota di disaggio per singolo BOT (100€ nominali). Per l'**asta** è l'intero disaggio (`100 − Prezzo emissione`); per il **MOT** è la quota proporzionale ai giorni rimanenti alla scadenza. Per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Imposta disaggio pro-quota**: imposta per singolo BOT, pari a `Disaggio pro-quota × 12,5%`.
+- **Imposta disaggio**: imposta totale anticipata, pari a `Imposta disaggio pro-quota × Quantità`.
 - **Totale pagato**: somma di importo secco, commissioni e imposta disaggio.
 
 ### Vendita / Rimborso
@@ -114,6 +116,74 @@ periodo di detenzione (trimestrale o annuale).
 - **Guadagno netto**: al netto di tutte le imposte e commissioni
 - **Rendimento semplice lordo/netto**: guadagno / totale pagato
 - **Rendimento composto lordo/netto**: tasso annualizzato con capitalizzazione composta
+
+## Esempio completo
+
+Di seguito un esempio reale con tutti i campi compilati, per capire cosa produce il calcolatore.
+
+**BOT Feb24 A** — acquistato sul MOT il 01/03/2023, portato a scadenza il 14/02/2024.
+
+| Parametro | Valore |
+|---|---|
+| Mercato | MOT |
+| Data emissione | 14/02/2023 |
+| Data scadenza | 14/02/2024 |
+| Prezzo emissione | 96,877 |
+| Data acquisto (regolamento) | 01/03/2023 |
+| Prezzo acquisto | 96,846 |
+| Lotto nominale | 5.000€ (50 BOT) |
+| Commissioni acquisto | 0,24% — min 3€ — costi fissi 3,50€ |
+| Vendita anticipata | No (rimborso a scadenza) |
+
+### Acquisto
+
+| Campo | Formula | Valore |
+|---|---|---|
+| Quantità | 5.000 / 100 | 50 |
+| Importo secco | 50 × 96,846 | 4.842,30€ |
+| Commissioni | max(4.842,30 × 0,24%, 3€) | 11,62€ |
+| Commissioni fisse | — | 3,50€ |
+| Disaggio pro-quota | 100 − 97,005 | 2,9950 |
+| Imposta disaggio | 2,9950 × 12,5% × 50 | 18,72€ |
+| **Totale pagato** | 4.842,30 + 11,62 + 3,50 + 18,72 | **4.876,14€** |
+
+### Rimborso a scadenza
+
+| Campo | Formula | Valore |
+|---|---|---|
+| Importo secco | 50 × 100 | 5.000,00€ |
+| Commissioni | — | 0,00€ |
+| Imposta disaggio rimborsata | (100 − 97,005) × 12,5% × 50 | 18,72€ |
+| **Totale ricevuto** | 5.000,00 + 0 + 18,72 | **5.018,72€** |
+
+### Capital Gain (MOT)
+
+| Campo | Formula | Valore |
+|---|---|---|
+| Prezzo teorico acquisto | 96,877 + 3,123 × (15/365) | 97,00534 |
+| Prezzo teorico vendita (scadenza) | 96,877 + 3,123 × (365/365) | 100,00000 |
+| Prezzo di carico | 96,846 + (11,62+3,50)/50 − (97,00534−96,877) | 97,02014 |
+| Prezzo di scarico | 100 − 0/50 − (100−96,877) | 96,87700 |
+| Plus/Minus valenza (per BOT) | 96,87700 − 97,02014 | −0,14314 |
+| Plus/Minus realizzata | −0,143 × 50 | −7,15€ |
+| Riduzione imponibile TdS (48,08%) | −7,15 × 48,08% | −3,44€ |
+| Minus valenza da zainetto | 7,15 × 48,08% | 3,44€ |
+
+> Il prezzo di scarico coincide con il prezzo di emissione (96,877) perché alla scadenza l'intero disaggio è stato maturato e viene sottratto, lasciando esattamente il valore di emissione (al netto delle commissioni di vendita, che in questo caso sono zero).
+
+### Riepilogo
+
+| Campo | Formula | Valore |
+|---|---|---|
+| Guadagno lordo | 5.000,00 − 4.842,30 | 157,70€ |
+| Guadagno netto (pre-bollo) | 157,70 − 18,72 (imp. disaggio) − 15,12 (comm.) | 123,86€ |
+| Guadagno netto | 123,86 − 9,84 (imposta di bollo) | 114,02€ |
+
+| Campo | Semplice | Composto |
+|---|---|---|
+| Rendimento lordo | 3,396% | 3,399% |
+| Rendimento netto (pre-bollo) | 2,649% | 2,650% |
+| Rendimento netto | 2,439% | 2,440% |
 
 ## Consigli pratici
 
