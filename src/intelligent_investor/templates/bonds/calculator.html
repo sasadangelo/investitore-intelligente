@@ -399,7 +399,7 @@
              <tr><th class="ps-3 text-muted fw-normal">Prezzo di carico</th>
                  <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.load_price) }}</td></tr>
              <tr><th class="ps-3 text-muted fw-normal">Prezzo di scarico</th>
-                 <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.unload_price) }}</td></tr>
+                 <td class="pe-3 text-end">{{ "%.3f"|format(result.capital_gain.unload_price) }}</td></tr>
             <tr>
               <th class="ps-3 text-muted fw-normal">Plus/Minus valenza (per BOT)</th>
               <td class="pe-3 text-end fw-semibold
@@ -744,8 +744,18 @@
   // -----------------------------------------------------------------------
 
   function toggleSale() {
-    document.getElementById('sale_fields').style.display =
-      document.getElementById('has_sale').checked ? '' : 'none';
+    const isChecked = document.getElementById('has_sale').checked;
+    document.getElementById('sale_fields').style.display = isChecked ? '' : 'none';
+    
+    // Clear sale fields when unchecking to prevent stale data from being sent
+    if (!isChecked) {
+      document.getElementById('sale_date').value = '';
+      document.getElementById('sale_price').value = '';
+      document.getElementById('sell_commission_pct').value = '';
+      document.getElementById('sell_commission_min').value = '';
+      document.getElementById('sell_commission_max').value = '';
+      document.getElementById('sell_commission_fixed').value = '';
+    }
   }
   document.getElementById('has_sale').addEventListener('change', toggleSale);
   toggleSale();

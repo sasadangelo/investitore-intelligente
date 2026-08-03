@@ -26,23 +26,7 @@ Se non conosci ancora i BOT, leggi la guida completa: **[Cos'è un BOT](/guides/
 | **Rendimento netto** | Rendimento annualizzato netto (al netto del 12,5% sul disaggio) |
 | **Azioni** | Pulsanti per accedere al dettaglio o al calcolatore |
 
-## Come vengono calcolati i rendimenti
-
-I rendimenti sono calcolati con la formula **composta** (XIRR), identica a quella usata da Excel:
-
-```
-rendimento_lordo = (100 / last_price) ^ (365 / giorni_residui) - 1
-```
-
-Per il rendimento netto si detrae l'imposta sostitutiva dal valore di rimborso:
-
-```
-disaggio_lordo   = (100 - prezzo_emissione) × giorni_residui / giorni_totali
-imposta_disaggio = disaggio_lordo × 12,5%
-rendimento_netto = ((100 - imposta_disaggio) / last_price) ^ (365 / giorni_residui) - 1
-```
-
-> **Nota:** il denominatore dell'esponente è sempre **365 giorni fissi** (convenzione XIRR di Excel/LibreOffice), indipendentemente dall'anno bisestile. Questo rende i rendimenti direttamente comparabili con quelli riportati da Bloomberg, Borsa Italiana e dai fogli di calcolo standard.
+> ℹ️ I rendimenti mostrati sono **annualizzati** e calcolati al netto dell'imposta sostitutiva sul disaggio (12,5%), ma **non includono** commissioni bancarie, imposta di bollo, né altre variabili coe le commissioni sul capital gain. Per il calcolo esatto con tutte le imposte e commissioni della tua banca, usa il **[Calcolatore BOT](/bonds/calculator)**.
 
 ## Aggiornamento quotazioni
 

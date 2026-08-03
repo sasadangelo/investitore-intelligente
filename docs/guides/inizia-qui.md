@@ -44,8 +44,8 @@ Il catalogo mostra in tempo reale tutti i BOT attualmente in circolazione sul me
 La scelta dipende principalmente da due fattori:
 
 1. **Orizzonte temporale** — per quanto tempo vuoi immobilizzare i tuoi soldi?
-   - Hai liquidità da parcheggiare per 3 mesi? Guarda i BOT trimestrali.
-   - Puoi aspettare 6 mesi? Considera i BOT semestrali.
+   - Hai liquidità da parcheggiare per 3 mesi? Guarda i BOT trimestrali o quelli che scadono fra tre mesi.
+   - Puoi aspettare 6 mesi? Considera i BOT semestrali o quelli che scadono fra sei mesi.
    - Vuoi massimizzare il rendimento entro l'anno? Scegli un BOT annuale.
    In linea generale, **più lungo è l'orizzonte, maggiore è il rendimento offerto**.
 
@@ -175,7 +175,7 @@ Il lotto minimo è generalmente **1.000 € nominali** (10 BOT da 100 € ciascu
 Tramite la tua banca o broker abilitato, sia in asta che sul MOT (Mercato Telematico delle Obbligazioni di Borsa Italiana).
 
 **4. Qual è la tassazione?**
-L'imposta sostitutiva sul disaggio (guadagno) è del **12,5%** — la più bassa tra gli strumenti finanziari italiani. È già trattenuta automaticamente dalla banca al momento del rimborso o della vendita.
+L'imposta sostitutiva sul disaggio (guadagno) è del **12,5%** — la più bassa tra gli strumenti finanziari italiani. È già trattenuta automaticamente dalla banca al momento dell'acquisto.
 
 **5. Oltre al prezzo di acquisto, quali altre spese devo considerare?**
 Tre voci si sommano al costo del BOT:
