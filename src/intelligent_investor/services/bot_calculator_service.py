@@ -211,25 +211,22 @@ class BotCalculatorService:
         # Step 1 — Plus/Minus Realizzata (D34 in Excel)
         total_gain_loss: float = unit_gain_loss * quantity
 
-        # Step 2 — Riduzione Imponibile per TdS (C35)
+        # Step 2 — Riduzione Imponibile per TdS (C35) — informativa
         tds_reduction: float = total_gain_loss * _TDS_REDUCTION
 
-        # Step 3 — Imposta lorda (D33): only when plus valenza
-        gross_tax: float = total_gain_loss * tax_rate if total_gain_loss > 0 else 0.0
+        # Step 3 — Imposta sulla plusvalenza: tax_rate% applicato direttamente sulla plus.
+        # È questa che il sostituto d'imposta trattiene al rimborso.
+        # (la riduzione TdS è solo una rappresentazione alternativa dello stesso calcolo,
+        # non riduce ulteriormente l'imposta rispetto all'applicazione diretta di tax_rate)
+        capital_gain_tax: float = total_gain_loss * tax_rate if total_gain_loss > 0 else 0.0
 
         if total_gain_loss > 0:
-            # Imponibile netto = plus realizzata − riduzione TdS − zainetto già usato
-            # Portfolio losses are at 26%-equivalent; scale to 12.5% to compare
-            scaled_losses: float = tx.portfolio_losses * tax_rate / _CAPITAL_GAIN_RATE
-            net_taxable: float = max(0.0, total_gain_loss - tds_reduction - scaled_losses)
-            capital_gain_tax: float = net_taxable * tax_rate
             # Zainetto residuo: parte dello zainetto non consumata dalla plus (B36/D38)
+            scaled_losses: float = tx.portfolio_losses * tax_rate / _CAPITAL_GAIN_RATE
             plus_after_tds: float = total_gain_loss - tds_reduction
-            consumed: float = min(tx.portfolio_losses * tax_rate / _CAPITAL_GAIN_RATE, plus_after_tds)
+            consumed: float = min(scaled_losses, plus_after_tds)
             remaining_loss: float = max(0.0, tx.portfolio_losses - consumed * _CAPITAL_GAIN_RATE / tax_rate)
         else:
-            net_taxable = 0.0
-            capital_gain_tax = 0.0
             # Minus da aggiungere allo zainetto: abs(total) × 48.08% (C35 Excel quando minus)
             remaining_loss = abs(tds_reduction)
 
@@ -241,8 +238,6 @@ class BotCalculatorService:
             unit_gain_loss=unit_gain_loss,
             total_gain_loss=total_gain_loss,
             tds_reduction=tds_reduction,
-            gross_tax=gross_tax,
-            net_taxable=net_taxable,
             capital_gain_tax=capital_gain_tax,
             remaining_loss=remaining_loss,
         )

@@ -359,32 +359,6 @@
       </div>
     </div>
 
-    {# ---- Sale / Redemption ---- #}
-    <div class="card shadow-sm mb-3">
-      <div class="card-header section-header">
-        <i class="bi bi-cash-coin me-1"></i>
-        {% if tx and tx.get('sale_price') %}Vendita anticipata{% else %}Rimborso a scadenza o vendita anticipata{% endif %}
-      </div>
-      <div class="card-body p-0">
-        <table class="table table-sm mb-0">
-          <tbody>
-            <tr><th class="ps-3 text-muted fw-normal w-50">Importo secco</th>
-                <td class="pe-3 text-end">€ {{ result.sale.dry_amount | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
-                <td class="pe-3 text-end">€ {{ result.sale.commission | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
-                <td class="pe-3 text-end">€ {{ result.sale.fixed_commission | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata</th>
-                <td class="pe-3 text-end">€ {{ result.sale.discount_tax | r2 }}</td></tr>
-            <tr class="table-light">
-              <th class="ps-3 fw-semibold">Totale ricevuto</th>
-              <td class="pe-3 text-end fw-semibold fs-6">€ {{ result.sale.total_received | r2 }}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
     {# ---- Capital Gain (MOT only) ---- #}
     {% if result.capital_gain %}
     <div class="card shadow-sm mb-3">
@@ -417,12 +391,8 @@
             <tr><th class="ps-3 text-muted fw-normal">Riduzione imponibile TdS (48.08%)</th>
                 <td class="pe-3 text-end">€ {{ result.capital_gain.tds_reduction | r2 }}</td></tr>
             {% if result.capital_gain.total_gain_loss > 0 %}
-            <tr><th class="ps-3 text-muted fw-normal">Imposta lorda (12.5%)</th>
-                <td class="pe-3 text-end">€ {{ result.capital_gain.gross_tax | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Imponibile netto (dopo zainetto)</th>
-                <td class="pe-3 text-end">€ {{ result.capital_gain.net_taxable | r2 }}</td></tr>
             <tr class="table-light">
-              <th class="ps-3 fw-semibold">Imposta sulla plusvalenza</th>
+              <th class="ps-3 fw-semibold">Imposta sulla plusvalenza (12.5%)</th>
               <td class="pe-3 text-end fw-semibold">€ {{ result.capital_gain.capital_gain_tax | r2 }}</td>
             </tr>
             {% if result.capital_gain.remaining_loss > 0 %}
@@ -440,6 +410,36 @@
       </div>
     </div>
     {% endif %}
+
+    {# ---- Sale / Redemption ---- #}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header section-header">
+        <i class="bi bi-cash-coin me-1"></i>
+        {% if tx and tx.get('sale_price') %}Vendita anticipata{% else %}Rimborso a scadenza o vendita anticipata{% endif %}
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-sm mb-0">
+          <tbody>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Importo secco</th>
+                <td class="pe-3 text-end">€ {{ result.sale.dry_amount | r2 }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
+                <td class="pe-3 text-end">€ {{ result.sale.commission | r2 }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
+                <td class="pe-3 text-end">€ {{ result.sale.fixed_commission | r2 }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata</th>
+                <td class="pe-3 text-end">€ {{ result.sale.discount_tax | r2 }}</td></tr>
+            {% if result.capital_gain and result.capital_gain.capital_gain_tax > 0 %}
+            <tr><th class="ps-3 text-muted fw-normal">Imposta sulla plusvalenza</th>
+                <td class="pe-3 text-end text-danger">− € {{ result.capital_gain.capital_gain_tax | r2 }}</td></tr>
+            {% endif %}
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold">Totale ricevuto</th>
+              <td class="pe-3 text-end fw-semibold fs-6">€ {{ (result.sale.total_received - (result.capital_gain.capital_gain_tax if result.capital_gain else 0)) | r2 }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
     {# ---- Stamp Duty ---- #}
     <div class="card shadow-sm mb-3">

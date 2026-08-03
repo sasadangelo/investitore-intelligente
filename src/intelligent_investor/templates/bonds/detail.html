@@ -69,6 +69,16 @@
               <th class="ps-3 text-muted fw-normal">Aliquota fiscale</th>
               <td class="pe-3">{{ "%.1f"|format(bond.tax_rate) }}%</td>
             </tr>
+            {% if bond.auction_result_url %}
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Doc. emissione</th>
+              <td class="pe-3">
+                <a href="{{ bond.auction_result_url }}" target="_blank" rel="noopener">
+                  <i class="bi bi-file-earmark-text me-1"></i>Apri documento
+                </a>
+              </td>
+            </tr>
+            {% endif %}
           </tbody>
         </table>
       </div>

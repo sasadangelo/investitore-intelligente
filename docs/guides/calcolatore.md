@@ -90,20 +90,22 @@ Mostra il costo totale dell'operazione:
 - **Imposta disaggio**: imposta totale anticipata, pari a `Imposta disaggio pro-quota × Quantità`.
 - **Totale pagato**: somma di importo secco, commissioni e imposta disaggio.
 
-### Vendita / Rimborso
-
-Mostra il ricavato dell'operazione:
-- **Importo secco**: controvalore alla vendita o al rimborso
-- **Commissioni** di vendita: calcolate con la stessa logica dell'acquisto (zero se rimborso a scadenza).
-- **Imposta disaggio rimborsata**: per i dettagli sul calcolo consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
-- **Totale ricevuto**: somma di importo secco, al netto di commissioni e imposta disaggio.
-
 ### Capital Gain (solo MOT)
 
 Per acquisti sul mercato secondario si calcola la plusvalenza o minusvalenza:
-- **Prezzo teorico di acquisto/vendita**: il prezzo di carico/scarico depurato del rateo disaggio fiscale
-- **Imponibile** e **imposta capital gain** (26%)
-- Se presente la minusvalenza pregressa, viene dedotta dall'imponibile
+- **Prezzo teorico di acquisto/vendita**: il prezzo di carico/scarico depurato del rateo disaggio fiscale. Per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Plus/Minus realizzata**: guadagno o perdita effettiva sull'operazione.
+- **Riduzione imponibile TdS (48,08%)**: quota informativa — i TdS godono di aliquota agevolata al 12,5%; il 48,08% è il fattore di riduzione rispetto all'aliquota standard 26%, usato per rendere la minusvalenza compensabile con altri strumenti. Per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Imposta sulla plusvalenza (12,5%)**: imposta trattenuta dal sostituto d'imposta (banca) al rimborso o alla vendita. È `Plus realizzata × 12,5%`. Zero in caso di minusvalenza.
+
+### Rimborso / Vendita anticipata
+
+Mostra il ricavato effettivo dell'operazione, **dopo** il Capital Gain:
+- **Importo secco**: controvalore alla vendita o al rimborso (es. 5.000€ a scadenza).
+- **Commissioni** di vendita: calcolate con la stessa logica dell'acquisto (zero se rimborso a scadenza).
+- **Imposta disaggio rimborsata**: per i dettagli sul calcolo consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Imposta sulla plusvalenza**: la stessa calcolata nella sezione Capital Gain, trattenuta direttamente al rimborso (mostrata solo se positiva).
+- **Totale ricevuto**: importo secco al netto di commissioni, imposta disaggio e imposta sulla plusvalenza. È la somma che la banca accredita effettivamente sul conto.
 
 ### Imposta di Bollo
 
@@ -147,15 +149,6 @@ Di seguito un esempio reale con tutti i campi compilati, per capire cosa produce
 | Imposta disaggio | 2,9950 × 12,5% × 50 | 18,72€ |
 | **Totale pagato** | 4.842,30 + 11,62 + 3,50 + 18,72 | **4.876,14€** |
 
-### Rimborso a scadenza
-
-| Campo | Formula | Valore |
-|---|---|---|
-| Importo secco | 50 × 100 | 5.000,00€ |
-| Commissioni | — | 0,00€ |
-| Imposta disaggio rimborsata | (100 − 97,005) × 12,5% × 50 | 18,72€ |
-| **Totale ricevuto** | 5.000,00 + 0 + 18,72 | **5.018,72€** |
-
 ### Capital Gain (MOT)
 
 | Campo | Formula | Valore |
@@ -165,11 +158,22 @@ Di seguito un esempio reale con tutti i campi compilati, per capire cosa produce
 | Prezzo di carico | 96,846 + (11,62+3,50)/50 − (97,00534−96,877) | 97,02014 |
 | Prezzo di scarico | 100 − 0/50 − (100−96,877) | 96,87700 |
 | Plus/Minus valenza (per BOT) | 96,87700 − 97,02014 | −0,14314 |
-| Plus/Minus realizzata | −0,143 × 50 | −7,15€ |
-| Riduzione imponibile TdS (48,08%) | −7,15 × 48,08% | −3,44€ |
-| Minus valenza da zainetto | 7,15 × 48,08% | 3,44€ |
+| Plus/Minus realizzata | −0,14314 × 50 | −7,16€ |
+| Riduzione imponibile TdS (48,08%) | 7,16 × 48,08% | 3,44€ |
+| Minus valenza da zainetto | 3,44€ | — |
+| **Imposta sulla plusvalenza** | minusvalenza → nessuna imposta | **0,00€** |
 
-> Il prezzo di scarico coincide con il prezzo di emissione (96,877) perché alla scadenza l'intero disaggio è stato maturato e viene sottratto, lasciando esattamente il valore di emissione (al netto delle commissioni di vendita, che in questo caso sono zero).
+> Il prezzo di scarico coincide con il prezzo di emissione (96,877) perché alla scadenza l'intero disaggio è stato maturato e viene sottratto, lasciando esattamente il valore di emissione (al netto delle commissioni di vendita, che in questo caso sono zero). Trattandosi di minusvalenza, l'imposta sulla plusvalenza è zero e la minus va allo zainetto fiscale.
+
+### Rimborso a scadenza
+
+| Campo | Formula | Valore |
+|---|---|---|
+| Importo secco | 50 × 100 | 5.000,00€ |
+| Commissioni | — | 0,00€ |
+| Imposta disaggio rimborsata | (100 − 97,005) × 12,5% × 50 | 18,72€ |
+| Imposta sulla plusvalenza | — (minusvalenza) | 0,00€ |
+| **Totale ricevuto** | 5.000,00 + 0 + 18,72 − 0,00 | **5.018,72€** |
 
 ### Riepilogo
 

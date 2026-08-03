@@ -50,13 +50,11 @@ class CapitalGainResultDTO(BaseModel):
     (issue_date, issue_price) and (maturity_date, 100).
 
     Sequence (mirrors the Excel calcolatore-bot.ods):
-      1. unit_gain_loss      = unload_price - load_price          (per single BOT)
-      2. total_gain_loss     = unit_gain_loss × quantity           (D34 in Excel)
-      3. tds_reduction       = total_gain_loss × 48.08%           (C35 — TdS reduction)
-      4. gross_tax           = total_gain_loss × 12.5%  (if >0)   (D33)
-      5. net_taxable         = max(0, total_gain_loss - tds_reduction - portfolio_losses_equiv)
-      6. capital_gain_tax    = net_taxable × 12.5%                (E37 scaled)
-      7. remaining_loss      = zainetto residuo (if gain) or minus da aggiungere allo zainetto (if loss)
+      1. unit_gain_loss   = unload_price - load_price        (per single BOT)
+      2. total_gain_loss  = unit_gain_loss × quantity        (Plus/Minus Realizzata in €)
+      3. tds_reduction    = total_gain_loss × 48.08%         (Riduzione Imponibile per TdS — informativa)
+      4. capital_gain_tax = total_gain_loss × 12.5%  (if >0) — trattenuta dal sostituto al rimborso
+      5. remaining_loss   = zainetto residuo (if gain) or minus da aggiungere allo zainetto (if loss)
     """
 
     theoretical_purchase_price: float
@@ -69,13 +67,9 @@ class CapitalGainResultDTO(BaseModel):
     unit_gain_loss: float
     # total_gain_loss = unit_gain_loss × quantity  (Plus/Minus Realizzata in €)
     total_gain_loss: float
-    # tds_reduction = total_gain_loss × 48.08%  (Riduzione Imponibile per TdS)
+    # tds_reduction = total_gain_loss × 48.08%  (Riduzione Imponibile per TdS — solo informativa)
     tds_reduction: float
-    # gross_tax = total_gain_loss × 12.5%  (Imposta lorda, 0 if minus)
-    gross_tax: float
-    # net_taxable = imponibile netto dopo zainetto fiscale (0 if fully offset or if minus)
-    net_taxable: float
-    # capital_gain_tax = net_taxable × 12.5%  (Imposta netta sulla Plusvalenza)
+    # capital_gain_tax = total_gain_loss × 12.5%  (trattenuta dal sostituto al rimborso, 0 if minus)
     capital_gain_tax: float
     # remaining_loss:
     #   if gain → zainetto fiscale residuo dopo compensazione (€, in termini 26%-equiv)

@@ -1,6 +1,6 @@
 ---
 title: Approfondimenti sul Calcolatore BOT
-description: Spiegazione dettagliata dei calcoli interni del Calcolatore BOT — disaggio lordo, imposta disaggio e rimborso pro-quota.
+description: Spiegazione dettagliata dei calcoli interni del Calcolatore BOT — disaggio, capital gain e imposta sui TdS.
 icon: bi-journal-text
 order: 5
 ---
@@ -124,22 +124,30 @@ Un valore positivo indica una plusvalenza, negativo una minusvalenza.
 Plus/Minus realizzata = Plus/Minus valenza (per BOT) × Quantità
 ```
 
-### Riduzione imponibile TdS (48,08%)
+### Imposta sulla plusvalenza (12,5%)
 
-I BOT sono titoli di Stato (TdS), tassati al **12,5%** anziché al 26% standard. Per rendere le minusvalenze su TdS compensabili con plusvalenze su altri strumenti al 26%, l'Agenzia delle Entrate applica un **fattore di riduzione del 48,08%** (= 12,5% / 26%) all'imponibile.
-
-In caso di **minusvalenza**, questo importo ridotto (48,08% della minus realizzata) è quello che entra nello "zainetto fiscale" e può compensare future plusvalenze.
+I BOT sono titoli di Stato (TdS), soggetti a imposta sostitutiva agevolata al **12,5%**. In caso di plusvalenza, il sostituto d'imposta (la banca) trattiene direttamente l'imposta al momento del rimborso o della vendita:
 
 ```
-Riduzione imponibile TdS = Plus/Minus realizzata × 48,08%
+Imposta sulla plusvalenza = Plus/Minus realizzata × 12,5%   (solo se positiva, altrimenti 0)
+```
+
+Questa è la cifra che la banca trattiene e che riduce il **Totale ricevuto** nella sezione Rimborso.
+
+### Riduzione imponibile TdS (48,08%) — voce informativa
+
+Il fattore 48,08% (= 12,5% / 26%) è esposto a titolo informativo e serve esclusivamente per calcolare la quota di **minusvalenza** da iscrivere nello zainetto fiscale in forma comparabile con strumenti tassati al 26%.
+
+```
+Riduzione imponibile TdS = |Plus/Minus realizzata| × 48,08%
 ```
 
 ### Minus valenza da zainetto
 
-In caso di minusvalenza, il valore che viene aggiunto allo zainetto fiscale — già ridotto al 48,08% — pronto a compensare future plusvalenze su altri strumenti:
+In caso di minusvalenza, il valore che viene aggiunto allo zainetto fiscale — già ridotto al 48,08% — è pronto a compensare future plusvalenze su altri strumenti:
 
 ```
 Minus valenza da zainetto = |Plus/Minus realizzata| × 48,08%
 ```
 
-> **Esempio**: minus realizzata = −7,15€ → minus da zainetto = 7,15 × 48,08% ≈ **3,44€**
+> **Esempio**: minus realizzata = −7,16€ → minus da zainetto = 7,16 × 48,08% ≈ **3,44€**
