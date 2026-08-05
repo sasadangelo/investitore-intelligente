@@ -1,0 +1,70 @@
+{
+  "description": "BOT annuale acquistato sul MOT (mercato secondario) - Feb 2023",
+  "bond": {
+    "name": "BOT Zc Feb24 A EUR",
+    "isin": "IT0005527532",
+    "bond_type": "BOT",
+    "issue_date": "2023-02-14",
+    "maturity_date": "2024-02-14",
+    "issue_price": 96.877,
+    "redemption_price": 100.0,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "bond_id": 0,
+    "purchase_venue": "mot",
+    "purchase_date": "2023-03-01",
+    "purchase_price": 96.846,
+    "face_value": 5000.0,
+    "buy_commission_pct": 0.24,
+    "buy_commission_min": 3.0,
+    "buy_commission_max": null,
+    "buy_commission_fixed": 3.5,
+    "stamp_duty_period": "quarterly",
+    "portfolio_losses": 0.0
+  },
+  "expected": {
+    "quantity": 50.0,
+    "purchase": {
+      "dry_amount": 4842.30,
+      "commission": 11.62,
+      "fixed_commission": 3.50,
+      "unit_discount": 2.994658,
+      "discount_tax": 18.72,
+      "total_paid": 4876.14
+    },
+    "capital_gain": {
+      "theoretical_purchase_price": 97.00534,
+      "theoretical_sale_price": 100.0,
+      "load_price": 97.02009,
+      "unload_price": 96.877,
+      "unit_gain_loss": -0.14309,
+      "total_gain_loss": -7.15,
+      "tds_reduction": -3.44,
+      "capital_gain_tax": 0.0,
+      "remaining_loss": 3.44
+    },
+    "sale": {
+      "dry_amount": 5000.0,
+      "commission": 0.0,
+      "fixed_commission": 0.0,
+      "discount_tax": 0.0,
+      "total_received": 5000.0
+    },
+    "stamp_duty": {
+      "holding_periods": 4,
+      "estimated_duty": 9.84
+    },
+    "summary": {
+      "gross_gain": 157.70,
+      "net_gain_before_duty": 123.86,
+      "net_gain": 114.02,
+      "simple_gross_yield": 3.396,
+      "compound_gross_yield": 3.399,
+      "simple_net_yield_before_duty": 2.649,
+      "compound_net_yield_before_duty": 2.650,
+      "simple_net_yield": 2.439,
+      "compound_net_yield": 2.440
+    }
+  }
+}

@@ -12,10 +12,10 @@ from intelligent_investor.dtos import BondDTO
 from intelligent_investor.models.bond import BondDAO
 from intelligent_investor.services import BondService
 
-
 # ------------------------------------------------------------------
 # Helpers
 # ------------------------------------------------------------------
+
 
 def _id(dto: BondDTO) -> int:
     """Assert and return a saved DTO's id as non-None int."""
@@ -46,6 +46,7 @@ def _make_bond(
 # Fixtures
 # ------------------------------------------------------------------
 
+
 @pytest.fixture(scope="module")
 def service() -> BondService:
     return BondService()
@@ -65,6 +66,7 @@ def clean_bonds(test_engine: sa.Engine, service: BondService) -> Generator[None,
 # create
 # ------------------------------------------------------------------
 
+
 def test_create_returns_dto_with_id(service: BondService) -> None:
     bond = _make_bond()
     saved = service.create(bond)
@@ -82,6 +84,7 @@ def test_create_duplicate_isin_raises(service: BondService) -> None:
 # get_by_id
 # ------------------------------------------------------------------
 
+
 def test_get_by_id_found(service: BondService) -> None:
     saved = service.create(_make_bond())
     fetched = service.get_by_id(_id(saved))
@@ -96,6 +99,7 @@ def test_get_by_id_not_found(service: BondService) -> None:
 # ------------------------------------------------------------------
 # get_by_isin
 # ------------------------------------------------------------------
+
 
 def test_get_by_isin_found(service: BondService) -> None:
     saved = service.create(_make_bond(isin="IT0005999001"))
@@ -112,6 +116,7 @@ def test_get_by_isin_not_found(service: BondService) -> None:
 # list_all
 # ------------------------------------------------------------------
 
+
 def test_list_all_empty(service: BondService) -> None:
     assert service.list_all() == []
 
@@ -125,6 +130,7 @@ def test_list_all_returns_all(service: BondService) -> None:
 # ------------------------------------------------------------------
 # update
 # ------------------------------------------------------------------
+
 
 def test_update_changes_fields(service: BondService) -> None:
     saved = service.create(_make_bond(issue_price=99.0))
@@ -156,6 +162,7 @@ def test_update_nonexistent_raises(service: BondService) -> None:
 # delete
 # ------------------------------------------------------------------
 
+
 def test_delete_existing_returns_true(service: BondService) -> None:
     saved = service.create(_make_bond())
     assert service.delete(_id(saved)) is True
@@ -170,20 +177,25 @@ def test_delete_nonexistent_returns_false(service: BondService) -> None:
 # delete_expired
 # ------------------------------------------------------------------
 
+
 def test_delete_expired_removes_only_expired(service: BondService) -> None:
     today = date.today()
-    service.create(_make_bond(
-        name="Expired",
-        isin="IT0009000001",
-        issue_date=today - timedelta(days=400),
-        maturity_date=today - timedelta(days=1),
-    ))
-    service.create(_make_bond(
-        name="Active",
-        isin="IT0009000002",
-        issue_date=today - timedelta(days=100),
-        maturity_date=today + timedelta(days=30),
-    ))
+    service.create(
+        _make_bond(
+            name="Expired",
+            isin="IT0009000001",
+            issue_date=today - timedelta(days=400),
+            maturity_date=today - timedelta(days=1),
+        )
+    )
+    service.create(
+        _make_bond(
+            name="Active",
+            isin="IT0009000002",
+            issue_date=today - timedelta(days=100),
+            maturity_date=today + timedelta(days=30),
+        )
+    )
     assert service.delete_expired() == 1
     remaining = service.list_all()
     assert len(remaining) == 1

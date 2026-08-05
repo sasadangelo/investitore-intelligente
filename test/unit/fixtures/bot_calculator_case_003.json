@@ -1,0 +1,60 @@
+{
+  "description": "BOT annuale acquistato all'asta (mercato primario) - Apr 2024 - rimborso a scadenza",
+  "bond": {
+    "name": "Bot Zc Apr25 A Eur",
+    "isin": "IT0005589922",
+    "bond_type": "BOT",
+    "issue_date": "2024-04-12",
+    "maturity_date": "2025-04-14",
+    "issue_price": 96.524,
+    "redemption_price": 100.0,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "bond_id": 0,
+    "purchase_venue": "asta",
+    "purchase_date": "2024-04-12",
+    "purchase_price": 96.524,
+    "face_value": 5000.0,
+    "buy_commission_pct": 0.15,
+    "buy_commission_min": 0.0,
+    "buy_commission_max": null,
+    "buy_commission_fixed": 0.0,
+    "stamp_duty_period": "quarterly",
+    "portfolio_losses": 0.0
+  },
+  "expected": {
+    "quantity": 50.0,
+    "purchase": {
+      "dry_amount": 4826.20,
+      "commission": 7.50,
+      "fixed_commission": 0.00,
+      "unit_discount": 3.476000,
+      "discount_tax": 21.73,
+      "total_paid": 4855.43
+    },
+    "capital_gain": null,
+    "sale": {
+      "dry_amount": 5000.0,
+      "commission": 0.0,
+      "fixed_commission": 0.0,
+      "discount_tax": 0.0,
+      "total_received": 5000.0
+    },
+    "stamp_duty": {
+      "holding_periods": 4,
+      "estimated_duty": 9.83
+    },
+    "summary": {
+      "gross_gain": 173.80,
+      "net_gain_before_duty": 144.58,
+      "net_gain": 134.75,
+      "simple_gross_yield": 3.586,
+      "compound_gross_yield": 3.581,
+      "simple_net_yield_before_duty": 2.965,
+      "compound_net_yield_before_duty": 2.961,
+      "simple_net_yield": 2.764,
+      "compound_net_yield": 2.760
+    }
+  }
+}
