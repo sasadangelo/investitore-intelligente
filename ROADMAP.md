@@ -14,19 +14,16 @@
 
 | #    | Bank | Profiles | Priority | Notes |
 |------|---|---|---|---|
-| 1.1  | **Poste Italiane / BancoPosta** | Sportello, Online | 🔴 | Huge retail customer base; BOT commissions typically higher than banks |
-| 1.2  | **ING Italia** | Internet Banking | 🔴 | Popular with self-directed investors |
-| 1.3  | **Widiba** | Internet Banking | 🔴 | MPS Group online bank; competitive fees |
-| 1.4  | **Banca Sella** | Internet Banking | 🟡 | Well-regarded by digital investors |
-| 1.5  | **CheBanca! (Mediobanca)** | Internet Banking | 🟡 | Similar target audience to Fineco |
-| 1.6  | **Mediolanum** | Internet Banking | 🟡 | Wide customer base via financial advisors |
-| 1.7  | **Credem (Credito Emiliano)** | Filiale, Internet Banking | 🟡 | Strong in Emilia-Romagna |
-| 1.8  | **Banco di Sardegna** | Filiale, Internet Banking | 🟢 | Relevant in Sardinia |
-| 1.9  | **Cassa Depositi e Prestiti / CDP** | — | 🟢 | Issues BTP but no retail brokerage |
-| 1.10 | **Trade Republic** | App | 🟢 | Growing among younger investors; BOT support limited |
-| 1.12 | **Revolut** | App | 🟢 | Large user base but limited Italian government bond support |
-| 1.13 | **Degiro** | Online | 🟢 | Popular discount broker; MOT access available |
-| 1.14 | **Flatex** | Online | 🟢 | German broker with Italian MOT access |
+| 1.1  | **Banca Sella** | Internet Banking | 🟡 | Well-regarded by digital investors |
+| 1.2  | **CheBanca! (Mediobanca)** | Internet Banking | 🟡 | Similar target audience to Fineco |
+| 1.3  | **Mediolanum** | Internet Banking | 🟡 | Wide customer base via financial advisors |
+| 1.4  | **Credem (Credito Emiliano)** | Filiale, Internet Banking | 🟡 | Strong in Emilia-Romagna |
+| 1.5  | **Banco di Sardegna** | Filiale, Internet Banking | 🟢 | Relevant in Sardinia |
+| 1.6  | **Cassa Depositi e Prestiti / CDP** | — | 🟢 | Issues BTP but no retail brokerage |
+| 1.7 | **Trade Republic** | App | 🟢 | Growing among younger investors; BOT support limited |
+| 1.8 | **Revolut** | App | 🟢 | Large user base but limited Italian government bond support |
+| 1.9 | **Degiro** | Online | 🟢 | Popular discount broker; MOT access available |
+| 1.10 | **Flatex** | Online | 🟢 | German broker with Italian MOT access |
 
 > **Note:** for each profile, collect the official information sheet and set `info_url`.
 
