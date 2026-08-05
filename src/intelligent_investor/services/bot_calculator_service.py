@@ -69,6 +69,9 @@ class BotCalculatorService:
             purchase=purchase,
             sale=sale,
         )
+        # Deduct capital gain tax from total_received (withheld by the broker at redemption)
+        if capital_gain and capital_gain.capital_gain_tax > 0:
+            sale = sale.model_copy(update={"total_received": sale.total_received - capital_gain.capital_gain_tax})
         stamp_duty: StampDutyResultDTO = self._calc_stamp_duty(transaction, sale_date, purchase)
         summary: SummaryResultDTO = self._calc_summary(
             purchase=purchase,
@@ -286,13 +289,13 @@ class BotCalculatorService:
 
         # Gross gain = pure cash flow without commissions, taxes or stamp duty
         gross_gain: float = sale.dry_amount - purchase.dry_amount
-        # Net gain before duty = total received − total paid − capital gain tax.
+        # Net gain before duty = total received − total paid.
+        # capital_gain_tax is already deducted from sale.total_received by calculate().
         # Use Decimal to avoid float subtraction errors on midpoint values (e.g. 144.575
         # must round to 144.58 via ROUND_HALF_UP, not 144.57 due to float imprecision).
         net_gain_before_duty: float = float(
             Decimal(str(sale.total_received))
             - Decimal(str(purchase.total_paid))
-            - Decimal(str(capital_gain_tax))
         )
         net_gain: float = float(
             Decimal(str(net_gain_before_duty)) - Decimal(str(stamp_duty.estimated_duty))
@@ -306,7 +309,7 @@ class BotCalculatorService:
         simple_gross_yield: float = yc.simple(gross_gain, dry_purchase)
         compound_gross_yield: float = yc.compound(sale.dry_amount, dry_purchase)
 
-        net_pre_redemption: float = sale.total_received - capital_gain_tax
+        net_pre_redemption: float = sale.total_received
         simple_net_yield_before_duty: float = yc.simple(net_gain_before_duty, total_paid)
         compound_net_yield_before_duty: float = yc.compound(net_pre_redemption, total_paid)
 

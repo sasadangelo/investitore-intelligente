@@ -434,7 +434,7 @@
             {% endif %}
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Totale ricevuto</th>
-              <td class="pe-3 text-end fw-semibold fs-6">€ {{ (result.sale.total_received - (result.capital_gain.capital_gain_tax if result.capital_gain else 0)) | r2 }}</td>
+              <td class="pe-3 text-end fw-semibold fs-6">€ {{ result.sale.total_received | r2 }}</td>
             </tr>
           </tbody>
         </table>

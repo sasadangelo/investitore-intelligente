@@ -1,0 +1,70 @@
+{
+  "description": "BOT annuale acquistato sul MOT (mercato secondario) - Feb 2026 - rimborso a scadenza",
+  "bond": {
+    "name": "Bot Zc Feb27 A Eur",
+    "isin": "IT0005695256",
+    "bond_type": "BOT",
+    "issue_date": "2026-02-13",
+    "maturity_date": "2027-02-12",
+    "issue_price": 97.952,
+    "redemption_price": 100.0,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "bond_id": 0,
+    "purchase_venue": "mot",
+    "purchase_date": "2026-08-07",
+    "purchase_price": 98.687,
+    "face_value": 5000.0,
+    "buy_commission_pct": 0.24,
+    "buy_commission_min": 3.50,
+    "buy_commission_max": null,
+    "buy_commission_fixed": 0.00,
+    "stamp_duty_period": "quarterly",
+    "portfolio_losses": 0.0
+  },
+  "expected": {
+    "quantity": 50.0,
+    "purchase": {
+      "dry_amount": 4934.35,
+      "commission": 11.84,
+      "fixed_commission": 0.00,
+      "unit_discount": 1.063385,
+      "discount_tax": 6.65,
+      "total_paid": 4952.84
+    },
+    "capital_gain": {
+      "theoretical_purchase_price": 98.93662,
+      "theoretical_sale_price": 100.00000,
+      "load_price": 97.93923,
+      "unload_price": 97.95200,
+      "unit_gain_loss": 0.01277,
+      "total_gain_loss": 0.64,
+      "tds_reduction": 0.31,
+      "capital_gain_tax": 0.08,
+      "remaining_loss": 0.00
+    },
+    "sale": {
+      "dry_amount": 5000.00,
+      "commission": 0.00,
+      "fixed_commission": 0.00,
+      "discount_tax": 0.00,
+      "total_received": 4999.92
+    },
+    "stamp_duty": {
+      "holding_periods": 2,
+      "estimated_duty": 4.97
+    },
+    "summary": {
+      "gross_gain": 65.65,
+      "net_gain_before_duty": 47.08,
+      "net_gain": 42.11,
+      "simple_gross_yield": 2.569,
+      "compound_gross_yield": 2.585,
+      "simple_net_yield_before_duty": 1.836,
+      "compound_net_yield_before_duty": 1.844,
+      "simple_net_yield": 1.642,
+      "compound_net_yield": 1.649
+    }
+  }
+}
