@@ -9,6 +9,7 @@ import intelligent_investor.db.session as _db_module
 from intelligent_investor.db.base import Base
 from intelligent_investor.models.bond import BondDAO  # noqa: F401 — registers table in Base metadata
 from intelligent_investor.models.bond_quotes import BondQuoteDAO  # noqa: F401 — registers table in Base metadata
+from intelligent_investor.models.bot_auction import BotAuctionDAO  # noqa: F401 — registers table in Base metadata
 
 _test_engine: Engine = create_engine("sqlite:///:memory:", echo=False)
 _db_module.db_manager.engine = _test_engine

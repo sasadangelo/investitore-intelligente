@@ -30,6 +30,7 @@ dev = [
   "poethepoet>=0.39.0",
   "pre-commit>=4.5.1",
   "pytest>=9.0.2",
+  "pytest-cov>=7.1.0",
   "radon>=6.0.1",
   "ruff>=0.11.0",
   "types-pyyaml>=6.0.12",
@@ -80,4 +81,11 @@ strict = false
 
 [tool.pytest.ini_options]
 pythonpath = ["src"]
-testpaths = ["test", "test/unit"]
+testpaths = ["test"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["test/*"]
+
+[tool.coverage.report]
+show_missing = true
