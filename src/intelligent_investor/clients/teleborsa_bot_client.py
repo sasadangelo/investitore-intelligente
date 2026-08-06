@@ -30,12 +30,9 @@ from bs4._typing import _AtMostOneTag, _SomeTags
 from bs4.element import Tag
 from requests.models import Response
 
-from intelligent_investor.clients.client_base import (BaseClient, ClientEvent,
-                                                      ClientRegistry)
+from intelligent_investor.clients.client_base import BaseClient, ClientEvent, ClientRegistry
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.dtos import BondDTO, BondQuoteDTO
-from intelligent_investor.dtos.bond import BondDTO
-from intelligent_investor.dtos.bond_quote import BondQuoteDTO
 
 logger = LoggerManager.get_logger(name="TeleborsaBotClient")
 
@@ -51,6 +48,7 @@ _HEADERS: dict[str, str] = {
 # ---------------------------------------------------------------------------
 # Private parse helpers
 # ---------------------------------------------------------------------------
+
 
 def _parse_price(raw: str) -> float | None:
     """Convert a price string like '99,456' or '99.456' to float, or None."""
@@ -143,6 +141,7 @@ def _scrape_detail(url: str) -> dict | None:
 # Client
 # ---------------------------------------------------------------------------
 
+
 class TeleborsaBotClient(BaseClient):
     """
     Fetches all BOTs from Teleborsa and yields parsed (BondDTO, BondQuoteDTO)
@@ -204,14 +203,14 @@ class TeleborsaBotClient(BaseClient):
                 skipped += 1
                 continue
 
-            name             = detail.get("name") or raw_name
-            isin             = detail.get("isin")
-            last_price       = detail.get("last_price")
-            var_pct          = detail.get("var_percent") or 0.0
-            issue_date       = detail.get("issue_date")
-            issue_price      = detail.get("issue_price")
+            name = detail.get("name") or raw_name
+            isin = detail.get("isin")
+            last_price = detail.get("last_price")
+            var_pct = detail.get("var_percent") or 0.0
+            issue_date = detail.get("issue_date")
+            issue_price = detail.get("issue_price")
             redemption_price = detail.get("redemption_price") or 100.0
-            maturity_date    = detail.get("maturity_date")
+            maturity_date = detail.get("maturity_date")
 
             if not (isin and last_price is not None and issue_date and issue_price and maturity_date):
                 logger.warning(f"Incomplete data for '{name}' — skipped")
@@ -231,7 +230,7 @@ class TeleborsaBotClient(BaseClient):
                 tax_rate=12.5,
             )
             quote_dto: BondQuoteDTO = BondQuoteDTO(
-                bond_id=0,          # bond_id is not known yet; the service will fill it in
+                bond_id=0,  # bond_id is not known yet; the service will fill it in
                 date=date.today(),
                 last_price=last_price,
                 var_percent=var_pct,
