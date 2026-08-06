@@ -28,10 +28,10 @@ from abc import ABC, abstractmethod
 from collections.abc import Generator
 from typing import Any, TypedDict
 
-
 # ---------------------------------------------------------------------------
 # Event payload
 # ---------------------------------------------------------------------------
+
 
 class ClientEvent(TypedDict):
     """
@@ -42,6 +42,7 @@ class ClientEvent(TypedDict):
     message : human-readable description of the current step
     payload : present only on type="data"; the parsed result
     """
+
     type: str
     pct: int
     message: str
@@ -51,6 +52,7 @@ class ClientEvent(TypedDict):
 # ---------------------------------------------------------------------------
 # Abstract base
 # ---------------------------------------------------------------------------
+
 
 class BaseClient(ABC):
     """
@@ -78,6 +80,7 @@ class BaseClient(ABC):
 # Registry
 # ---------------------------------------------------------------------------
 
+
 class ClientRegistry:
     """
     Central catalogue of all registered network clients.
@@ -103,10 +106,7 @@ class ClientRegistry:
         KeyError if *name* is unknown.
         """
         if name not in cls._registry:
-            raise KeyError(
-                f"Client '{name}' not registered. "
-                f"Available: {list(cls._registry)}"
-            )
+            raise KeyError(f"Client '{name}' not registered. Available: {list(cls._registry)}")
         return cls._registry[name]()
 
     @classmethod
