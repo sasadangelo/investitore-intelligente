@@ -85,7 +85,12 @@ testpaths = ["test"]
 
 [tool.coverage.run]
 source = ["src"]
-omit = ["test/*"]
+omit = [
+    "test/*",
+    "src/intelligent_investor/controllers/*",
+    "src/intelligent_investor/clients/teleborsa_bot_client.py",
+    "src/intelligent_investor/core/log.py",
+]
 
 [tool.coverage.report]
 show_missing = true

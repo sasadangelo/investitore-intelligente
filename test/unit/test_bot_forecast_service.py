@@ -28,7 +28,7 @@ from intelligent_investor.services.bot_forecast_service import (
 # Helpers
 # ------------------------------------------------------------------
 
-TODAY = date(2025, 6, 1)
+TODAY = date.today()
 
 
 def _auction(
@@ -36,14 +36,19 @@ def _auction(
     settlement_date: date,
     maturity_date: date | None,
     duration_type: str = "annual",
-    days: int | None = 365,
 ) -> BotAuctionDTO:
+    # announcement_date and submission_deadline are required by the DTO validator;
+    # we pin them to auction_date - 2 and auction_date - 1 respectively.
+    announcement = auction_date - timedelta(days=2)
+    submission = auction_date - timedelta(days=1)
     return BotAuctionDTO(
+        period="mid_month",
+        duration_type=duration_type,  # type: ignore[arg-type]
+        announcement_date=announcement,
+        submission_deadline=submission,
         auction_date=auction_date,
         settlement_date=settlement_date,
         maturity_date=maturity_date,
-        duration_type=duration_type,
-        days=days,
     )
 
 
@@ -65,7 +70,7 @@ def _bond(
 
 
 def _quote(bond_id: int, last_price: float) -> BondQuoteDTO:
-    return BondQuoteDTO(bond_id=bond_id, last_price=last_price)
+    return BondQuoteDTO(bond_id=bond_id, last_price=last_price, date=TODAY, var_percent=0.0)
 
 
 def _service_with_mocks(
@@ -124,7 +129,6 @@ def test_forecast_tbd_auction_returns_unavailable() -> None:
         settlement_date=TODAY + timedelta(days=12),
         maturity_date=None,
         duration_type="tbd",
-        days=None,
     )
     result = svc._forecast_one(a, [], {}, TODAY)
     assert result.available is False
@@ -132,13 +136,13 @@ def test_forecast_tbd_auction_returns_unavailable() -> None:
 
 
 def test_forecast_maturity_none_returns_unavailable() -> None:
+    # duration_type="tbd" is the only valid way to have maturity_date=None
     svc = _service_with_mocks([], [], [])
     a = _auction(
         auction_date=TODAY + timedelta(days=5),
         settlement_date=TODAY + timedelta(days=7),
         maturity_date=None,
-        duration_type="annual",
-        days=None,
+        duration_type="tbd",
     )
     result = svc._forecast_one(a, [], {}, TODAY)
     assert result.available is False
@@ -156,7 +160,6 @@ def test_forecast_insufficient_bonds_returns_unavailable() -> None:
         settlement_date=TODAY + timedelta(days=12),
         maturity_date=TODAY + timedelta(days=377),
         duration_type="annual",
-        days=365,
     )
     # only 1 annual bond — below MIN_BONDS=2
     bond = _bond(1, TODAY - timedelta(days=10), TODAY + timedelta(days=355))
@@ -178,7 +181,6 @@ def test_forecast_two_annual_bonds_returns_available() -> None:
         settlement_date=TODAY + timedelta(days=12),
         maturity_date=TODAY + timedelta(days=377),
         duration_type="annual",
-        days=365,
     )
     # Two annual bonds (total duration >= ANNUAL_MIN_DAYS)
     b1 = _bond(1, TODAY - timedelta(days=30), TODAY + timedelta(days=335), name="BOT Annual A")
@@ -202,7 +204,6 @@ def test_forecast_semiannual_ignores_annual_bonds() -> None:
         settlement_date=TODAY + timedelta(days=7),
         maturity_date=TODAY + timedelta(days=187),
         duration_type="semiannual",
-        days=180,
     )
     # Two annual bonds — should be excluded from semiannual forecast
     b1 = _bond(1, TODAY - timedelta(days=30), TODAY + timedelta(days=335))
@@ -219,7 +220,6 @@ def test_forecast_bond_without_quote_excluded() -> None:
         settlement_date=TODAY + timedelta(days=12),
         maturity_date=TODAY + timedelta(days=377),
         duration_type="annual",
-        days=365,
     )
     b1 = _bond(1, TODAY - timedelta(days=30), TODAY + timedelta(days=335))
     b2 = _bond(2, TODAY - timedelta(days=20), TODAY + timedelta(days=345))
@@ -240,7 +240,6 @@ def test_forecast_all_skips_past_auctions() -> None:
         settlement_date=TODAY - timedelta(days=8),  # past
         maturity_date=TODAY + timedelta(days=357),
         duration_type="annual",
-        days=365,
     )
     svc = _service_with_mocks([past_auction], [], [])
     results = svc.forecast_all()
@@ -248,8 +247,8 @@ def test_forecast_all_skips_past_auctions() -> None:
 
 
 def test_forecast_all_returns_one_result_per_future_auction() -> None:
-    a1 = _auction(TODAY + timedelta(days=5), TODAY + timedelta(days=7), TODAY + timedelta(days=372), days=365)
-    a2 = _auction(TODAY + timedelta(days=12), TODAY + timedelta(days=14), TODAY + timedelta(days=194), duration_type="semiannual", days=180)
+    a1 = _auction(TODAY + timedelta(days=5), TODAY + timedelta(days=7), TODAY + timedelta(days=372))
+    a2 = _auction(TODAY + timedelta(days=12), TODAY + timedelta(days=14), TODAY + timedelta(days=194), duration_type="semiannual")
     b1 = _bond(1, TODAY - timedelta(days=30), TODAY + timedelta(days=335))
     b2 = _bond(2, TODAY - timedelta(days=20), TODAY + timedelta(days=345))
     b3 = _bond(3, TODAY - timedelta(days=10), TODAY + timedelta(days=170), name="BOT Semi A")

@@ -140,25 +140,15 @@ class BondSyncService:
     # ------------------------------------------------------------------
 
     def _upsert_bond(self, dto: BondDTO) -> BondDTO:
-        """Create or update a Bond record; returns the saved DTO with id."""
+        """Insert a new Bond or, if one with the same ISIN already exists, return it unchanged.
+
+        Once a bond is in the database any manual corrections (e.g. issue_date)
+        are preserved: only the quote is updated on subsequent syncs.
+        """
         existing = self._bond_service.get_by_isin(dto.isin)
-        if existing is None:
-            return self._bond_service.create(dto)
-        # Refresh mutable fields; preserve fiscal fields and any manually set URL
-        return self._bond_service.update(BondDTO(
-            id=existing.id,
-            name=dto.name,
-            isin=dto.isin,
-            bond_type=dto.bond_type,
-            issue_date=dto.issue_date,
-            maturity_date=dto.maturity_date,
-            issue_price=dto.issue_price,
-            redemption_price=dto.redemption_price,
-            nominal_rate=existing.nominal_rate,
-            coupon_frequency=existing.coupon_frequency,
-            tax_rate=existing.tax_rate,
-            auction_result_url=existing.auction_result_url or None,
-        ))
+        if existing is not None:
+            return existing
+        return self._bond_service.create(dto)
 
     def _upsert_quote(self, dto: BondQuoteDTO, bond_id: int) -> BondQuoteDTO:
         """Upsert the current quote for the given bond_id."""

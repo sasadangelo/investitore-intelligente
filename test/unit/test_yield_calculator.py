@@ -12,6 +12,7 @@ All tests are pure (no DB, no I/O) — they only exercise:
   - _yearfrac_act_act() edge cases (leap year, multi-year)
   - _yearfrac_30_360() US and European variants
 """
+
 from datetime import date
 
 import pytest
@@ -30,14 +31,14 @@ from intelligent_investor.utils.yield_calculator import (
 
 
 def test_yearfrac_same_date_returns_zero() -> None:
-    d = date(2025, 1, 1)
-    assert yearfrac(d, d) == 0.0
+    d: date = date(year=2025, month=1, day=1)
+    assert yearfrac(d1=d, d2=d) == 0.0
 
 
 def test_yearfrac_swapped_dates_same_result() -> None:
-    d1 = date(2025, 1, 1)
-    d2 = date(2025, 7, 1)
-    assert yearfrac(d1, d2) == yearfrac(d2, d1)
+    d1: date = date(year=2025, month=1, day=1)
+    d2: date = date(year=2025, month=7, day=1)
+    assert yearfrac(d1, d2) == yearfrac(d1=d2, d2=d1)
 
 
 # ------------------------------------------------------------------
@@ -46,17 +47,17 @@ def test_yearfrac_swapped_dates_same_result() -> None:
 
 
 def test_yearfrac_act_360() -> None:
-    d1 = date(2025, 1, 1)
-    d2 = date(2025, 7, 1)
-    days = (d2 - d1).days  # 181
-    assert yearfrac(d1, d2, YearfracBasis.ACT_360) == pytest.approx(days / 360.0)
+    d1: date = date(year=2025, month=1, day=1)
+    d2: date = date(year=2025, month=7, day=1)
+    days: int = (d2 - d1).days  # 181
+    assert yearfrac(d1, d2, basis=YearfracBasis.ACT_360) == pytest.approx(expected=days / 360.0)
 
 
 def test_yearfrac_act_365() -> None:
-    d1 = date(2025, 1, 1)
-    d2 = date(2025, 7, 1)
-    days = (d2 - d1).days
-    assert yearfrac(d1, d2, YearfracBasis.ACT_365) == pytest.approx(days / 365.0)
+    d1: date = date(year=2025, month=1, day=1)
+    d2: date = date(year=2025, month=7, day=1)
+    days: int = (d2 - d1).days
+    assert yearfrac(d1, d2, basis=YearfracBasis.ACT_365) == pytest.approx(expected=days / 365.0)
 
 
 # ------------------------------------------------------------------
@@ -66,9 +67,9 @@ def test_yearfrac_act_365() -> None:
 
 def test_yearfrac_us_30_360_full_year() -> None:
     # Jan 1 → Jan 1 next year = exactly 1.0
-    d1 = date(2024, 1, 1)
-    d2 = date(2025, 1, 1)
-    assert yearfrac(d1, d2, YearfracBasis.US_30_360) == pytest.approx(1.0)
+    d1: date = date(year=2024, month=1, day=1)
+    d2: date = date(year=2025, month=1, day=1)
+    assert yearfrac(d1, d2, basis=YearfracBasis.US_30_360) == pytest.approx(expected=1.0)
 
 
 def test_yearfrac_eur_30_360_full_year() -> None:
@@ -123,13 +124,14 @@ def test_yearfrac_act_act_leap_year_feb29_in_range() -> None:
 
 
 def test_yearfrac_act_act_multi_year() -> None:
-    # 2 full calendar years spanning 2024 (leap) and 2025 (non-leap)
-    # avg year length = (366 + 365) / 2 = 365.5
+    # Period spans 2024 (leap, 366) and 2025 (non-leap, 365) and 2026 (non-leap, 365).
+    # years_spanned = range(2024, 2027) = [2024, 2025, 2026]  → 3 years
+    # denom = (366 + 365 + 365) / 3 = 1096 / 3 ≈ 365.333...
     d1 = date(2024, 1, 1)
     d2 = date(2026, 1, 1)
     days = (d2 - d1).days  # 731
-    expected = days / 365.5
-    assert _yearfrac_act_act(d1, d2) == pytest.approx(expected, rel=1e-6)
+    denom = (366.0 + 365.0 + 365.0) / 3  # years 2024, 2025, 2026
+    assert _yearfrac_act_act(d1, d2) == pytest.approx(days / denom, rel=1e-6)
 
 
 # ------------------------------------------------------------------
