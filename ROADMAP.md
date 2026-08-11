@@ -31,6 +31,7 @@
 
 ## Milestone 3 — BTP support (fixed-rate)
 > Goal: extend the calculator to standard fixed-coupon BTPs.
+> Detailed step-by-step technical roadmap: [`docs/roadmap-btp.md`](docs/roadmap-btp.md).
 
 | # | Feature | Notes | Priority |
 |---|---|---|---|
@@ -122,7 +123,6 @@
 | Topic | Description | Priority |
 |---|---|---|
 | **DB migrations** | Introduce Alembic for controlled schema migrations | 🔴 |
-| **Unit tests** | pytest coverage for all calculation services | 🔴 |
 | **REST API** | JSON API endpoints for future mobile clients or external integrations | 🟡 |
 | **Production deploy** | gunicorn + nginx + HTTPS, environment variables, Docker image | 🟡 |
 | **i18n** | Optional multilingual support (Italian / English) | 🟢 |
