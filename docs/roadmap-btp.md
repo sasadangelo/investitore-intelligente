@@ -37,7 +37,11 @@ modificato in place, ma preso come riferimento/modello per la struttura del nuov
 
 ---
 
-## Fase 1 — Utility: scadenzario cedole e rateo (🔴)
+## Fase 1 — Utility: scadenzario cedole e rateo (🔴) ✅
+
+Implementata in [coupon_schedule.py](../src/intelligent_investor/utils/coupon_schedule.py)
+(classe `CouponSchedule`, sullo stile stateful di `YieldCalculator`), con test in
+[test_coupon_schedule.py](../test/unit/test_coupon_schedule.py).
 
 Nuovo modulo, es. `utils/coupon_schedule.py`, riusabile sia dal calcolatore che dal catalogo.
 
