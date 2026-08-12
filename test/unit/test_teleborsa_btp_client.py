@@ -119,7 +119,9 @@ _LIST_HTML = """
 """
 
 
-def _detail_html(name: str, isin: str, price: str, tipo_bond: str, extra_items: str = "") -> str:
+def _detail_html(
+    name: str, isin: str, price: str, tipo_bond: str, extra_items: str = "", issue_price: str = "99,99"
+) -> str:
     return f"""
     <div class="scheda-panel--header--title">{name}|ISIN: {isin} - Mercato: Milano - Tit. di Stato</div>
     <div class="scheda-panel--header--data--price">{price}</div>
@@ -128,7 +130,7 @@ def _detail_html(name: str, isin: str, price: str, tipo_bond: str, extra_items: 
     <div class="scheda-panel--body--data--item">Frequenza cedola|Semestrale</div>
     <div class="scheda-panel--body--data--item">Scadenza|26/08/2027</div>
     <div class="scheda-panel--body--data--item">Data emissione|26/06/2025</div>
-    <div class="scheda-panel--body--data--item">Prezzo emissione|99,99</div>
+    <div class="scheda-panel--body--data--item">Prezzo emissione|{issue_price}</div>
     <div class="scheda-panel--body--data--item">Prezzo rimborso|100</div>
     <div class="scheda-panel--body--data--item">Tipo bond|{tipo_bond}</div>
     {extra_items}
@@ -177,3 +179,35 @@ def test_fetch_yields_only_fixed_rate_data_events() -> None:
 
     assert events[-1]["type"] == "done"
     assert "1 BTP recuperati" in events[-1]["message"]
+
+
+def test_fetch_falls_back_to_par_when_issue_price_is_missing() -> None:
+    """Teleborsa reports 'Prezzo emissione: n.d.' for some reopened issues (e.g.
+    IT0004889033): the quote must not be dropped just because of that — it falls
+    back to the redemption price (par), which BondSyncService discards anyway
+    for a bond already on file."""
+    list_html = """
+    <table>
+      <tr><th>Titolo</th></tr>
+      <tr><td><a href="/obbligazioni-titoli-di-stato/btp-tf-st28">Btp Tf 4,75% St28 Eur</a></td></tr>
+    </table>
+    """
+    detail = _detail_html("Btp Tf 4,75% St28 Eur", "IT0004889033", "103,60", "Tasso Fisso", issue_price="n.d.")
+
+    responses_by_url = {
+        mod._LIST_URL: _mock_response(list_html),
+        "https://www.teleborsa.it/obbligazioni-titoli-di-stato/btp-tf-st28": _mock_response(detail),
+    }
+
+    def _fake_get(url: str, headers=None, timeout=None):
+        return responses_by_url[url]
+
+    with patch.object(mod.requests, "get", side_effect=_fake_get):
+        events = list(TeleborsaBtpClient().fetch())
+
+    data_events = [e for e in events if e["type"] == "data"]
+    assert len(data_events) == 1
+    bond_dto, quote_dto = data_events[0]["payload"]
+    assert bond_dto.isin == "IT0004889033"
+    assert bond_dto.issue_price == bond_dto.redemption_price == 100.0
+    assert quote_dto.last_price == 103.60

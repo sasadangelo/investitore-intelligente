@@ -307,17 +307,19 @@ class TeleborsaBtpClient(BaseClient):
             coupon_frequency = detail.get("coupon_frequency", _DEFAULT_COUPON_FREQUENCY)
             nominal_rate = _resolve_nominal_rate(name, detail)
 
-            if not (
-                isin
-                and last_price is not None
-                and issue_date
-                and issue_price
-                and maturity_date
-                and nominal_rate is not None
-            ):
+            if not (isin and last_price is not None and issue_date and maturity_date and nominal_rate is not None):
                 logger.warning(f"Incomplete data for '{name}' — skipped")
                 skipped += 1
                 continue
+
+            if issue_price is None:
+                # Teleborsa occasionally reports "Prezzo emissione: n.d." for older
+                # reopened issues (e.g. IT0004889033). Fall back to redemption_price
+                # (par) so the quote is not lost: for a bond already in the catalogue
+                # BondSyncService._upsert_bond discards this placeholder anyway and
+                # keeps the real issue_price on file (imported from MEF in Fase 6).
+                logger.warning(f"Missing issue_price for '{name}' ({isin}) — using par value as placeholder")
+                issue_price = redemption_price
 
             bond_dto: BondDTO = BondDTO(
                 name=name,
