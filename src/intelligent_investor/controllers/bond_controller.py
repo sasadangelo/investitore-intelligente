@@ -32,6 +32,14 @@ BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
 # Catalogue filter options (value, label) — restricted to the types actually in use for now
 CATALOG_FILTERS: list[tuple[str, str]] = [("BOT", "BOT"), ("BTP", "BTP Tasso Fisso")]
 
+# Catalogue sorting/pagination
+SORT_FIELDS: tuple[str, ...] = ("maturity", "yield_gross", "yield_net")
+SORT_DEFAULT_DIR: dict[str, str] = {"maturity": "asc", "yield_gross": "desc", "yield_net": "desc"}
+# Index into the (gross, net) yield tuple for each sortable yield field
+_YIELD_TUPLE_INDEX: dict[str, int] = {"yield_gross": 0, "yield_net": 1}
+PER_PAGE_OPTIONS: tuple[int, ...] = (10, 20, 50, 100)
+DEFAULT_PER_PAGE = 20
+
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -119,6 +127,48 @@ def _calc_bond_yields(bond: BondDTO, last_price: float, today: date) -> tuple[fl
     return _calc_yields(bond=bond, last_price=last_price, today=today)
 
 
+def _sort_bonds(
+    bonds: list[BondDTO],
+    yields: dict[int, tuple[float | None, float | None]],
+    sort: str,
+    direction: str,
+) -> list[BondDTO]:
+    """Sort catalogue bonds by maturity date, gross yield or net yield.
+
+    When sorting by yield, bonds without a computed value (no MOT quote yet) always
+    sort last — regardless of direction — since there is no meaningful position for
+    them relative to a numeric yield.
+    """
+    reverse = direction == "desc"
+    if sort in _YIELD_TUPLE_INDEX:
+        idx = _YIELD_TUPLE_INDEX[sort]
+
+        def yield_value(b: BondDTO) -> float | None:
+            return yields.get(b.id, (None, None))[idx] if b.id is not None else None
+
+        with_yield = [b for b in bonds if yield_value(b) is not None]
+        without_yield = [b for b in bonds if yield_value(b) is None]
+        with_yield.sort(key=yield_value, reverse=reverse)  # type: ignore[arg-type]
+        without_yield.sort(key=lambda b: b.maturity_date)
+        return with_yield + without_yield
+    return sorted(bonds, key=lambda b: b.maturity_date, reverse=reverse)
+
+
+def _toggle_sort_dir(current_sort: str, current_dir: str, field: str) -> str:
+    """Return the direction that clicking the *field* column header should switch to."""
+    if current_sort == field:
+        return "desc" if current_dir == "asc" else "asc"
+    return SORT_DEFAULT_DIR[field]
+
+
+def _paginate(items: list[BondDTO], page: int, per_page: int) -> tuple[list[BondDTO], int, int]:
+    """Slice *items* to the given 1-indexed *page*. Returns (page_items, clamped_page, total_pages)."""
+    total_pages = max(1, -(-len(items) // per_page))  # ceil division
+    page = min(max(1, page), total_pages)
+    start = (page - 1) * per_page
+    return items[start : start + per_page], page, total_pages
+
+
 def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
     """Build a BondDTO from an HTML form dict."""
     url = form.get("auction_result_url", "").strip() or None
@@ -145,26 +195,58 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
 
 @bond_bp.route(rule="/", methods=["GET"])
 def index() -> str:
-    """List all bonds, optionally filtered by ?bond_type=BOT|BTP (see CATALOG_FILTERS)."""
+    """
+    List all bonds, optionally filtered by ?bond_type=BOT|BTP (see CATALOG_FILTERS).
+
+    Supports sorting via ?sort=maturity|yield_gross|yield_net&dir=asc|desc (default:
+    maturity ascending) and pagination via ?page=&per_page= (per_page restricted to
+    PER_PAGE_OPTIONS, default DEFAULT_PER_PAGE).
+    """
     today: date = date.today()
     bond_type_filter: str | None = request.args.get("bond_type") or None
-    bonds: list[BondDTO] = sorted(
-        (
-            b
-            for b in _service.list_all()
-            if b.maturity_date >= today and (bond_type_filter is None or b.bond_type == bond_type_filter)
-        ),
-        key=lambda b: b.maturity_date,
-    )
+
+    sort = request.args.get("sort", "maturity")
+    if sort not in SORT_FIELDS:
+        sort = "maturity"
+    direction = request.args.get("dir") or SORT_DEFAULT_DIR[sort]
+    if direction not in ("asc", "desc"):
+        direction = SORT_DEFAULT_DIR[sort]
+    per_page = request.args.get("per_page", type=int) or DEFAULT_PER_PAGE
+    if per_page not in PER_PAGE_OPTIONS:
+        per_page = DEFAULT_PER_PAGE
+    requested_page = request.args.get("page", type=int) or 1
+
+    bonds_all: list[BondDTO] = [
+        b
+        for b in _service.list_all()
+        if b.maturity_date >= today and (bond_type_filter is None or b.bond_type == bond_type_filter)
+    ]
     quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
 
     # Pre-compute yields so the template doesn't need math operations
     yields: dict[int, tuple[float | None, float | None]] = {}
-    for bond in bonds:
+    for bond in bonds_all:
         if bond.id is not None:
             quote: BondQuoteDTO | None = quotes.get(bond.id)
             if quote is not None:
                 yields[bond.id] = _calc_bond_yields(bond=bond, last_price=quote.last_price, today=today)
+
+    bonds_sorted = _sort_bonds(bonds_all, yields, sort, direction)
+    bonds, page, total_pages = _paginate(bonds_sorted, requested_page, per_page)
+
+    def page_url(p: int) -> str:
+        return url_for("bonds.index", bond_type=bond_type_filter, sort=sort, dir=direction, per_page=per_page, page=p)
+
+    sort_urls = {
+        field: url_for(
+            "bonds.index",
+            bond_type=bond_type_filter,
+            sort=field,
+            dir=_toggle_sort_dir(sort, direction, field),
+            per_page=per_page,
+        )
+        for field in SORT_FIELDS
+    }
 
     return render_template(
         template_name_or_list="bonds/index.html",
@@ -173,6 +255,15 @@ def index() -> str:
         yields=yields,
         catalog_filters=CATALOG_FILTERS,
         bond_type_filter=bond_type_filter,
+        sort=sort,
+        dir=direction,
+        page=page,
+        total_pages=total_pages,
+        per_page=per_page,
+        per_page_options=PER_PAGE_OPTIONS,
+        total_count=len(bonds_all),
+        page_url=page_url,
+        sort_urls=sort_urls,
     )
 
 

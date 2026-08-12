@@ -5,7 +5,7 @@
 """
 Coupon schedule and accrued-interest utilities for fixed-rate coupon bonds (BTP).
 
-Reusable by both the BTP calculator (Fase 4) and the bond catalogue (Fase 6).
+Reusable by both the BTP calculator (Fase 4) and the bond catalogue (Fase 5).
 coupon_frequency=0 (zero-coupon, e.g. BOT) is treated as a no-coupon degenerate
 case throughout: schedules are empty and accrued interest is always 0.0.
 """

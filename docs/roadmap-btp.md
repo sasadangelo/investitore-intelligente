@@ -145,12 +145,22 @@ i BTP, con test in
   ignoti a livello di catalogo).
 - `_calc_bond_yields` fa da dispatcher tra la formula BTP e quella BOT esistente (`_calc_yields`),
   usato sia dalla pagina lista (`index`) sia dal dettaglio (`detail`).
+- Paginazione (`?page=&per_page=`, opzioni 10/20/50/100, default 20 — `_paginate`) e ordinamento
+  (`?sort=maturity|yield_gross|yield_net&dir=asc|desc`, header di colonna cliccabili — `_sort_bonds`,
+  `_toggle_sort_dir`) aggiunti dopo l'import reale dei 108 BTP (Fase 6), necessari per una tabella
+  di quella dimensione. I titoli senza rendimento calcolato (nessuna quotazione MOT — vedi Fase 7)
+  vanno sempre in fondo quando si ordina per rendimento, indipendentemente dalla direzione.
 
-## Fase 6 — Import anagrafica BTP a tasso fisso dal foglio `Emissioni` (🔴, *pianificata, non eseguita in questa fase*)
+## Fase 6 — Import anagrafica BTP a tasso fisso dal foglio `Emissioni` (🔴) ✅
+
+Eseguito un import una-tantum tramite uno script (`scripts/import_btp_emissioni.py`, rimosso dal
+repository dopo l'uso: era un bulk-load pensato per popolare l'anagrafica una sola volta, non uno
+strumento ricorrente — i BTP futuri arriveranno via sync automatico, vedi Fase 7, e verranno
+rifiniti a mano dalle pagine CRUD esistenti, esattamente come già avviene oggi per i BOT).
 
 Il foglio `Emissioni` del file di riferimento contiene l'elenco di tutti i titoli censiti
-(BOT, BTP a tasso fisso, BTP Valore/Futura a cedola STEP, CCT, ecc.). Per questa milestone va
-importato **solo** il sottoinsieme:
+(BOT, BTP a tasso fisso, BTP Valore/Futura a cedola STEP, CCT, ecc.). L'import ha selezionato
+**solo** il sottoinsieme:
 
 ```
 Tipo Obbl. (col. L) = "Cedola Fissa"  AND  Tasso (col. C) ≠ "STEP"
@@ -177,15 +187,37 @@ Colonne **non** mappate in questa fase: `N` (Premio Fedeltà, solo BTP Valore/Fu
 (scadenzario STEP), `J`/`K` (quotazione MOT — va nel catalogo quotazioni esistente, non
 nell'anagrafica).
 
-Lo step di lavoro previsto (da realizzare quando si arriva a questa fase, non ora):
-1. Esportare/estrarre le righe `Emissioni` filtrate come sopra.
-2. Script una-tantum (es. `scripts/import_btp_emissioni.py`) che legge i dati e crea i record
-   `BondDAO` via `BondService`, con verifica di duplicati per ISIN.
-3. Validazione manuale di un campione contro il sito MEF prima di considerare i dati affidabili
-   per l'uso in produzione.
+**Import reale eseguito**: 108 BTP a tasso fisso importati in `data/investor.db` da
+`ObbligazioniTF v5.0.ods` (non presente in questo repository). Durante l'import è emerso un ISIN
+duplicato nel file sorgente (due titoli diversi condividevano lo stesso ISIN, corretto a mano
+prima dell'import reale) — evidenzia perché il passo sotto resta necessario prima di considerare
+i dati affidabili in produzione.
 
+**Resta da fare**: validazione manuale di un campione contro il sito MEF prima di considerare i
+dati affidabili per l'uso in produzione.
 
-## Fase 7 — Controller e UI (🟡)
+## Fase 7 — Sync quotazioni MOT per BTP (🟡, pianificata)
+
+Dopo l'import dell'anagrafica (Fase 6), i 108 BTP importati non hanno alcuna quotazione
+(`BondQuoteDAO`): il catalogo (Fase 5) mostra correttamente "—" al posto di rendimento
+lordo/netto perché `_calc_bond_yields` richiede un `last_price` che oggi non esiste per nessun
+BTP. Per i BOT esiste già un sync (`teleborsa_bot_client.py` + `BondSyncService`, bottone
+"Aggiorna Quotazioni" nel catalogo); per i BTP manca l'equivalente.
+
+Lavoro previsto:
+1. Un nuovo client (es. `teleborsa_btp_client.py` o sorgente equivalente) che recuperi l'ultimo
+   prezzo MOT per ISIN, sullo stile di `teleborsa_bot_client.py` (stesso parsing prezzo/data,
+   `ClientRegistry`).
+2. Registrazione del nuovo client in `ClientRegistry` con una sorgente dedicata (es.
+   `"teleborsa_btp"`), riusando `BondSyncService.sync()` così com'è (già generico per
+   `(BondDTO, BondQuoteDTO)`, non serve toccarlo).
+3. UI: un secondo bottone "Aggiorna Quotazioni BTP" in
+   [bonds/index.html](../src/intelligent_investor/templates/bonds/index.html) accanto a quello
+   BOT esistente, o un'estensione del bottone attuale per sincronizzare entrambi i tipi in un'unica
+   passata (da valutare in base a quanto è comune la fonte dati).
+4. Test sul modello di [test_bond_sync_service.py](../test/unit/test_bond_sync_service.py).
+
+## Fase 8 — Controller e UI (🟡)
 
 - Nuova rotta calcolatore BTP (route dedicata o parametro `bond_type` sulla rotta esistente in
   [bond_controller.py](../src/intelligent_investor/controllers/bond_controller.py), da valutare
@@ -196,7 +228,7 @@ Lo step di lavoro previsto (da realizzare quando si arriva a questa fase, non or
   nessuna modifica allo schema: le commissioni MOT sono le stesse indipendentemente dallo
   strumento.
 
-## Fase 8 — Documentazione utente (🟡)
+## Fase 9 — Documentazione utente (🟡)
 
 In `docs/guides/` (seguendo lo stile di
 [cosa-e-un-bot.md](../docs/guides/cosa-e-un-bot.md) e
@@ -206,7 +238,7 @@ In `docs/guides/` (seguendo lo stile di
   per il BOT.
 - Aggiornare `catalogo.md` per menzionare i BTP in catalogo.
 
-## Fase 9 — Test (🔴, trasversale a tutte le fasi precedenti)
+## Fase 10 — Test (🔴, trasversale a tutte le fasi precedenti)
 
 Sul modello di `test/unit/test_bot_calculator_service.py` e delle fixture in
 `test/unit/fixtures/`:
@@ -231,7 +263,7 @@ Non conviene però anticipare questa unificazione: `BotCalculatorService` è gi�
 produzione, e usa una specializzazione precisa del caso zero-coupon (formula chiusa a 2 flussi,
 "imposta scarto" invece di cedola + capital gain separati) che sarebbe rischioso alterare prima
 che il calcolatore BTP generalizzato esista e sia collaudato. Sequenza consigliata, da eseguire
-solo a valle della Fase 9:
+solo a valle della Fase 10:
 
 1. Costruire `BtpCalculatorService` gestendo `coupon_frequency = 0` come caso limite dello
    scadenzario cedole (Fase 1) e dell'XIRR multi-flusso (Fase 2).
@@ -246,7 +278,8 @@ solo a valle della Fase 9:
 ## Ordine di esecuzione consigliato
 
 Le fasi 1–4 sono sequenziali e bloccanti (la logica di calcolo è un prerequisito per tutto il
-resto). Le fasi 5–8 possono procedere in parallelo una volta completata la Fase 4. La Fase 7
-(import dati) può partire in autonomia in qualsiasi momento, dato che tocca solo l'anagrafica e
-non dipende dal calcolatore — ma ha senso completarla prima della Fase 6 (catalogo) per avere
-dati reali su cui verificarlo.
+resto). Le fasi 5–9 possono procedere in parallelo una volta completata la Fase 4. Le fasi 5
+(catalogo) e 6 (import anagrafica) sono già complete. La Fase 7 (sync quotazioni MOT) dipende dai
+dati importati in Fase 6 ed è il passo che sblocca il rendimento nel catalogo per i BTP reali. Le
+fasi 8 (Controller e UI calcolatore) e 9 (Documentazione) possono procedere in autonomia rispetto
+alla 7, dato che non dipendono dalle quotazioni.
