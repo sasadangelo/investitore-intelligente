@@ -267,19 +267,46 @@ def index() -> str:
     )
 
 
-@bond_bp.route(rule="/refresh-bot-quotes/stream", methods=["GET"])
-def refresh_bot_quotes_stream() -> Response:
+_SYNC_SOURCES: tuple[tuple[str, str], ...] = (("teleborsa_bot", "BOT"), ("teleborsa_btp", "BTP"))
+
+
+@bond_bp.route(rule="/refresh-quotes/stream", methods=["GET"])
+def refresh_quotes_stream() -> Response:
     """
     SSE endpoint — streams bond sync progress events to the browser.
+
+    Runs every source in _SYNC_SOURCES sequentially (currently BOT then BTP),
+    scaling each source's 0-100 progress into its own slice of the overall
+    0-100 range so the single "Aggiorna Quotazioni" button reports one
+    continuous progress bar across both.
 
     Each event is a JSON-encoded SyncEvent:
         data: {"type": "progress"|"done"|"error", "pct": 0-100, "message": "..."}
     """
 
     def _event_stream() -> Generator[str, None, None]:
+        slice_size = 100 // len(_SYNC_SOURCES)
+        last_idx = len(_SYNC_SOURCES) - 1
         try:
-            for event in _sync_service.sync(source="teleborsa_bot"):
-                yield f"data: {json.dumps(obj=event)}\n\n"
+            for idx, (source, label) in enumerate(_SYNC_SOURCES):
+                is_last_source = idx == last_idx
+                slice_start = idx * slice_size
+                for event in _sync_service.sync(source=source):
+                    event_type = event["type"]
+                    if event_type == "error":
+                        pct = slice_start + int(event["pct"] * slice_size / 100)
+                    elif event_type == "done":
+                        # Only the final source's "done" event ends the stream; earlier
+                        # ones are relabelled "progress" so the browser keeps listening.
+                        pct = 100 if is_last_source else slice_start + slice_size
+                        if not is_last_source:
+                            event_type = "progress"
+                    else:
+                        pct = slice_start + int(event["pct"] * slice_size / 100)
+                    scaled_event = {"type": event_type, "pct": pct, "message": f"[{label}] {event['message']}"}
+                    yield f"data: {json.dumps(obj=scaled_event)}\n\n"
+                    if event["type"] == "error":
+                        return
         except Exception as exc:
             error_event = {"type": "error", "pct": 0, "message": str(exc)}
             yield f"data: {json.dumps(obj=error_event)}\n\n"

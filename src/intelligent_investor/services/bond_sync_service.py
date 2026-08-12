@@ -130,7 +130,7 @@ class BondSyncService:
             yield SyncEvent(
                 type="done",
                 pct=100,
-                message=f"Sincronizzazione completata: {ok} BOT aggiornati, {skipped} ignorati.",
+                message=f"Sincronizzazione completata: {ok} titoli aggiornati, {skipped} ignorati.",
             )
 
         logger.info(f"Bond sync done: ok={ok}, skipped={skipped}")

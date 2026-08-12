@@ -156,7 +156,7 @@ def test_sync_new_bond_is_created_and_quote_upserted() -> None:
     svc._bond_service.create.assert_called_once()
     svc._quote_service.upsert.assert_called_once()
     assert events[-1]["type"] == "done"
-    assert "1" in events[-1]["message"]  # "1 BOT aggiornati"
+    assert "1" in events[-1]["message"]  # "1 titoli aggiornati"
 
 
 # ------------------------------------------------------------------

@@ -196,26 +196,36 @@ i dati affidabili in produzione.
 **Resta da fare**: validazione manuale di un campione contro il sito MEF prima di considerare i
 dati affidabili per l'uso in produzione.
 
-## Fase 7 — Sync quotazioni MOT per BTP (🟡, pianificata)
+## Fase 7 — Sync quotazioni MOT per BTP (🟡) ✅
 
-Dopo l'import dell'anagrafica (Fase 6), i 108 BTP importati non hanno alcuna quotazione
-(`BondQuoteDAO`): il catalogo (Fase 5) mostra correttamente "—" al posto di rendimento
-lordo/netto perché `_calc_bond_yields` richiede un `last_price` che oggi non esiste per nessun
-BTP. Per i BOT esiste già un sync (`teleborsa_bot_client.py` + `BondSyncService`, bottone
-"Aggiorna Quotazioni" nel catalogo); per i BTP manca l'equivalente.
+Dopo l'import dell'anagrafica (Fase 6), i 108 BTP importati non avevano alcuna quotazione
+(`BondQuoteDAO`): il catalogo (Fase 5) mostrava correttamente "—" al posto di rendimento
+lordo/netto perché `_calc_bond_yields` richiede un `last_price` che non esisteva per nessun BTP.
 
-Lavoro previsto:
-1. Un nuovo client (es. `teleborsa_btp_client.py` o sorgente equivalente) che recuperi l'ultimo
-   prezzo MOT per ISIN, sullo stile di `teleborsa_bot_client.py` (stesso parsing prezzo/data,
-   `ClientRegistry`).
-2. Registrazione del nuovo client in `ClientRegistry` con una sorgente dedicata (es.
-   `"teleborsa_btp"`), riusando `BondSyncService.sync()` così com'è (già generico per
-   `(BondDTO, BondQuoteDTO)`, non serve toccarlo).
-3. UI: un secondo bottone "Aggiorna Quotazioni BTP" in
-   [bonds/index.html](../src/intelligent_investor/templates/bonds/index.html) accanto a quello
-   BOT esistente, o un'estensione del bottone attuale per sincronizzare entrambi i tipi in un'unica
-   passata (da valutare in base a quanto è comune la fonte dati).
-4. Test sul modello di [test_bond_sync_service.py](../test/unit/test_bond_sync_service.py).
+Lavoro svolto:
+1. [`teleborsa_btp_client.py`](../src/intelligent_investor/clients/teleborsa_btp_client.py) —
+   sullo stile di `teleborsa_bot_client.py`, scarica la lista da
+   `https://www.teleborsa.it/Quotazioni/BTP` e visita la pagina di dettaglio di ogni riga
+   (`https://www.teleborsa.it/obbligazioni-titoli-di-stato/<slug>`). Filtra solo i BTP a tasso
+   fisso: il campo "Tipo bond" della pagina di dettaglio deve valere "Tasso Fisso" **e** il nome
+   non deve iniziare per "Btpi" né contenere "Italia" — Teleborsa etichetta "Tasso Fisso" anche i
+   BTP€i e i BTP Italia, che in realtà sono indicizzati all'inflazione e non hanno un flusso
+   cedolare nominale fisso rappresentabile da `BondDTO.nominal_rate`. Step-rate e zero-coupon
+   (Futura, Più, Valore, Coupon Strip, ...) sono esclusi dallo stesso campo "Tipo bond". Il tasso
+   nominale annuo è risolto con una catena di priorità: campo "Cedola annuale" (se valorizzato) →
+   "Cedola in corso" moltiplicato per la frequenza cedolare → parsing dal nome del titolo
+   (copre la nomenclatura legacy tipo "Btp-1Ag34 5", dove nessuno dei due campi è popolato).
+2. Registrato in `ClientRegistry` con la sorgente `"teleborsa_btp"`; `BondSyncService.sync()`
+   riusato così com'è, nessuna modifica necessaria.
+3. UI: un solo bottone "Aggiorna Quotazioni" in
+   [bonds/index.html](../src/intelligent_investor/templates/bonds/index.html) sincronizza sia BOT
+   che BTP in un'unica passata SSE (rotta `bonds.refresh_quotes_stream`); il progresso di ciascuna
+   sorgente è scalato nella propria metà della barra 0-100%.
+4. Test in [test_teleborsa_btp_client.py](../test/unit/test_teleborsa_btp_client.py) sui parse
+   helper e sul filtraggio end-to-end di `fetch()` (rete mockata).
+
+Verificato in locale con un sync live completo: 107 dei 108 BTP già in anagrafica hanno ricevuto
+una quotazione, il catalogo mostra ora prezzo e rendimento lordo/netto invece di "—".
 
 ## Fase 8 — Controller e UI (🟡)
 
@@ -279,7 +289,7 @@ solo a valle della Fase 10:
 
 Le fasi 1–4 sono sequenziali e bloccanti (la logica di calcolo è un prerequisito per tutto il
 resto). Le fasi 5–9 possono procedere in parallelo una volta completata la Fase 4. Le fasi 5
-(catalogo) e 6 (import anagrafica) sono già complete. La Fase 7 (sync quotazioni MOT) dipende dai
-dati importati in Fase 6 ed è il passo che sblocca il rendimento nel catalogo per i BTP reali. Le
-fasi 8 (Controller e UI calcolatore) e 9 (Documentazione) possono procedere in autonomia rispetto
+(catalogo), 6 (import anagrafica) e 7 (sync quotazioni MOT) sono già complete: il catalogo mostra
+ora rendimento lordo/netto reale per i BTP. Le fasi 8 (Controller e UI calcolatore) e 9
+(Documentazione) possono procedere in autonomia rispetto
 alla 7, dato che non dipendono dalle quotazioni.

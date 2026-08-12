@@ -7,7 +7,7 @@
   <h2 class="mb-0"><i class="bi bi-bank me-2 text-primary"></i>Obbligazioni</h2>
   <div class="d-flex gap-2">
     <button id="btn-refresh" class="btn btn-success" onclick="startRefresh()">
-      <i class="bi bi-arrow-clockwise me-1"></i>Aggiorna Quotazioni BOT
+      <i class="bi bi-arrow-clockwise me-1"></i>Aggiorna Quotazioni
     </button>
     <a href="{{ url_for('bonds.new') }}" class="btn btn-primary">
       <i class="bi bi-plus-circle me-1"></i>Aggiungi
@@ -25,14 +25,7 @@
       {% endfor %}
     </select>
   </div>
-  <div style="max-width: 140px;">
-    <label class="form-label small text-muted mb-1">Per pagina</label>
-    <select name="per_page" class="form-select" onchange="this.form.submit()">
-      {% for opt in per_page_options %}
-      <option value="{{ opt }}" {{ 'selected' if per_page == opt else '' }}>{{ opt }}</option>
-      {% endfor %}
-    </select>
-  </div>
+  <input type="hidden" name="per_page" value="{{ per_page }}">
   <input type="hidden" name="sort" value="{{ sort }}">
   <input type="hidden" name="dir" value="{{ dir }}">
 </form>
@@ -127,18 +120,31 @@
       </table>
     </div>
   </div>
-  <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-2 text-muted small">
+  <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-3 text-muted small">
     <span>{{ total_count }} obbligazion{{ 'e' if total_count == 1 else 'i' }} in archivio — pagina {{ page }} di {{ total_pages }}</span>
-    <nav aria-label="Paginazione">
-      <ul class="pagination pagination-sm mb-0">
-        <li class="page-item {{ 'disabled' if page <= 1 else '' }}">
-          <a class="page-link" href="{{ page_url(page - 1) if page > 1 else '#' }}">&laquo; Precedente</a>
-        </li>
-        <li class="page-item {{ 'disabled' if page >= total_pages else '' }}">
-          <a class="page-link" href="{{ page_url(page + 1) if page < total_pages else '#' }}">Successiva &raquo;</a>
-        </li>
-      </ul>
-    </nav>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+      <form method="get" class="d-flex align-items-center gap-2 mb-0">
+        <label for="per_page_bottom" class="mb-0">Per pagina</label>
+        <select id="per_page_bottom" name="per_page" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
+          {% for opt in per_page_options %}
+          <option value="{{ opt }}" {{ 'selected' if per_page == opt else '' }}>{{ opt }}</option>
+          {% endfor %}
+        </select>
+        <input type="hidden" name="bond_type" value="{{ bond_type_filter or '' }}">
+        <input type="hidden" name="sort" value="{{ sort }}">
+        <input type="hidden" name="dir" value="{{ dir }}">
+      </form>
+      <nav aria-label="Paginazione">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item {{ 'disabled' if page <= 1 else '' }}">
+            <a class="page-link" href="{{ page_url(page - 1) if page > 1 else '#' }}">&laquo; Precedente</a>
+          </li>
+          <li class="page-item {{ 'disabled' if page >= total_pages else '' }}">
+            <a class="page-link" href="{{ page_url(page + 1) if page < total_pages else '#' }}">Successiva &raquo;</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
   </div>
 </div>
 
@@ -175,7 +181,7 @@ function startRefresh() {
   pctEl.textContent  = '0%';
   statusEl.textContent = '';
 
-  const url = "{{ url_for('bonds.refresh_bot_quotes_stream') }}";
+  const url = "{{ url_for('bonds.refresh_quotes_stream') }}";
   const es  = new EventSource(url);
 
   es.onmessage = function(e) {
