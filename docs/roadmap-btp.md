@@ -57,19 +57,24 @@ Nuovo modulo, es. `utils/coupon_schedule.py`, riusabile sia dal calcolatore che 
   nominale), `cedola_netta = cedola_lorda * (1 - tax_rate/100)` — vedi colonne `V`/`W`/`X` del
   foglio `Bond` (rateo cedolare lordo/netto).
 
-## Fase 2 — TIR a flussi multipli (🔴)
+## Fase 2 — TIR a flussi multipli (🔴) ✅
 
-`YieldCalculator.compound()` oggi è una formula chiusa a 2 flussi (capitale investito →
+Implementata in [yield_calculator.py](../src/intelligent_investor/utils/yield_calculator.py)
+(funzione `xirr`), con test in
+[test_yield_calculator.py](../test/unit/test_yield_calculator.py).
+
+`YieldCalculator.compound()` era una formula chiusa a 2 flussi (capitale investito →
 incasso finale), valida per i BOT ma **non corretta** per un BTP con cedole intermedie: serve un
 vero XIRR su una serie di flussi datati (uscita all'acquisto, cedole nette periodiche, incasso
 finale a vendita/scadenza).
 
-- Aggiungere a `yield_calculator.py` una funzione `xirr(cashflows: list[tuple[date, float]]) ->
-  float` con Newton-Raphson (o bisezione come fallback), stesso criterio di giorni/365 già
-  documentato per l'XIRR dei BOT.
+- Aggiunta a `yield_calculator.py` una funzione `xirr(cashflows: list[tuple[date, float]]) ->
+  float` con Newton-Raphson (fallback a bisezione `_xirr_bisection` se non converge), stesso
+  criterio di giorni/365 già documentato per l'XIRR dei BOT (ancorato al flusso più vecchio;
+  coincide con `YieldCalculator.compound()` nel caso a 2 flussi).
 - Il rendimento semplice (non composto) può restare basato su `YEARFRAC`, sommando i flussi netti
   totali sul capitale investito (come oggi in `SummaryResultDTO`, ma con `net_gain` che include
-  anche le cedole).
+  anche le cedole) — da collegare in Fase 3/4, non ancora integrato in `SummaryResultDTO`.
 
 ## Fase 3 — DTO: `BtpTransactionDTO` e `BtpCalculationResultDTO` (🔴)
 
@@ -109,29 +114,6 @@ Nuovo file `services/btp_calculator_service.py`. Struttura a metodi privati spec
 > Valutare se estrarre le parti realmente comuni (commissioni, bollo) in un modulo condiviso
 > `services/bond_calculator_common.py` per evitare duplicazione tra BOT e BTP, senza forzare
 > un'astrazione prematura se la logica diverge troppo tra i due calcolatori.
-
-### Nota di design — il BOT come caso speciale di BTP (🟢, valutazione successiva)
-
-Un BOT è, matematicamente, un BTP con `coupon_frequency = 0`: nessuna cedola, nessun rateo, un
-solo flusso all'acquisto e uno a scadenza/vendita. `BondDAO`/`BondDTO` sono già unificati e non
-richiedono modifiche per rappresentare questo caso. In linea di principio, quindi,
-`BtpCalculatorService` potrebbe assorbire anche la logica oggi in `BotCalculatorService`,
-eliminando la duplicazione tra i due servizi.
-
-Non conviene però anticipare questa unificazione: `BotCalculatorService` è già testato e in
-produzione, e usa una specializzazione precisa del caso zero-coupon (formula chiusa a 2 flussi,
-"imposta scarto" invece di cedola + capital gain separati) che sarebbe rischioso alterare prima
-che il calcolatore BTP generalizzato esista e sia collaudato. Sequenza consigliata, da eseguire
-solo a valle della Fase 9:
-
-1. Costruire `BtpCalculatorService` gestendo `coupon_frequency = 0` come caso limite dello
-   scadenzario cedole (Fase 1) e dell'XIRR multi-flusso (Fase 2).
-2. Far girare la fixture di test del BOT esistenti (`test_bot_calculator_service.py`) anche
-   contro `BtpCalculatorService` con `coupon_frequency = 0`, e verificare parità **esatta** dei
-   risultati con `BotCalculatorService`.
-3. Solo dopo aver dimostrato questa parità, valutare se trasformare `BotCalculatorService` in un
-   thin wrapper su `BtpCalculatorService` (o ritirarlo del tutto), senza mai toccare il
-   calcolatore BOT in produzione prima che l'equivalenza sia provata.
 
 ## Fase 5 — Controller e UI (🟡)
 
@@ -211,6 +193,30 @@ Sul modello di `test/unit/test_bot_calculator_service.py` e delle fixture in
   riferimento per almeno 2–3 titoli reali.
 
 ---
+
+### Nota di design — il BOT come caso speciale di BTP (🟢, valutazione successiva)
+
+Un BOT è, matematicamente, un BTP con `coupon_frequency = 0`: nessuna cedola, nessun rateo, un
+solo flusso all'acquisto e uno a scadenza/vendita. `BondDAO`/`BondDTO` sono già unificati e non
+richiedono modifiche per rappresentare questo caso. In linea di principio, quindi,
+`BtpCalculatorService` potrebbe assorbire anche la logica oggi in `BotCalculatorService`,
+eliminando la duplicazione tra i due servizi.
+
+Non conviene però anticipare questa unificazione: `BotCalculatorService` è già testato e in
+produzione, e usa una specializzazione precisa del caso zero-coupon (formula chiusa a 2 flussi,
+"imposta scarto" invece di cedola + capital gain separati) che sarebbe rischioso alterare prima
+che il calcolatore BTP generalizzato esista e sia collaudato. Sequenza consigliata, da eseguire
+solo a valle della Fase 9:
+
+1. Costruire `BtpCalculatorService` gestendo `coupon_frequency = 0` come caso limite dello
+   scadenzario cedole (Fase 1) e dell'XIRR multi-flusso (Fase 2).
+2. Far girare la fixture di test del BOT esistenti (`test_bot_calculator_service.py`) anche
+   contro `BtpCalculatorService` con `coupon_frequency = 0`, e verificare parità **esatta** dei
+   risultati con `BotCalculatorService`.
+3. Solo dopo aver dimostrato questa parità, valutare se trasformare `BotCalculatorService` in un
+   thin wrapper su `BtpCalculatorService` (o ritirarlo del tutto), senza mai toccare il
+   calcolatore BOT in produzione prima che l'equivalenza sia provata.
+
 
 ## Ordine di esecuzione consigliato
 
