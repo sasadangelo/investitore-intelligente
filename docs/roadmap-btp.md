@@ -98,25 +98,34 @@ commissioni, bollo, minusvalenze pregresse); non serve duplicare quella parte.
 | **Bollo** | invariato, riuso 1:1 di `_calc_stamp_duty` | — |
 | **Riepilogo** | rendimento semplice/composto lordo e netto, ora calcolato sui flussi multipli (Fase 2) invece che a 2 punti | `J4`/`K4` (TIR), `J5`/`K5` (guadagno netto totale) |
 
-## Fase 4 — `BtpCalculatorService` (🔴)
+## Fase 4 — `BtpCalculatorService` (🔴) ✅
 
-Nuovo file `services/btp_calculator_service.py`. Struttura a metodi privati speculare a
-`BotCalculatorService`:
+Implementata in
+[btp_calculator_service.py](../src/intelligent_investor/services/btp_calculator_service.py), con
+test in [test_btp_calculator_service.py](../test/unit/test_btp_calculator_service.py).
 
-1. `_calc_purchase` — prezzo corso secco (clean + rateo), commissioni (stessa funzione
-   `_calc_commission` già esistente, da spostare in un modulo condiviso se resta privata al file
-   BOT).
-2. `_calc_coupon_schedule` — usa Fase 1 per generare le cedole nette incassate durante il possesso.
+Le parti realmente comuni con il BOT (commissioni, bollo) sono state estratte in
+[bond_calculator_common.py](../src/intelligent_investor/services/bond_calculator_common.py)
+(`calc_commission`, `calc_stamp_duty`), usato solo dal nuovo servizio: `bot_calculator_service.py`
+non è stato toccato, come richiesto in testa a questo documento, e mantiene la propria copia
+privata di `_calc_commission`.
+
+Struttura a metodi privati speculare a `BotCalculatorService`:
+
+1. `_calc_purchase` — prezzo corso secco (clean + rateo), commissioni via `calc_commission` del
+   modulo condiviso.
+2. `_calc_coupon_schedule` — usa Fase 1 per generare le cedole nette incassate durante il possesso
+   (stacchi in `(purchase_date, sale_date]`).
 3. `_calc_sale` — prezzo di vendita/rimborso corso secco (clean + rateo a favore del venditore).
-4. `_calc_capital_gain` — riuso concettuale della logica BOT (prezzo teorico, riduzione TdS,
-   zainetto), applicata allo scarto di prezzo *clean* invece che al disaggio.
-5. `_calc_stamp_duty` — riuso diretto della funzione BOT (stessa base di calcolo, stessa aliquota
-   0,20%/anno).
+4. `_calc_capital_gain` — riuso concettuale della logica BOT (riduzione TdS, zainetto), applicata
+   allo scarto di prezzo *clean* invece che al disaggio. A differenza del BOT non serve il prezzo
+   teorico: il prezzo clean di un BTP non è vincolato a una retta di accrescimento
+   emissione→scadenza, quindi `load_price`/`unload_price` sono lo scarto di prezzo diretto (al
+   netto delle commissioni per unità), senza alcuna correzione. Di conseguenza, a differenza del
+   BOT, per il BTP il capital gain è sempre calcolato (mai `None`, anche per acquisti in asta).
+5. `_calc_stamp_duty` — riuso diretto di `calc_stamp_duty` del modulo condiviso (stessa base di
+   calcolo, stessa aliquota 0,20%/anno).
 6. `_calc_summary` — rendimento semplice/composto con XIRR multi-flusso (Fase 2).
-
-> Valutare se estrarre le parti realmente comuni (commissioni, bollo) in un modulo condiviso
-> `services/bond_calculator_common.py` per evitare duplicazione tra BOT e BTP, senza forzare
-> un'astrazione prematura se la logica diverge troppo tra i due calcolatori.
 
 ## Fase 5 — Controller e UI (🟡)
 
