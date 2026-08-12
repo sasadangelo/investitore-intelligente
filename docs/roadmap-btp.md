@@ -76,7 +76,10 @@ finale a vendita/scadenza).
   totali sul capitale investito (come oggi in `SummaryResultDTO`, ma con `net_gain` che include
   anche le cedole) — da collegare in Fase 3/4, non ancora integrato in `SummaryResultDTO`.
 
-## Fase 3 — DTO: `BtpTransactionDTO` e `BtpCalculationResultDTO` (🔴)
+## Fase 3 — DTO: `BtpTransactionDTO` e `BtpCalculationResultDTO` (🔴) ✅
+
+Implementata in [btp_transaction.py](../src/intelligent_investor/dtos/btp_transaction.py) e
+[btp_calculation_result.py](../src/intelligent_investor/dtos/btp_calculation_result.py).
 
 Nuovi file in `dtos/`, sul modello di
 [bot_transaction.py](../src/intelligent_investor/dtos/bot_transaction.py) e
