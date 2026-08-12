@@ -22,6 +22,7 @@ from intelligent_investor.utils.yield_calculator import (
     YieldCalculator,
     _yearfrac_30_360,
     _yearfrac_act_act,
+    xirr,
     yearfrac,
 )
 
@@ -221,3 +222,92 @@ def test_simple_less_than_compound_for_discount_bond() -> None:
     yc = YieldCalculator(d1, d2)
     gain = 100.0 - 98.5
     assert yc.simple(gain, 98.5) < yc.compound(100.0, 98.5)
+
+
+# ------------------------------------------------------------------
+# xirr(): matches YieldCalculator.compound() for two-flow cash flows
+# ------------------------------------------------------------------
+
+
+def test_xirr_matches_compound_two_flows() -> None:
+    d1 = date(2025, 1, 1)
+    d2 = date(2026, 1, 1)  # 365 days
+    yc = YieldCalculator(d1, d2)
+    expected = yc.compound(final_proceeds=100.0, capital=98.0)
+    result = xirr([(d1, -98.0), (d2, 100.0)])
+    assert result == pytest.approx(expected, rel=1e-6)
+
+
+def test_xirr_matches_compound_half_year() -> None:
+    d1 = date(2025, 1, 1)
+    d2 = date(2025, 7, 2)  # 182 days
+    yc = YieldCalculator(d1, d2)
+    expected = yc.compound(final_proceeds=100.0, capital=99.0)
+    result = xirr([(d1, -99.0), (d2, 100.0)])
+    assert result == pytest.approx(expected, rel=1e-6)
+
+
+# ------------------------------------------------------------------
+# xirr(): multi-flow cash flows (BTP-style: purchase, coupons, redemption)
+# ------------------------------------------------------------------
+
+
+def test_xirr_multi_flow_annual_coupons() -> None:
+    # Purchase at par, two annual net coupons of 3, redemption at par one year
+    # after the last coupon -> yield should be close to the flat coupon rate (3%).
+    purchase = date(2024, 1, 1)
+    coupon1 = date(2025, 1, 1)
+    coupon2 = date(2026, 1, 1)
+    redemption = date(2026, 1, 1)
+    cashflows = [
+        (purchase, -100.0),
+        (coupon1, 3.0),
+        (coupon2, 3.0),
+        (redemption, 100.0),
+    ]
+    result = xirr(cashflows)
+    assert result == pytest.approx(3.0, rel=1e-2)
+
+
+def test_xirr_root_zeroes_npv() -> None:
+    """The solved rate must bring the discounted cash flows to (approximately) zero."""
+    d0 = date(2024, 1, 1)
+    cashflows = [
+        (d0, -100.0),
+        (date(2024, 7, 1), 4.0),
+        (date(2025, 1, 1), 4.0),
+        (date(2025, 7, 1), 4.0),
+        (date(2026, 1, 1), 104.0),
+    ]
+    rate = xirr(cashflows) / 100.0
+    npv = sum(amount / (1.0 + rate) ** ((d - d0).days / 365.0) for d, amount in cashflows)
+    assert npv == pytest.approx(0.0, abs=1e-6)
+
+
+# ------------------------------------------------------------------
+# xirr(): validation and edge cases
+# ------------------------------------------------------------------
+
+
+def test_xirr_single_cashflow_raises() -> None:
+    with pytest.raises(ValueError):
+        xirr([(date(2025, 1, 1), -100.0)])
+
+
+def test_xirr_all_negative_raises() -> None:
+    with pytest.raises(ValueError):
+        xirr([(date(2025, 1, 1), -100.0), (date(2025, 7, 1), -50.0)])
+
+
+def test_xirr_all_positive_raises() -> None:
+    with pytest.raises(ValueError):
+        xirr([(date(2025, 1, 1), 100.0), (date(2025, 7, 1), 50.0)])
+
+
+def test_xirr_unordered_cashflows_same_result() -> None:
+    d1 = date(2025, 1, 1)
+    d2 = date(2025, 7, 1)
+    d3 = date(2026, 1, 1)
+    ordered = [(d1, -100.0), (d2, 2.0), (d3, 100.0)]
+    shuffled = [(d3, 100.0), (d1, -100.0), (d2, 2.0)]
+    assert xirr(ordered) == pytest.approx(xirr(shuffled), rel=1e-9)

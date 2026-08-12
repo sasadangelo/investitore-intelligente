@@ -154,6 +154,67 @@ class YieldCalculator:
         return (final_proceeds / capital) ** (1 / self.year_fraction_xirr) * 100 - 100
 
 
+def xirr(cashflows: list[tuple[date, float]], guess: float = 0.1) -> float:
+    """Annualised compound yield (XIRR) for a series of dated cash flows.
+
+    Generalises ``YieldCalculator.compound()`` from a two-flow (purchase → final
+    proceeds) formula to N dated flows — e.g. a BTP's purchase outflow, periodic
+    net coupons, and final sale/redemption inflow. Uses the same ``days / 365``
+    convention as ``YieldCalculator.year_fraction_xirr``, anchored to the earliest
+    cash flow date, so it reduces to ``YieldCalculator.compound()`` for the
+    two-flow case.
+
+    Solved with Newton-Raphson starting from *guess*; falls back to bisection
+    if Newton-Raphson fails to converge (e.g. poor initial guess, degenerate
+    cash flow pattern).
+
+    Args:
+        cashflows: List of (date, amount) pairs, in any order. Outflows (e.g.
+                   the purchase price) are negative, inflows (coupons, sale
+                   proceeds, redemption) positive.
+        guess:     Initial rate guess for Newton-Raphson (default 0.10 = 10%).
+
+    Returns:
+        Annualised yield as a percentage (e.g. 3.399 for 3.399%), consistent
+        with ``YieldCalculator.compound()``.
+
+    Raises:
+        ValueError: if cashflows has fewer than two entries, or all amounts
+                    share the same sign (no rate can zero the NPV).
+    """
+    if len(cashflows) < 2:
+        raise ValueError("xirr requires at least two cash flows")
+    if not any(amount < 0 for _, amount in cashflows) or not any(amount > 0 for _, amount in cashflows):
+        raise ValueError("xirr requires at least one negative and one positive cash flow")
+
+    t0 = min(d for d, _ in cashflows)
+    years = [(d - t0).days / 365.0 for d, _ in cashflows]
+    amounts = [amount for _, amount in cashflows]
+
+    def npv(rate: float) -> float:
+        return sum(a / (1.0 + rate) ** t for a, t in zip(amounts, years, strict=True))
+
+    def dnpv(rate: float) -> float:
+        return sum(
+            -t * a / (1.0 + rate) ** (t + 1) for a, t in zip(amounts, years, strict=True) if t > 0
+        )
+
+    rate = guess
+    for _ in range(100):
+        f = npv(rate)
+        df = dnpv(rate)
+        if df == 0:
+            break
+        new_rate = rate - f / df
+        if new_rate <= -1.0:
+            break
+        if abs(new_rate - rate) < 1e-10:
+            return new_rate * 100
+        rate = new_rate
+
+    return _xirr_bisection(amounts, years) * 100
+
+
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
@@ -211,3 +272,41 @@ def _yearfrac_30_360(d1: date, d2: date, european: bool) -> float:
 
     days = (d2.year - d1.year) * 360 + (d2m - d1m) * 30 + (d2d - d1d)
     return days / 360.0
+
+
+def _xirr_bisection(
+    amounts: list[float],
+    years: list[float],
+    low: float = -0.999999,
+    high: float = 10.0,
+    tol: float = 1e-10,
+    max_iter: int = 200,
+) -> float:
+    """Bisection fallback for ``xirr()`` when Newton-Raphson fails to converge.
+
+    Expands *high* geometrically until the NPV changes sign between *low* and
+    *high* (a root is bracketed), then bisects down to *tol*.
+    """
+    def npv(rate: float) -> float:
+        return sum(a / (1.0 + rate) ** t for a, t in zip(amounts, years, strict=True))
+
+    f_low = npv(low)
+    f_high = npv(high)
+    while f_low * f_high > 0 and high < 1e6:
+        high *= 2
+        f_high = npv(high)
+    if f_low * f_high > 0:
+        raise ValueError("xirr: could not bracket a root")
+
+    for _ in range(max_iter):
+        mid = (low + high) / 2
+        f_mid = npv(mid)
+        if abs(f_mid) < tol or (high - low) < tol:
+            return mid
+        if f_low * f_mid < 0:
+            high = mid
+            f_high = f_mid
+        else:
+            low = mid
+            f_low = f_mid
+    return (low + high) / 2
