@@ -127,25 +127,26 @@ Struttura a metodi privati speculare a `BotCalculatorService`:
    calcolo, stessa aliquota 0,20%/anno).
 6. `_calc_summary` — rendimento semplice/composto con XIRR multi-flusso (Fase 2).
 
-## Fase 5 — Controller e UI (🟡)
+## Fase 5 — Catalogo BTP (🟡) ✅
 
-- Nuova rotta calcolatore BTP (route dedicata o parametro `bond_type` sulla rotta esistente in
-  [bond_controller.py](../src/intelligent_investor/controllers/bond_controller.py), da valutare
-  in base a quanto diverge il template).
-- Template: stessa struttura della pagina calcolatore BOT, con l'aggiunta della tabella "Piano
-  cedole" (Fase 3) sotto i risultati di acquisto.
-- Riuso del profilo bancario esistente (`bank_profile` / `bank_commission`) per le commissioni,
-  nessuna modifica allo schema: le commissioni MOT sono le stesse indipendentemente dallo
-  strumento.
+Estesa la pagina/servizio di catalogo esistente
+([bond_controller.py](../src/intelligent_investor/controllers/bond_controller.py)) per includere
+i BTP, con test in
+[test_bond_controller.py](../test/unit/test_bond_controller.py):
 
-## Fase 6 — Catalogo BTP (🟡)
+- Filtro per `bond_type` (dropdown "Tutte"/"BOT"/"BTP Tasso Fisso" in
+  [bonds/index.html](../src/intelligent_investor/templates/bonds/index.html), query param
+  `?bond_type=`; opzioni limitate ai tipi realmente in uso per ora, vedi `CATALOG_FILTERS`).
+- Rendimento corrente stimato (`_calc_btp_yields`): scadenzario cedole (Fase 1) sui flussi
+  residui da oggi a scadenza, ancorati all'ultima quotazione MOT (`BondQuoteDAO`) come esborso
+  odierno (prezzo corso secco = clean + rateo), risolto con XIRR multi-flusso (Fase 2). Il netto
+  applica anche un'imposta indicativa di capital gain sullo scarto di prezzo clean, coerente con
+  la semplificazione già usata per il rendimento BOT del catalogo (nessuna commissione/bollo,
+  ignoti a livello di catalogo).
+- `_calc_bond_yields` fa da dispatcher tra la formula BTP e quella BOT esistente (`_calc_yields`),
+  usato sia dalla pagina lista (`index`) sia dal dettaglio (`detail`).
 
-Estendere la pagina/servizio di catalogo esistente per includere i BTP:
-- Filtro per `bond_type = "BTP"`.
-- Rendimento corrente stimato (yield to maturity indicativo) usando l'ultima quotazione MOT
-  (`BondQuoteDAO`) e la Fase 2 (XIRR sui flussi residui fino a scadenza).
-
-## Fase 7 — Import anagrafica BTP a tasso fisso dal foglio `Emissioni` (🔴, *pianificata, non eseguita in questa fase*)
+## Fase 6 — Import anagrafica BTP a tasso fisso dal foglio `Emissioni` (🔴, *pianificata, non eseguita in questa fase*)
 
 Il foglio `Emissioni` del file di riferimento contiene l'elenco di tutti i titoli censiti
 (BOT, BTP a tasso fisso, BTP Valore/Futura a cedola STEP, CCT, ecc.). Per questa milestone va
@@ -182,6 +183,18 @@ Lo step di lavoro previsto (da realizzare quando si arriva a questa fase, non or
    `BondDAO` via `BondService`, con verifica di duplicati per ISIN.
 3. Validazione manuale di un campione contro il sito MEF prima di considerare i dati affidabili
    per l'uso in produzione.
+
+
+## Fase 7 — Controller e UI (🟡)
+
+- Nuova rotta calcolatore BTP (route dedicata o parametro `bond_type` sulla rotta esistente in
+  [bond_controller.py](../src/intelligent_investor/controllers/bond_controller.py), da valutare
+  in base a quanto diverge il template).
+- Template: stessa struttura della pagina calcolatore BOT, con l'aggiunta della tabella "Piano
+  cedole" (Fase 3) sotto i risultati di acquisto.
+- Riuso del profilo bancario esistente (`bank_profile` / `bank_commission`) per le commissioni,
+  nessuna modifica allo schema: le commissioni MOT sono le stesse indipendentemente dallo
+  strumento.
 
 ## Fase 8 — Documentazione utente (🟡)
 

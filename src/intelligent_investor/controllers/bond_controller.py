@@ -10,13 +10,14 @@ from flask import Blueprint, Response, flash, redirect, render_template, request
 from pydantic import ValidationError
 
 from intelligent_investor.dtos import BondDTO
-from intelligent_investor.utils.yield_calculator import YieldCalculator
 from intelligent_investor.dtos.bond_quote import BondQuoteDTO
 from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
 from intelligent_investor.services import BondService, BondSyncService
 from intelligent_investor.services.bank_profile_service import BankProfileService
 from intelligent_investor.services.bond_quote_service import BondQuoteService
 from intelligent_investor.services.bot_calculator_service import BotCalculatorService
+from intelligent_investor.utils.coupon_schedule import CouponSchedule
+from intelligent_investor.utils.yield_calculator import YieldCalculator, xirr
 
 bond_bp = Blueprint("bonds", __name__, url_prefix="/bonds")
 _service = BondService()
@@ -27,6 +28,9 @@ _calculator_service = BotCalculatorService()
 
 # Allowed bond types for dropdowns
 BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
+
+# Catalogue filter options (value, label) — restricted to the types actually in use for now
+CATALOG_FILTERS: list[tuple[str, str]] = [("BOT", "BOT"), ("BTP", "BTP Tasso Fisso")]
 
 
 # ---------------------------------------------------------------------------
@@ -65,6 +69,56 @@ def _calc_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float |
     return gross, net
 
 
+def _calc_btp_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | None, float | None]:
+    """Compute an indicative gross/net yield-to-maturity for a fixed-rate BTP.
+
+    Uses the coupon schedule (Fase 1) and multi-flow XIRR (Fase 2) on the residual
+    cash flows from today to maturity:
+        outflow today = -(last_price + rateo lordo)         (corso secco / dirty price)
+        inflows       = future gross/net coupons + redemption_price at maturity
+
+    Net additionally deducts an indicative capital-gain tax on the clean-price gap
+    (redemption_price - last_price), mirroring BtpCalculatorService's simplified
+    capital-gain treatment. Commissions and stamp duty are not modelled here (unknown
+    at catalogue level), same simplification already applied to the BOT catalogue yield.
+
+    Returns (gross_pct, net_pct) as percentage values, or (None, None) if the bond
+    has already matured or the quote is invalid.
+    """
+    if bond.maturity_date <= today or last_price <= 0:
+        return None, None
+
+    cs = CouponSchedule(bond.issue_date, bond.maturity_date, bond.coupon_frequency, bond.nominal_rate, bond.tax_rate)
+    dirty_price = last_price + cs.accrued_interest(today)
+    future_coupons = [cp for cp in cs.schedule if cp.payment_date > today]
+
+    capital_gain = max(0.0, bond.redemption_price - last_price)
+    net_redemption = bond.redemption_price - capital_gain * (bond.tax_rate / 100)
+
+    gross_cashflows: list[tuple[date, float]] = (
+        [(today, -dirty_price)]
+        + [(cp.payment_date, cp.gross_amount) for cp in future_coupons]
+        + [(bond.maturity_date, bond.redemption_price)]
+    )
+    net_cashflows: list[tuple[date, float]] = (
+        [(today, -dirty_price)]
+        + [(cp.payment_date, cp.net_amount) for cp in future_coupons]
+        + [(bond.maturity_date, net_redemption)]
+    )
+
+    try:
+        return xirr(gross_cashflows), xirr(net_cashflows)
+    except ValueError:
+        return None, None
+
+
+def _calc_bond_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | None, float | None]:
+    """Dispatch to the yield formula matching the bond's type (catalogue-wide helper)."""
+    if bond.bond_type == "BTP":
+        return _calc_btp_yields(bond=bond, last_price=last_price, today=today)
+    return _calc_yields(bond=bond, last_price=last_price, today=today)
+
+
 def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
     """Build a BondDTO from an HTML form dict."""
     url = form.get("auction_result_url", "").strip() or None
@@ -91,10 +145,15 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
 
 @bond_bp.route(rule="/", methods=["GET"])
 def index() -> str:
-    """List all bonds."""
+    """List all bonds, optionally filtered by ?bond_type=BOT|BTP (see CATALOG_FILTERS)."""
     today: date = date.today()
+    bond_type_filter: str | None = request.args.get("bond_type") or None
     bonds: list[BondDTO] = sorted(
-        (b for b in _service.list_all() if b.maturity_date >= today),
+        (
+            b
+            for b in _service.list_all()
+            if b.maturity_date >= today and (bond_type_filter is None or b.bond_type == bond_type_filter)
+        ),
         key=lambda b: b.maturity_date,
     )
     quotes: dict[int, BondQuoteDTO] = {q.bond_id: q for q in _quote_service.list_all()}
@@ -105,9 +164,16 @@ def index() -> str:
         if bond.id is not None:
             quote: BondQuoteDTO | None = quotes.get(bond.id)
             if quote is not None:
-                yields[bond.id] = _calc_yields(bond=bond, last_price=quote.last_price, today=today)
+                yields[bond.id] = _calc_bond_yields(bond=bond, last_price=quote.last_price, today=today)
 
-    return render_template(template_name_or_list="bonds/index.html", bonds=bonds, quotes=quotes, yields=yields)
+    return render_template(
+        template_name_or_list="bonds/index.html",
+        bonds=bonds,
+        quotes=quotes,
+        yields=yields,
+        catalog_filters=CATALOG_FILTERS,
+        bond_type_filter=bond_type_filter,
+    )
 
 
 @bond_bp.route(rule="/refresh-bot-quotes/stream", methods=["GET"])
@@ -147,7 +213,7 @@ def detail(bond_id: int):
         return redirect(url_for("bonds.index"))
 
     quote = _quote_service.get_by_bond_id(bond_id)
-    gross_yield, net_yield = _calc_yields(bond, quote.last_price, today) if quote else (None, None)
+    gross_yield, net_yield = _calc_bond_yields(bond, quote.last_price, today) if quote else (None, None)
     residual_days = (bond.maturity_date - today).days if bond.maturity_date >= today else 0
     total_days = (bond.maturity_date - bond.issue_date).days
 

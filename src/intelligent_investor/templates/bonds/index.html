@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}BOT / Obbligazioni — Investitore Intelligente{% endblock %}
+{% block title %}Obbligazioni — Investitore Intelligente{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="mb-0"><i class="bi bi-bank me-2 text-primary"></i>BOT / Obbligazioni</h2>
+  <h2 class="mb-0"><i class="bi bi-bank me-2 text-primary"></i>Obbligazioni</h2>
   <div class="d-flex gap-2">
     <button id="btn-refresh" class="btn btn-success" onclick="startRefresh()">
       <i class="bi bi-arrow-clockwise me-1"></i>Aggiorna Quotazioni BOT
@@ -14,6 +14,15 @@
     </a>
   </div>
 </div>
+
+<form method="get" class="mb-4" style="max-width: 260px;">
+  <select name="bond_type" class="form-select" onchange="this.form.submit()">
+    <option value="" {{ 'selected' if not bond_type_filter else '' }}>Tutte</option>
+    {% for value, label in catalog_filters %}
+    <option value="{{ value }}" {{ 'selected' if bond_type_filter == value else '' }}>{{ label }}</option>
+    {% endfor %}
+  </select>
+</form>
 
 <!-- Progress panel — hidden until refresh starts -->
 <div id="refresh-panel" class="card mb-4 d-none">
