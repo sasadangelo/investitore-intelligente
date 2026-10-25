@@ -1,0 +1,56 @@
+{
+  "description": "BTP Nv26 emesso nel 1996: il disaggio matura dalla prima cedola dopo l'1/1/1997",
+  "source": "ObbligazioniTF v5.0.ods, foglio Bond (F6=2): formule replicate cella per cella; le chiavi riportano la cella",
+  "bond": {
+    "name": "Btp-1Nv26 7,25",
+    "isin": "IT0001086567",
+    "bond_type": "BTP",
+    "issue_date": "1996-11-01",
+    "maturity_date": "2026-11-01",
+    "issue_price": 99.45,
+    "redemption_price": 100.0,
+    "nominal_rate": 7.25,
+    "coupon_frequency": 2,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "purchase_venue": "mot",
+    "face_value": 10000.0,
+    "buy_commission_pct": 0.19,
+    "buy_commission_min": 2.95,
+    "buy_commission_max": 19.0,
+    "buy_commission_fixed": 0.0,
+    "stamp_duty_period": "quarterly",
+    "purchase_date": "2026-05-01",
+    "purchase_price": 100.8
+  },
+  "expected": {
+    "purchase": {
+      "unit_discount_F30": 0.531714,
+      "discount_tax_K27": -6.64643,
+      "commission_K24": 19.0,
+      "total_paid_K29": 10092.35357
+    },
+    "sale": {
+      "unit_discount_F46": 0.55,
+      "discount_tax_K39_F16": -6.875,
+      "commission_K36": 0.0
+    },
+    "capital_gain": {
+      "theoretical_purchase_price_F29": 99.981714,
+      "theoretical_sale_price_F45": 100.0,
+      "load_price_K26": 100.458286,
+      "unload_price_K38": 99.45,
+      "unit_gain_loss_K46": -1.008286,
+      "total_gain_loss_K48": -100.828562,
+      "capital_gain_tax_K52": 0.0
+    },
+    "coupons_in_holding": 1,
+    "summary": {
+      "gross_gain_K10": 282.5,
+      "compound_gross_yield_K9": 5.636087,
+      "net_gain_before_duty_K7": 217.95893,
+      "compound_net_yield_before_duty_K6": 4.329578
+    }
+  }
+}

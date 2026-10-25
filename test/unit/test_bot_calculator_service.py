@@ -3,7 +3,10 @@
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
 """
-Parametrised unit tests for BotCalculatorService.
+Parametrised unit tests for BondCalculatorService on BOTs.
+
+These cases were written for the former BotCalculatorService and now run against the
+unified calculator: they are the parity check required by docs/roadmap-btp.md (Fase 8).
 
 Each JSON file in test/unit/fixtures/ whose name starts with
 "bot_calculator_case_" describes one complete test scenario:
@@ -11,7 +14,7 @@ Each JSON file in test/unit/fixtures/ whose name starts with
   {
     "description": "human-readable label",
     "bond":        { ...fields for BondDTO... },
-    "transaction": { ...fields for BotTransactionDTO... },
+    "transaction": { ...fields for BondTransactionDTO... },
     "expected":    {
       "quantity": ...,
       "purchase":      { dry_amount, commission, fixed_commission,
@@ -43,8 +46,8 @@ from pathlib import Path
 import pytest
 
 from intelligent_investor.dtos.bond import BondDTO
-from intelligent_investor.dtos.bot_transaction import BotTransactionDTO
-from intelligent_investor.services.bot_calculator_service import BotCalculatorService
+from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
+from intelligent_investor.services.bond_calculator_service import BondCalculatorService
 
 # ---------------------------------------------------------------------------
 # Fixtures directory
@@ -95,8 +98,8 @@ def _make_bond(raw: dict) -> BondDTO:
     )
 
 
-def _make_transaction(raw: dict) -> BotTransactionDTO:
-    return BotTransactionDTO(
+def _make_transaction(raw: dict) -> BondTransactionDTO:
+    return BondTransactionDTO(
         bond_id=raw.get("bond_id", 0),
         purchase_venue=raw["purchase_venue"],
         purchase_date=date.fromisoformat(raw["purchase_date"]),
@@ -124,14 +127,14 @@ def _make_transaction(raw: dict) -> BotTransactionDTO:
 @pytest.mark.parametrize("test_id,case", _CASES, ids=[c[0] for c in _CASES])
 def test_bot_calculator(test_id: str, case: dict) -> None:
     """
-    Run BotCalculatorService.calculate() for the given case and assert
+    Run BondCalculatorService.calculate() for the given case and assert
     every expected field within tolerance.
     """
     bond = _make_bond(case["bond"])
     transaction = _make_transaction(case["transaction"])
     expected = case["expected"]
 
-    result = BotCalculatorService().calculate(transaction, bond)
+    result = BondCalculatorService().calculate(transaction, bond)
 
     # -- quantity ------------------------------------------------------------
     assert result.quantity == pytest.approx(expected["quantity"], abs=_ABS_EURO), \

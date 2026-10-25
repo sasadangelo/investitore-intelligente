@@ -52,7 +52,7 @@ Il rendimento lordo è il guadagno prima delle imposte, espresso come tasso annu
 rendimento_lordo = (100 / prezzo_acquisto) ^ (365 / giorni_a_scadenza) − 1
 ```
 
-Questo è il rendimento che trovi nel [Catalogo BOT](/bonds/) e nelle quotazioni di mercato.
+Questo è il rendimento che trovi nel [Catalogo BOT](/catalogue/) e nelle quotazioni di mercato.
 
 ### L'imposta sostitutiva agevolata al 12,5%
 
@@ -77,6 +77,8 @@ rendimento_netto = ((100 − imposta_disaggio) / prezzo_acquisto) ^ (365 / giorn
 ## Per orizzonti più lunghi: i BTP
 
 Il BOT è lo strumento ideale per **orizzonte temporale fino a 12 mesi**. Se vuoi investire per periodi più lunghi, dovresti considerare i **BTP** (Buoni del Tesoro Poliennali), che pagano cedole semestrali e hanno scadenze da 3 a 50 anni. Più lungo è l'orizzonte, maggiore è in genere il rendimento offerto (curva dei tassi crescente in condizioni normali di mercato).
+
+Per capire come funzionano cedole, rateo e tasse dei BTP leggi **[Cos'è un BTP](/guides/cosa-e-un-btp)**.
 
 ---
 

@@ -13,8 +13,8 @@ Benvenuto su **Investitore Intelligente**, il sito che ti aiuta a **simulare con
 
 | Sezione | A cosa serve |
 |---|---|
-| [Catalogo BOT](/bonds/) | Vedi tutti i BOT in circolazione con rendimento lordo e netto |
-| [Calcolatore BOT](/bonds/calculator) | Simula acquisto e vendita con le commissioni della tua banca |
+| [Catalogo BOT](/catalogue/) | Vedi tutti i BOT in circolazione con rendimento lordo e netto |
+| [Calcolatore BOT](/calculator/) | Simula acquisto e vendita con le commissioni della tua banca |
 | [Calendario Aste](/auctions/) | Consulta le date delle prossime aste MEF |
 | [Guide](/guides/) | Approfondimenti su ogni funzionalità del sito |
 
@@ -31,7 +31,7 @@ Se non hai mai sentito parlare di BOT o non sai cosa sia un'obbligazione, inizia
 
 ## Passo 1 — Consulta il Catalogo BOT
 
-Il primo strumento concreto da usare è il **[Catalogo BOT](/bonds/)**.
+Il primo strumento concreto da usare è il **[Catalogo BOT](/catalogue/)**.
 
 Il catalogo mostra in tempo reale tutti i BOT attualmente in circolazione sul mercato, con:
 
@@ -51,7 +51,7 @@ La scelta dipende principalmente da due fattori:
 
 2. **Rendimento netto desiderato** — il Catalogo è ordinato per data di scadenza crescente, quindi i BOT con scadenza più vicina appaiono in cima e quelli più lontani in fondo. Confronta la colonna "Rendimento netto" tra i BOT della fascia di durata che ti interessa e scegli quello con il rendimento più alto.
 
-   > **Attenzione ai BOT in scadenza imminente.** Un BOT che scade tra pochi giorni può mostrare un rendimento annualizzato apparentemente attraente: la formula annualizza un guadagno minuscolo su una finestra temporale brevissima, gonfiando la percentuale. In pratica, l'importo netto che incasseresti sarebbe così piccolo da essere interamente eroso dalle commissioni bancarie. La regola è semplice: **prima di prendere qualsiasi decisione, porta sempre il BOT scelto nel [Calcolatore BOT](/bonds/calculator)** — solo lì vedrai i numeri reali in euro, commissioni e imposte incluse.
+   > **Attenzione ai BOT in scadenza imminente.** Un BOT che scade tra pochi giorni può mostrare un rendimento annualizzato apparentemente attraente: la formula annualizza un guadagno minuscolo su una finestra temporale brevissima, gonfiando la percentuale. In pratica, l'importo netto che incasseresti sarebbe così piccolo da essere interamente eroso dalle commissioni bancarie. La regola è semplice: **prima di prendere qualsiasi decisione, porta sempre il BOT scelto nel [Calcolatore BOT](/calculator/)** — solo lì vedrai i numeri reali in euro, commissioni e imposte incluse.
 
 > Il limite naturale dei BOT è **12 mesi**: per investire su orizzonti più lunghi esistono i **BTP** (Buoni del Tesoro Poliennali), che pagano cedole semestrali e hanno scadenze fino a 50 anni.
 
@@ -61,7 +61,7 @@ Un BOT non è uno strumento "bloccato" fino alla scadenza. Se dopo l'acquisto ha
 
 ### Il Catalogo è solo il punto di partenza
 
-Il Catalogo ti serve per fare una **prima scrematura**: scegli il BOT che si avvicina al tuo orizzonte temporale e al rendimento che cerchi. I rendimenti mostrati però sono **indicativi** — non tengono conto delle commissioni della tua banca, dell'imposta di bollo né di eventuali plusvalenze da vendita anticipata. Per sapere con precisione **quanti euro incasserai davvero**, una volta scelto il BOT devi portarlo nel **[Calcolatore BOT](/bonds/calculator)**.
+Il Catalogo ti serve per fare una **prima scrematura**: scegli il BOT che si avvicina al tuo orizzonte temporale e al rendimento che cerchi. I rendimenti mostrati però sono **indicativi** — non tengono conto delle commissioni della tua banca, dell'imposta di bollo né di eventuali plusvalenze da vendita anticipata. Per sapere con precisione **quanti euro incasserai davvero**, una volta scelto il BOT devi portarlo nel **[Calcolatore BOT](/calculator/)**.
 
 A questo punto hai due opzioni **mutuamente esclusive** — scegli una sola:
 
@@ -72,7 +72,7 @@ A questo punto hai due opzioni **mutuamente esclusive** — scegli una sola:
 
 ## Passo 2 — Acquisto sul MOT: simula con il Calcolatore
 
-Se hai scelto di acquistare il BOT sul **mercato secondario (MOT)**, usa subito il **[Calcolatore BOT](/bonds/calculator)** per ottenere il calcolo completo e preciso con il prezzo attuale di mercato.
+Se hai scelto di acquistare il BOT sul **mercato secondario (MOT)**, usa subito il **[Calcolatore BOT](/calculator/)** per ottenere il calcolo completo e preciso con il prezzo attuale di mercato.
 
 Il Calcolatore ti permette di:
 
@@ -110,7 +110,7 @@ Per aggirare questo problema puoi usare la pagina **[Previsione Prezzi BOT](/auc
 Procedura consigliata prima di un'asta:
 
 1. Vai su **[Previsione Prezzi BOT](/auctions/forecast)** e annota il prezzo stimato per la prossima asta.
-2. Apri il **[Calcolatore BOT](/bonds/calculator)**, seleziona il mercato **Asta** e inserisci il prezzo stimato nei campi **Prezzo Emissione** e **Prezzo Acquisto**.
+2. Apri il **[Calcolatore BOT](/calculator/)**, seleziona il mercato **Asta** e inserisci il prezzo stimato nei campi **Prezzo Emissione** e **Prezzo Acquisto**.
 3. Inserisci il lotto nominale che vuoi acquistare (es. 1.000 €, 2.000 €, 5.000 €, 10.000 €, …).
 4. Seleziona la tua banca dal menu **Profilo bancario** per caricare automaticamente le commissioni, oppure inseriscile manualmente.
 5. Il risultato ti darà un'**idea realistica del guadagno netto atteso e del rendimento**, tenendo conto delle commissioni della tua banca.
@@ -180,7 +180,7 @@ L'imposta sostitutiva sul disaggio (guadagno) è del **12,5%** — la più bassa
 **5. Oltre al prezzo di acquisto, quali altre spese devo considerare?**
 Tre voci si sommano al costo del BOT:
 
-- **Commissioni bancarie** — applicate al momento dell'acquisto (e dell'eventuale vendita anticipata). La percentuale e il minimo variano da banca a banca; alcune banche non applicano commissioni sugli acquisti in asta. Usa il [Calcolatore BOT](/bonds/calculator) con il profilo della tua banca per vedere l'impatto esatto.
+- **Commissioni bancarie** — applicate al momento dell'acquisto (e dell'eventuale vendita anticipata). La percentuale e il minimo variano da banca a banca; alcune banche non applicano commissioni sugli acquisti in asta. Usa il [Calcolatore BOT](/calculator/) con il profilo della tua banca per vedere l'impatto esatto.
 - **Imposta di bollo** — pari allo **0,2% annuo** sul controvalore del titolo in portafoglio. Viene addebitata trimestralmente (o annualmente, a seconda del regime scelto) per ogni periodo di detenzione; più a lungo tieni il BOT, più periodi di bollo accumuli.
 - **Imposta sostitutiva sul disaggio** — il **12,5%** del guadagno lordo (differenza tra rimborso e prezzo di emissione, pro-quota per il periodo di possesso). È trattenuta automaticamente dalla banca a rimborso o a vendita.
 

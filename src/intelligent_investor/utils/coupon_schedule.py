@@ -182,6 +182,34 @@ class CouponSchedule:
 # ---------------------------------------------------------------------------
 
 
+def next_coupon_date(settlement_date: date, maturity_date: date, coupon_frequency: int) -> date:
+    """
+    First coupon date strictly after settlement_date — equivalent of COUPNCD in LibreOffice/Excel.
+
+    Coupon dates are anchored to maturity_date and step back by 12/coupon_frequency
+    months, so the result does not depend on the issue date (it can fall before it).
+
+    Args:
+        settlement_date: Reference date
+        maturity_date: Bond maturity, the last coupon date
+        coupon_frequency: Coupons per year; 0 (no coupons) returns settlement_date
+
+    Returns:
+        The next coupon date, or maturity_date when settlement_date is in the last period
+    """
+    if coupon_frequency <= 0:
+        return settlement_date
+    step_months = 12 // coupon_frequency
+    candidate = maturity_date
+    periods_back = 1
+    # Step back from maturity (not from the previous candidate) so that day clamping
+    # in short months (e.g. 31 → 30) does not drift across iterations
+    while (previous := _subtract_months(maturity_date, periods_back * step_months)) > settlement_date:
+        candidate = previous
+        periods_back += 1
+    return candidate
+
+
 def _subtract_months(d: date, months: int) -> date:
     """Subtract *months* calendar months from *d*, clamping the day to the target month length.
 

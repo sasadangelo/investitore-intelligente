@@ -16,7 +16,7 @@
   <h2 class="mb-0">
     <i class="bi bi-calculator me-2 text-primary"></i>Calcolatore BOT
   </h2>
-  <a href="{{ url_for('bonds.index') }}" class="btn btn-outline-secondary">
+  <a href="{{ url_for('catalogue.index') }}" class="btn btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i>Torna al catalogo
   </a>
 </div>
@@ -33,7 +33,7 @@
         <span class="fs-5">Parametri transazione</span>
       </div>
       <div class="card-body">
-        <form method="post" action="{{ url_for('bonds.calculator_compute') }}" novalidate>
+        <form method="post" action="{{ url_for('calculator.compute') }}" novalidate>
 
           {# Helper macro: returns submitted form value or falls back to default #}
           {% macro fval(field, default='') -%}

@@ -7,40 +7,30 @@
 
 ---
 
-## Milestone 1 — Bank profile data completion
-> Goal: cover the banks most used by Italian retail investors for BOT purchases.
+## Order of work
 
-### 1.1 — Banks to add
+Milestone numbers are stable identifiers (other documents refer to them), not the order of work.
 
-| #    | Bank | Profiles | Priority | Notes |
-|------|---|---|---|---|
-| 1.1  | **Banca Sella** | Internet Banking | 🟡 | Well-regarded by digital investors |
-| 1.2  | **CheBanca! (Mediobanca)** | Internet Banking | 🟡 | Similar target audience to Fineco |
-| 1.3  | **Mediolanum** | Internet Banking | 🟡 | Wide customer base via financial advisors |
-| 1.4  | **Credem (Credito Emiliano)** | Filiale, Internet Banking | 🟡 | Strong in Emilia-Romagna |
-| 1.5  | **Banco di Sardegna** | Filiale, Internet Banking | 🟢 | Relevant in Sardinia |
-| 1.6  | **Cassa Depositi e Prestiti / CDP** | — | 🟢 | Issues BTP but no retail brokerage |
-| 1.7 | **Trade Republic** | App | 🟢 | Growing among younger investors; BOT support limited |
-| 1.8 | **Revolut** | App | 🟢 | Large user base but limited Italian government bond support |
-| 1.9 | **Degiro** | Online | 🟢 | Popular discount broker; MOT access available |
-| 1.10 | **Flatex** | Online | 🟢 | German broker with Italian MOT access |
-
-> **Note:** for each profile, collect the official information sheet and set `info_url`.
+1. **Now — Milestone 3** (fixed-rate BTP): see [`docs/roadmap-btp.md`](docs/roadmap-btp.md) for phases and status.
+2. **Next** — Milestones 4 to 8, in the order listed below.
+3. **Deferred — Milestone 1** (more bank profiles): listed last.
 
 ---
 
 ## Milestone 3 — BTP support (fixed-rate)
-> Goal: extend the calculator to standard fixed-coupon BTPs.
-> Detailed step-by-step technical roadmap: [`docs/roadmap-btp.md`](docs/roadmap-btp.md).
+> Goal: support standard fixed-coupon BTPs in the catalogue and the calculator, with results
+> matching the reference spreadsheet (`docs/ObbligazioniTF v5.0.ods`).
+>
+> Phases, status and technical details live only in [`docs/roadmap-btp.md`](docs/roadmap-btp.md).
 
-| # | Feature | Notes | Priority |
-|---|---|---|---|
-| 3.1 | BTP data model | Extend `BondDTO` / new entity with coupon, frequency, maturity | 🔴 |
-| 3.2 | BTP calculator | Dirty price, accrued interest, YTM gross/net, modified duration | 🔴 |
-| 3.3 | BTP catalogue | Active BTPs with MOT quotes and current yield | 🔴 |
-| 3.4 | Discount/premium tax | 12.5% withholding on discount; coupon not subject to capital gain tax | 🟡 |
-| 3.5 | Capital gain on early sale | Purchase load price vs sale price, 26% tax | 🟡 |
-| 3.6 | Bank commissions for BTP | Reuse existing bank profiles (government bond section) | 🟡 |
+**Status:**
+- ✅ Done (phases 1–8): coupon schedule and accrued interest, multi-flow XIRR, BTP catalogue with
+  yields, import of 108 fixed-rate BTPs, MOT quote sync, single BOT/BTP calculator with the issue
+  discount (checked against the spreadsheet).
+- 🔴 Next (phases 9–10): accrued interest convention and taxes, irregular first coupon.
+- 🟡 Then (phases 11–14): BTP calculator page, modified duration, yield comparison (formerly
+  item 4.5), refinements.
+- Phases are numbered in execution order. User guides and tests are updated with every phase.
 
 ---
 
@@ -53,7 +43,9 @@
 | 4.2 | BTP Italia | Semi-annual coupon + FOIEX capital revaluation, loyalty bonus | 🟡 |
 | 4.3 | BTP Più | Step-up coupon with early redemption option at year 4 | 🟡 |
 | 4.4 | Future coupon calculator | Table of expected coupons per year/semester with net amounts | 🔴 |
-| 4.5 | BOT vs BTP comparison | Net annualised yield on the same time horizon | 🟡 |
+
+> Item 4.5 (BOT vs BTP comparison) moved to Milestone 3 as phase 13 of [`docs/roadmap-btp.md`](docs/roadmap-btp.md);
+> step-up BTPs will be added to that comparison when this milestone is done.
 
 ---
 
@@ -115,6 +107,30 @@
 | 8.5 | Maturity alerts | In-app or email notification N days before a BOT matures | 🟡 |
 | 8.6 | CSV / Excel export | Portfolio and history export for tax return preparation | 🟡 |
 | 8.7 | Multi-instrument portfolio | BOT + BTP + Corporate Bond in a single view | 🟢 |
+
+---
+
+## Milestone 1 — Bank profile data completion (deferred)
+> Goal: cover the banks most used by Italian retail investors for BOT purchases.
+> **Deferred**: the existing bank profiles are enough to use the calculators. Resume after
+> Milestone 3; the BTP work only reuses the existing profiles (government bond section).
+
+### 1.1 — Banks to add
+
+| #    | Bank | Profiles | Priority | Notes |
+|------|---|---|---|---|
+| 1.1  | **Banca Sella** | Internet Banking | 🟡 | Well-regarded by digital investors |
+| 1.2  | **CheBanca! (Mediobanca)** | Internet Banking | 🟡 | Similar target audience to Fineco |
+| 1.3  | **Mediolanum** | Internet Banking | 🟡 | Wide customer base via financial advisors |
+| 1.4  | **Credem (Credito Emiliano)** | Filiale, Internet Banking | 🟡 | Strong in Emilia-Romagna |
+| 1.5  | **Banco di Sardegna** | Filiale, Internet Banking | 🟢 | Relevant in Sardinia |
+| 1.6  | **Cassa Depositi e Prestiti / CDP** | — | 🟢 | Issues BTP but no retail brokerage |
+| 1.7 | **Trade Republic** | App | 🟢 | Growing among younger investors; BOT support limited |
+| 1.8 | **Revolut** | App | 🟢 | Large user base but limited Italian government bond support |
+| 1.9 | **Degiro** | Online | 🟢 | Popular discount broker; MOT access available |
+| 1.10 | **Flatex** | Online | 🟢 | German broker with Italian MOT access |
+
+> **Note:** for each profile, collect the official information sheet and set `info_url`.
 
 ---
 

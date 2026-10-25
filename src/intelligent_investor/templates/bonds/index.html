@@ -1,66 +1,19 @@
 {% extends "base.html" %}
 
-{% block title %}Obbligazioni — Investitore Intelligente{% endblock %}
+{% block title %}Gestione obbligazioni — Investitore Intelligente{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-  <h2 class="mb-0"><i class="bi bi-bank me-2 text-primary"></i>Obbligazioni</h2>
+  <h2 class="mb-0"><i class="bi bi-gear me-2 text-primary"></i>Gestione obbligazioni</h2>
   <div class="d-flex gap-2">
-    <button id="btn-refresh" class="btn btn-success" onclick="startRefresh()">
-      <i class="bi bi-arrow-clockwise me-1"></i>Aggiorna Quotazioni
-    </button>
+    <a href="{{ url_for('catalogue.index') }}" class="btn btn-outline-secondary">
+      <i class="bi bi-arrow-left me-1"></i>Torna al catalogo
+    </a>
     <a href="{{ url_for('bonds.new') }}" class="btn btn-primary">
       <i class="bi bi-plus-circle me-1"></i>Aggiungi
     </a>
   </div>
 </div>
-
-<form method="get" class="d-flex flex-wrap gap-3 align-items-end mb-4">
-  <div style="max-width: 260px;">
-    <label class="form-label small text-muted mb-1">Tipo</label>
-    <select name="bond_type" class="form-select" onchange="this.form.submit()">
-      <option value="" {{ 'selected' if not bond_type_filter else '' }}>Tutte</option>
-      {% for value, label in catalog_filters %}
-      <option value="{{ value }}" {{ 'selected' if bond_type_filter == value else '' }}>{{ label }}</option>
-      {% endfor %}
-    </select>
-  </div>
-  <input type="hidden" name="per_page" value="{{ per_page }}">
-  <input type="hidden" name="sort" value="{{ sort }}">
-  <input type="hidden" name="dir" value="{{ dir }}">
-</form>
-
-<!-- Progress panel — hidden until refresh starts -->
-<div id="refresh-panel" class="card mb-4 d-none">
-  <div class="card-body">
-    <div class="d-flex justify-content-between mb-1">
-      <span class="small fw-semibold" id="refresh-message">Avvio…</span>
-      <span class="small text-muted" id="refresh-pct">0%</span>
-    </div>
-    <div class="progress" style="height: 10px;">
-      <div id="refresh-bar"
-           class="progress-bar progress-bar-striped progress-bar-animated"
-           role="progressbar"
-           style="width: 0%"
-           aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-      </div>
-    </div>
-    <p id="refresh-status" class="small text-muted mt-2 mb-0"></p>
-  </div>
-</div>
-
-{% macro sort_th(field, label, css_class='') %}
-<th class="{{ css_class }}">
-  <a href="{{ sort_urls[field] }}" class="text-decoration-none text-reset d-inline-flex align-items-center gap-1">
-    {{ label }}
-    {% if sort == field %}
-      <i class="bi bi-caret-{{ 'up' if dir == 'asc' else 'down' }}-fill small"></i>
-    {% else %}
-      <i class="bi bi-caret-down small text-muted opacity-25"></i>
-    {% endif %}
-  </a>
-</th>
-{% endmacro %}
 
 {% if bonds %}
 <div class="card shadow-sm">
@@ -72,36 +25,34 @@
             <th>#</th>
             <th>Nome</th>
             <th>ISIN</th>
+            <th>Tipo</th>
             <th>Data Emissione</th>
-            {{ sort_th('maturity', 'Data Scadenza') }}
-            <th class="text-end">Ultimo Prezzo</th>
-            {{ sort_th('yield_gross', 'Rendimento lordo', 'text-end') }}
-            {{ sort_th('yield_net', 'Rendimento netto', 'text-end') }}
+            <th>Data Scadenza</th>
             <th class="text-center">Azioni</th>
           </tr>
         </thead>
         <tbody>
           {% for bond in bonds %}
-          <tr>
+          <tr class="{{ 'text-muted' if bond.maturity_date < today else '' }}">
             <td class="text-muted small">{{ bond.id }}</td>
             <td>
               <a href="{{ url_for('bonds.detail', bond_id=bond.id) }}" class="text-decoration-none fw-semibold">
                 {{ bond.name }}
               </a>
+              {% if bond.maturity_date < today %}<span class="badge text-bg-secondary ms-1">Scaduto</span>{% endif %}
+              {# The quote sync stores par when the source has no issue price: a wrong 100
+                 silently removes the issue discount from every calculation #}
+              {% if bond.bond_type != 'BOT' and bond.issue_price == bond.redemption_price %}
+              <span class="badge text-bg-warning ms-1"
+                    title="Prezzo di emissione uguale al prezzo di rimborso: potrebbe essere un valore provvisorio inserito dalla sincronizzazione. Verificalo sul sito del MEF, perché da questo dipende l'imposta sullo scarto di emissione.">
+                Prezzo emissione da verificare
+              </span>
+              {% endif %}
             </td>
             <td><code>{{ bond.isin }}</code></td>
+            <td>{{ bond.bond_type }}</td>
             <td>{{ bond.issue_date.strftime('%d/%m/%Y') }}</td>
             <td>{{ bond.maturity_date.strftime('%d/%m/%Y') }}</td>
-            {% set q = quotes.get(bond.id) %}
-            <td class="text-end">{% if q %}<strong>{{ "%.4f"|format(q.last_price) }}</strong>{% else %}<span class="text-muted">—</span>{% endif %}</td>
-            {% set yld = yields.get(bond.id) %}
-            {% if yld and yld[0] is not none %}
-              <td class="text-end">{{ "%.2f"|format(yld[0]) }}%</td>
-              <td class="text-end">{{ "%.2f"|format(yld[1]) }}%</td>
-            {% else %}
-              <td class="text-end text-muted">—</td>
-              <td class="text-end text-muted">—</td>
-            {% endif %}
             <td class="text-center text-nowrap">
               <a href="{{ url_for('bonds.edit', bond_id=bond.id) }}"
                  class="btn btn-sm btn-outline-primary me-1"
@@ -120,105 +71,19 @@
       </table>
     </div>
   </div>
-  <div class="card-footer d-flex flex-wrap justify-content-between align-items-center gap-3 text-muted small">
-    <span>{{ total_count }} obbligazion{{ 'e' if total_count == 1 else 'i' }} in archivio — pagina {{ page }} di {{ total_pages }}</span>
-    <div class="d-flex flex-wrap align-items-center gap-3">
-      <form method="get" class="d-flex align-items-center gap-2 mb-0">
-        <label for="per_page_bottom" class="mb-0">Per pagina</label>
-        <select id="per_page_bottom" name="per_page" class="form-select form-select-sm" style="width: auto;" onchange="this.form.submit()">
-          {% for opt in per_page_options %}
-          <option value="{{ opt }}" {{ 'selected' if per_page == opt else '' }}>{{ opt }}</option>
-          {% endfor %}
-        </select>
-        <input type="hidden" name="bond_type" value="{{ bond_type_filter or '' }}">
-        <input type="hidden" name="sort" value="{{ sort }}">
-        <input type="hidden" name="dir" value="{{ dir }}">
-      </form>
-      <nav aria-label="Paginazione">
-        <ul class="pagination pagination-sm mb-0">
-          <li class="page-item {{ 'disabled' if page <= 1 else '' }}">
-            <a class="page-link" href="{{ page_url(page - 1) if page > 1 else '#' }}">&laquo; Precedente</a>
-          </li>
-          <li class="page-item {{ 'disabled' if page >= total_pages else '' }}">
-            <a class="page-link" href="{{ page_url(page + 1) if page < total_pages else '#' }}">Successiva &raquo;</a>
-          </li>
-        </ul>
-      </nav>
-    </div>
+  <div class="card-footer text-muted small">
+    {{ bonds|length }} obbligazion{{ 'e' if bonds|length == 1 else 'i' }} in archivio
   </div>
 </div>
-
 {% else %}
 <div class="card shadow-sm text-center py-5">
   <div class="card-body">
     <i class="bi bi-inbox display-4 text-muted"></i>
     <p class="mt-3 text-muted fs-5">Nessuna obbligazione presente.</p>
     <a href="{{ url_for('bonds.new') }}" class="btn btn-primary mt-2">
-      <i class="bi bi-plus-circle me-1"></i>Aggiungi il primo BOT
+      <i class="bi bi-plus-circle me-1"></i>Aggiungi la prima obbligazione
     </a>
   </div>
 </div>
 {% endif %}
-{% endblock %}
-
-{% block extra_scripts %}
-<script>
-function startRefresh() {
-  const btn     = document.getElementById('btn-refresh');
-  const panel   = document.getElementById('refresh-panel');
-  const bar     = document.getElementById('refresh-bar');
-  const msgEl   = document.getElementById('refresh-message');
-  const pctEl   = document.getElementById('refresh-pct');
-  const statusEl= document.getElementById('refresh-status');
-
-  // Reset UI
-  btn.disabled = true;
-  panel.classList.remove('d-none', 'border-success', 'border-danger');
-  bar.className = 'progress-bar progress-bar-striped progress-bar-animated bg-success';
-  bar.style.width = '0%';
-  bar.setAttribute('aria-valuenow', 0);
-  msgEl.textContent  = 'Connessione al server…';
-  pctEl.textContent  = '0%';
-  statusEl.textContent = '';
-
-  const url = "{{ url_for('bonds.refresh_quotes_stream') }}";
-  const es  = new EventSource(url);
-
-  es.onmessage = function(e) {
-    let ev;
-    try { ev = JSON.parse(e.data); } catch(_) { return; }
-
-    const pct = Math.min(100, Math.max(0, ev.pct ?? 0));
-    bar.style.width = pct + '%';
-    bar.setAttribute('aria-valuenow', pct);
-    pctEl.textContent  = pct + '%';
-    msgEl.textContent  = ev.message ?? '';
-
-    if (ev.type === 'done') {
-      bar.className = 'progress-bar bg-success';
-      panel.classList.add('border-success');
-      statusEl.textContent = ev.message;
-      es.close();
-      btn.disabled = false;
-      // Reload the table to reflect new data
-      setTimeout(() => window.location.reload(), 1500);
-    } else if (ev.type === 'error') {
-      bar.className = 'progress-bar bg-danger';
-      panel.classList.add('border-danger');
-      statusEl.textContent = '⚠ ' + ev.message;
-      es.close();
-      btn.disabled = false;
-    }
-  };
-
-  es.onerror = function() {
-    bar.className = 'progress-bar bg-danger';
-    msgEl.textContent = 'Connessione interrotta.';
-    statusEl.textContent = 'Riprova tra qualche istante.';
-    panel.classList.add('border-danger');
-    es.close();
-    btn.disabled = false;
-  };
-}
-</script>
 {% endblock %}

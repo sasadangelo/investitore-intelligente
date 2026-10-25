@@ -1,0 +1,61 @@
+{
+  "description": "BTP Dc32 emesso sotto la pari, venduto prima della scadenza in una data di stacco",
+  "source": "ObbligazioniTF v5.0.ods, foglio Bond (F6=2): formule replicate cella per cella; le chiavi riportano la cella",
+  "bond": {
+    "name": "Btp Tf 2,5% Dc32 Eur",
+    "isin": "IT0005494239",
+    "bond_type": "BTP",
+    "issue_date": "2022-05-03",
+    "maturity_date": "2032-12-01",
+    "issue_price": 97.66,
+    "redemption_price": 100.0,
+    "nominal_rate": 2.5,
+    "coupon_frequency": 2,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "purchase_venue": "mot",
+    "face_value": 10000.0,
+    "buy_commission_pct": 0.19,
+    "buy_commission_min": 2.95,
+    "buy_commission_max": 19.0,
+    "buy_commission_fixed": 0.0,
+    "stamp_duty_period": "quarterly",
+    "purchase_date": "2025-12-01",
+    "purchase_price": 96.5,
+    "sale_date": "2027-06-01",
+    "sale_price": 99.0,
+    "sell_commission_pct": 0.19,
+    "sell_commission_min": 2.95,
+    "sell_commission_max": 19.0
+  },
+  "expected": {
+    "purchase": {
+      "unit_discount_F30": 0.791956,
+      "discount_tax_K27": -9.899452,
+      "commission_K24": 18.335,
+      "total_paid_K29": 9658.435548
+    },
+    "sale": {
+      "unit_discount_F46": 1.123405,
+      "discount_tax_K39_F16": -14.042564,
+      "commission_K36": 18.81
+    },
+    "capital_gain": {
+      "theoretical_purchase_price_F29": 98.451956,
+      "theoretical_sale_price_F45": 98.783405,
+      "load_price_K26": 95.891394,
+      "unload_price_K38": 97.688495,
+      "unit_gain_loss_K46": 1.797101,
+      "total_gain_loss_K48": 179.710103,
+      "capital_gain_tax_K52": 22.463763
+    },
+    "coupons_in_holding": 3,
+    "summary": {
+      "gross_gain_K10": 625.0,
+      "compound_gross_yield_K9": 4.331205,
+      "net_gain_before_duty_K7": 514.373125,
+      "compound_net_yield_before_duty_K6": 3.562439
+    }
+  }
+}

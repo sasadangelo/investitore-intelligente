@@ -38,7 +38,14 @@ except Exception as exc:
 
 from flask import Flask, redirect, url_for
 
-from intelligent_investor.controllers import bank_bp, bond_bp, bot_auction_bp, guide_bp
+from intelligent_investor.controllers import (
+    bank_bp,
+    bond_bp,
+    bot_auction_bp,
+    calculator_bp,
+    catalogue_bp,
+    guide_bp,
+)
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.services import DatabaseInitializer
 
@@ -60,6 +67,8 @@ def create_app() -> Flask:
     DatabaseInitializer().initialize_tables()
 
     # Register Blueprints
+    app.register_blueprint(blueprint=catalogue_bp)
+    app.register_blueprint(blueprint=calculator_bp)
     app.register_blueprint(blueprint=bond_bp)
     app.register_blueprint(blueprint=bot_auction_bp)
     app.register_blueprint(blueprint=bank_bp)
@@ -74,10 +83,10 @@ def create_app() -> Flask:
         except Exception:
             return str(value)
 
-    # Root redirect → bonds list
+    # Root redirect → bond catalogue
     @app.route(rule="/")
     def index() -> Response:
-        return redirect(location=url_for(endpoint="bonds.index"))
+        return redirect(location=url_for(endpoint="catalogue.index"))
 
     logger.info("Flask application created and configured.")
     return app

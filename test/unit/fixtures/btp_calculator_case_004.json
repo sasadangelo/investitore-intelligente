@@ -1,0 +1,56 @@
+{
+  "description": "BTP Mg33 emesso sopra la pari, tenuto a scadenza: nessun disaggio",
+  "source": "ObbligazioniTF v5.0.ods, foglio Bond (F6=2): formule replicate cella per cella; le chiavi riportano la cella",
+  "bond": {
+    "name": "Btp Tf 4,40% Mg33 Eur",
+    "isin": "IT0005518128",
+    "bond_type": "BTP",
+    "issue_date": "2022-11-01",
+    "maturity_date": "2033-05-01",
+    "issue_price": 101.71,
+    "redemption_price": 100.0,
+    "nominal_rate": 4.4,
+    "coupon_frequency": 2,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "purchase_venue": "mot",
+    "face_value": 10000.0,
+    "buy_commission_pct": 0.19,
+    "buy_commission_min": 2.95,
+    "buy_commission_max": 19.0,
+    "buy_commission_fixed": 0.0,
+    "stamp_duty_period": "quarterly",
+    "purchase_date": "2025-11-01",
+    "purchase_price": 104.0
+  },
+  "expected": {
+    "purchase": {
+      "unit_discount_F30": 0.0,
+      "discount_tax_K27": -0.0,
+      "commission_K24": 19.0,
+      "total_paid_K29": 10419.0
+    },
+    "sale": {
+      "unit_discount_F46": 0.0,
+      "discount_tax_K39_F16": -0.0,
+      "commission_K36": 0.0
+    },
+    "capital_gain": {
+      "theoretical_purchase_price_F29": 101.221174,
+      "theoretical_sale_price_F45": 100.0,
+      "load_price_K26": 104.19,
+      "unload_price_K38": 100.0,
+      "unit_gain_loss_K46": -4.19,
+      "total_gain_loss_K48": -419.0,
+      "capital_gain_tax_K52": 0.0
+    },
+    "coupons_in_holding": 15,
+    "summary": {
+      "gross_gain_K10": 2900.0,
+      "compound_gross_yield_K9": 3.817586,
+      "net_gain_before_duty_K7": 2468.5,
+      "compound_net_yield_before_duty_K6": 3.242098
+    }
+  }
+}

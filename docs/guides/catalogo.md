@@ -26,7 +26,7 @@ Se non conosci ancora i BOT, leggi la guida completa: **[Cos'è un BOT](/guides/
 | **Rendimento netto** | Rendimento annualizzato netto (al netto del 12,5% sul disaggio) |
 | **Azioni** | Pulsanti per accedere al dettaglio o al calcolatore |
 
-> ℹ️ I rendimenti mostrati sono **annualizzati** e calcolati al netto dell'imposta sostitutiva sul disaggio (12,5%), ma **non includono** commissioni bancarie, imposta di bollo, né altre variabili coe le commissioni sul capital gain. Per il calcolo esatto con tutte le imposte e commissioni della tua banca, usa il **[Calcolatore BOT](/bonds/calculator)**.
+> ℹ️ I rendimenti mostrati sono **annualizzati** e calcolati al netto dell'imposta sostitutiva sul disaggio (12,5%), ma **non includono** commissioni bancarie, imposta di bollo, né altre variabili coe le commissioni sul capital gain. Per il calcolo esatto con tutte le imposte e commissioni della tua banca, usa il **[Calcolatore BOT](/calculator/)**.
 
 ## Aggiornamento quotazioni
 

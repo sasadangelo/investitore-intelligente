@@ -8,10 +8,15 @@ from typing import Literal
 from pydantic import BaseModel, model_validator
 
 
-class BotTransactionDTO(BaseModel):
+class BondTransactionDTO(BaseModel):
     """
-    Represents a BOT purchase (and optional early sale) entered by the user
+    Represents a bond purchase (and optional early sale) entered by the user
     to compute the net gain, yields, capital gain/loss and stamp duty.
+
+    Shared by BOTs and fixed-rate BTPs: the transaction is the same, only the
+    bond differs. Coupon schedule and accrued interest (rateo), when the bond
+    has coupons, are derived from the bond's own record (bond_id), not from
+    this transaction.
 
     Purchase venue
     --------------
@@ -27,12 +32,12 @@ class BotTransactionDTO(BaseModel):
     Both fields must be either both present or both absent.
     """
 
-    bond_id: int  # 0 is used as sentinel for manually-entered (non-DB) BOTs
+    bond_id: int  # 0 is used as sentinel for manually-entered (non-DB) bonds
 
     # --- Purchase ---
     purchase_venue: Literal["asta", "mot"]
     purchase_date: date                         # settlement date of the purchase
-    purchase_price: float                       # price per single BOT unit (e.g. 96.524)
+    purchase_price: float                       # clean price per 100 of nominal (e.g. 96.524)
     face_value: float                           # nominal lot in Euro (e.g. 5000.0)
 
     buy_commission_pct: float = 0.0             # % on face value (asta) or on purchase amount (mot)
@@ -42,7 +47,7 @@ class BotTransactionDTO(BaseModel):
 
     # --- Sale (optional) ---
     sale_date: date | None = None               # settlement date of the sale
-    sale_price: float | None = None             # price per single BOT unit at sale
+    sale_price: float | None = None             # clean price per 100 of nominal at sale
 
     sell_commission_pct: float = 0.0            # % on sale amount
     sell_commission_min: float = 0.0            # minimum commission
@@ -58,7 +63,7 @@ class BotTransactionDTO(BaseModel):
     # ------------------------------------------------------------------
 
     @model_validator(mode="after")
-    def check_consistency(self) -> "BotTransactionDTO":
+    def check_consistency(self) -> "BondTransactionDTO":
         if self.face_value <= 0 or self.face_value % 100 != 0:
             raise ValueError("face_value must be a positive multiple of 100")
 
@@ -81,7 +86,7 @@ class BotTransactionDTO(BaseModel):
 
     @property
     def quantity(self) -> float:
-        """Number of BOT units purchased (face_value / 100)."""
+        """Number of units purchased (face_value / 100)."""
         return self.face_value / 100
 
     @property
