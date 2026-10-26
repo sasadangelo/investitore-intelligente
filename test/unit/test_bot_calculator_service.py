@@ -235,3 +235,57 @@ def test_bot_calculator(test_id: str, case: dict) -> None:
     assert result.summary.compound_net_yield == pytest.approx(
         exp_su["compound_net_yield"], abs=_ABS_YIELD
     ), f"[{test_id}] summary.compound_net_yield"
+
+
+# ---------------------------------------------------------------------------
+# Fase 9 — zainetto and maturity commissions (not covered by the JSON cases,
+# which all have an empty zainetto and no sale commission at maturity)
+# ---------------------------------------------------------------------------
+
+_BOT = BondDTO(
+    name="BOT Zc Gn26 A EUR",
+    isin="IT0000000009",
+    bond_type="BOT",
+    issue_date=date(2025, 6, 13),
+    maturity_date=date(2026, 6, 12),
+    issue_price=97.5,
+)
+
+
+def _bot_held_to_maturity(portfolio_losses: float = 0.0, **sell_commissions: float) -> BondTransactionDTO:
+    # Bought below the theoretical price (~98.75 on 2025-12-12): capital gain at maturity
+    return BondTransactionDTO(
+        bond_id=0,
+        purchase_venue="mot",
+        purchase_date=date(2025, 12, 12),
+        purchase_price=98.0,
+        face_value=10000.0,
+        portfolio_losses=portfolio_losses,
+        **sell_commissions,
+    )
+
+
+@pytest.mark.parametrize("portfolio_losses", [0.0, 10.0, 1000.0])
+def test_bot_zainetto_reduces_capital_gain_tax(portfolio_losses: float) -> None:
+    """Reference spreadsheet K49–K53: the zainetto offsets the gain reduced to 48.08%
+    (12.5% / 26%); only what is left is taxed, brought back to the full gain."""
+    cg = BondCalculatorService().calculate(_bot_held_to_maturity(portfolio_losses), _BOT).capital_gain
+    assert cg is not None and cg.total_gain_loss > 0
+
+    factor = 12.5 / 26
+    reduced_gain = cg.total_gain_loss * factor
+    assert cg.tds_reduction == pytest.approx(reduced_gain)
+    assert cg.capital_gain_tax == pytest.approx(max(0.0, reduced_gain - portfolio_losses) / factor * 0.125)
+    assert cg.remaining_loss == pytest.approx(max(0.0, portfolio_losses - reduced_gain))
+
+
+def test_bot_no_sale_commission_at_maturity() -> None:
+    """Reference spreadsheet K36: redemption at maturity is not a sale, so sale
+    commissions passed with the transaction are ignored."""
+    plain = BondCalculatorService().calculate(_bot_held_to_maturity(), _BOT)
+    with_commissions = BondCalculatorService().calculate(
+        _bot_held_to_maturity(sell_commission_pct=0.19, sell_commission_min=2.95, sell_commission_fixed=1.5), _BOT
+    )
+    assert with_commissions.sale.commission == 0.0
+    assert with_commissions.sale.fixed_commission == 0.0
+    assert with_commissions.sale.total_received == plain.sale.total_received

@@ -11,8 +11,7 @@ case throughout: schedules are empty and accrued interest is always 0.0.
 """
 from dataclasses import dataclass
 from datetime import date
-
-from intelligent_investor.utils.yield_calculator import YearfracBasis, yearfrac
+from decimal import ROUND_FLOOR, Decimal
 
 
 @dataclass(frozen=True)
@@ -133,10 +132,13 @@ class CouponSchedule:
     def accrued_interest(self, settlement_date: date) -> float:
         """
         Gross accrued interest (rateo cedolare lordo) at settlement_date
-        (data di regolamento), per 100 of nominal: the quota of the running coupon matured since the
-        last coupon date (or since issue_date, if no coupon has been paid yet),
-        using ACT/ACT (yearfrac basis 1) — same convention as
-        YieldCalculator's simple yield.
+        (data di regolamento), per 100 of nominal.
+
+        ACT/ACT ICMA, as in the reference spreadsheet (foglio `Bond`, cells F36/F52):
+        the running coupon times the days elapsed since the last coupon date (or
+        since issue_date, if later) over the days of the whole coupon period,
+        rounded down to the 6th decimal. The coupon period is the regular one
+        anchored to maturity, even when the bond was issued in the middle of it.
 
         This is owed by the buyer to the seller at purchase (added on top of the
         clean price), and by the seller to the buyer at an early sale: the coupon
@@ -146,10 +148,20 @@ class CouponSchedule:
 
         Returns 0.0 when coupon_frequency == 0 (zero-coupon bonds have no accrued interest).
         """
-        if self._coupon_frequency <= 0:
+        # At (or after) maturity the last coupon is paid in full: nothing is accrued
+        if self._coupon_frequency <= 0 or settlement_date >= self._maturity_date:
             return 0.0
-        last = self.previous_coupon_date(settlement_date)
-        return self._nominal_rate * yearfrac(last, settlement_date, YearfracBasis.ACT_ACT)
+        period_start, period_end = self._coupon_period(settlement_date)
+        accrual_start = max(period_start, self._issue_date)
+        elapsed_days = max(0, (settlement_date - accrual_start).days)
+        # Decimal so that exact values (e.g. 0.625) are not floored to 0.624999 by float error
+        accrued = (
+            Decimal(str(self._nominal_rate))
+            / Decimal(self._coupon_frequency)
+            * Decimal(elapsed_days)
+            / Decimal((period_end - period_start).days)
+        )
+        return float(accrued.quantize(Decimal("0.000001"), rounding=ROUND_FLOOR))
 
     def net_accrued_interest(self, settlement_date: date) -> float:
         """Net accrued interest (rateo cedolare netto) at settlement_date, after withholding tax_rate%."""
@@ -158,6 +170,20 @@ class CouponSchedule:
     # ------------------------------------------------------------------
     # Private helpers
     # ------------------------------------------------------------------
+
+    def _coupon_period(self, settlement_date: date) -> tuple[date, date]:
+        """
+        Regular coupon period containing settlement_date, as (start, end] anchored to maturity.
+
+        start is the coupon date on or before settlement_date (COUPPCD) and may fall
+        before issue_date; end is the next coupon date (COUPNCD).
+        """
+        end = next_coupon_date(settlement_date, self._maturity_date, self._coupon_frequency)
+        periods_back = 0
+        while _subtract_months(self._maturity_date, periods_back * 12 // self._coupon_frequency) != end:
+            periods_back += 1
+        start = _subtract_months(self._maturity_date, (periods_back + 1) * 12 // self._coupon_frequency)
+        return start, end
 
     def _generate_dates(self) -> list[date]:
         if self._coupon_frequency <= 0:

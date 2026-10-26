@@ -8,13 +8,13 @@ Unit tests for BondCalculatorService on fixed-rate BTPs.
 The parametrised test runs every "btp_calculator_case_*.json" fixture. Expected
 values come from the `Bond` sheet of the reference spreadsheet
 (docs/ObbligazioniTF v5.0.ods, F6 = 2): each key ends with the cell it was taken
-from (e.g. "load_price_K26"). The cases cover the issue discount (scarto di
-emissione): bonds issued below par bought above and below the theoretical price,
-an early sale, a bond issued above par and one issued before 1997.
-
-Purchases and sales fall on coupon dates, where the accrued interest is zero:
-the accrued-interest convention still differs from the sheet (see
-docs/roadmap-btp.md, Fase 9), so it is kept out of these comparisons.
+from (e.g. "load_price_K26"). The cases cover:
+  - the issue discount (scarto di emissione, Fase 8): bonds issued below par bought
+    above and below the theoretical price, an early sale, a bond issued above par
+    and one issued before 1997;
+  - the accrued interest (rateo) and its taxes for purchases and sales in the
+    middle of a coupon period, the zainetto offsetting a capital gain and sale
+    commissions ignored at maturity (Fase 9).
 """
 import json
 from datetime import date
@@ -67,12 +67,16 @@ def test_btp_matches_reference_spreadsheet(test_id: str, case: dict) -> None:
     expected = case["expected"]
 
     exp_p = expected["purchase"]
+    assert result.purchase.accrued_interest == pytest.approx(exp_p["accrued_interest_F36"], abs=_ABS_PRICE)
+    assert result.purchase.accrued_interest_tax == pytest.approx(exp_p["accrued_interest_tax_K28"], abs=_ABS_EURO)
     assert result.purchase.unit_discount == pytest.approx(exp_p["unit_discount_F30"], abs=_ABS_PRICE)
     assert result.purchase.discount_tax == pytest.approx(exp_p["discount_tax_K27"], abs=_ABS_EURO)
     assert result.purchase.commission == pytest.approx(exp_p["commission_K24"], abs=_ABS_EURO)
     assert result.purchase.total_paid == pytest.approx(exp_p["total_paid_K29"], abs=_ABS_EURO)
 
     exp_s = expected["sale"]
+    assert result.sale.accrued_interest == pytest.approx(exp_s["accrued_interest_F52"], abs=_ABS_PRICE)
+    assert result.sale.accrued_interest_tax == pytest.approx(exp_s["accrued_interest_tax_K40"], abs=_ABS_EURO)
     assert result.sale.unit_discount == pytest.approx(exp_s["unit_discount_F46"], abs=_ABS_PRICE)
     assert result.sale.discount_tax == pytest.approx(exp_s["discount_tax_K39_F16"], abs=_ABS_EURO)
     assert result.sale.commission == pytest.approx(exp_s["commission_K36"], abs=_ABS_EURO)
@@ -87,6 +91,7 @@ def test_btp_matches_reference_spreadsheet(test_id: str, case: dict) -> None:
     assert cg.unit_gain_loss == pytest.approx(exp_cg["unit_gain_loss_K46"], abs=_ABS_PRICE)
     assert cg.total_gain_loss == pytest.approx(exp_cg["total_gain_loss_K48"], abs=_ABS_EURO)
     assert cg.capital_gain_tax == pytest.approx(exp_cg["capital_gain_tax_K52"], abs=_ABS_EURO)
+    assert cg.remaining_loss == pytest.approx(exp_cg["remaining_loss_K53"], abs=_ABS_EURO)
 
     assert len(result.coupon_plan) == expected["coupons_in_holding"]
 

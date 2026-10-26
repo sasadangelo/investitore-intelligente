@@ -41,14 +41,25 @@ prezzo tel quel = corso secco + rateo
 
 Il **tel quel** è quello che paghi davvero. Il rateo non è un costo: te lo ripaga lo Stato con la prossima cedola, che incassi per intero.
 
-> **Esempio:** compri il BTP 2,5% Dic 2032 a metà semestre a un corso secco di 98. Sono maturati circa 3 mesi di cedola, cioè circa 0,62 € ogni 100 €. Paghi 98,62 per ogni 100 € di nominale; il 1° dicembre incassi la cedola intera da 1,25 €.
+Il rateo si calcola in giorni: la cedola del semestre moltiplicata per i giorni passati dall'ultimo stacco, divisa per i giorni dell'intero semestre.
+
+> **Esempio:** compri il BTP 2,5% Dic 2032 il 2 marzo 2026 a un corso secco di 98. Dall'ultimo stacco (1° dicembre) sono passati 92 giorni su 184 del semestre, quindi il rateo è metà cedola: 1,25 × 92 / 184 = **0,625 €** ogni 100 €. Paghi 98,625 per ogni 100 € di nominale; il 1° giugno incassi la cedola intera da 1,25 €.
+
+### Il rateo e le tasse
+
+Il rateo è a tutti gli effetti un pezzo di cedola, quindi anche lui è tassato al 12,5%, ma solo per la parte che spetta a te:
+
+- **quando compri**, paghi al venditore il rateo lordo, ma la banca ti riconosce un **credito del 12,5%** su quell'importo. Serve a pareggiare i conti: alla cedola successiva la banca tassa la cedola intera, anche la parte che avevi già pagato al venditore;
+- **quando vendi prima della scadenza**, è il compratore a pagarti il rateo maturato mentre il titolo era tuo, e la banca **trattiene il 12,5%** su quell'importo, come farebbe su una cedola.
+
+> **Esempio:** con 10.000 € di nominale, nell'esempio sopra paghi 62,50 € di rateo e ricevi 7,81 € di credito. Se poi rivendi il 15 settembre 2027, a metà del semestre giugno–dicembre, il compratore ti paga 72,40 € di rateo e la banca ne trattiene 9,05 €.
 
 ## Le tasse sui BTP
 
 Come tutti i titoli di Stato italiani, i BTP sono tassati al **12,5%** invece del 26%. L'imposta colpisce:
 
-- **ogni cedola** (la banca te la accredita già al netto);
-- la **plusvalenza**, se rivendi o rimborsi a un prezzo più alto di quello pagato. Se invece ci perdi hai una **minusvalenza**, che finisce nello *zainetto fiscale* e puoi usare per pagare meno tasse su plusvalenze future;
+- **ogni cedola** (la banca te la accredita già al netto), e il **rateo**, come spiegato sopra;
+- la **plusvalenza**, se rivendi o rimborsi a un prezzo più alto di quello pagato. Se invece ci perdi hai una **minusvalenza**, che finisce nello *zainetto fiscale* e puoi usare per pagare meno tasse su plusvalenze future. Sui titoli di Stato una plusvalenza conta per il 48,08% del suo importo (12,5% / 26%) quando la compensi con lo zainetto;
 - lo **scarto di emissione**, se il BTP è stato emesso sotto 100. È la parte meno intuitiva, e vale la pena capirla.
 
 ## Lo scarto di emissione

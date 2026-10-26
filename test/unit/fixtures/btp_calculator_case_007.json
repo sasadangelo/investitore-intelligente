@@ -1,0 +1,66 @@
+{
+  "description": "BTP Dc32 comprato e venduto a metà periodo: credito sul rateo pagato e imposta sul rateo incassato",
+  "source": "ObbligazioniTF v5.0.ods, foglio Bond (F6=2): formule replicate cella per cella; le chiavi riportano la cella",
+  "bond": {
+    "name": "Btp Tf 2,5% Dc32 Eur",
+    "isin": "IT0005494239",
+    "bond_type": "BTP",
+    "issue_date": "2022-05-03",
+    "maturity_date": "2032-12-01",
+    "issue_price": 97.66,
+    "redemption_price": 100.0,
+    "nominal_rate": 2.5,
+    "coupon_frequency": 2,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "purchase_venue": "mot",
+    "face_value": 10000.0,
+    "buy_commission_pct": 0.19,
+    "buy_commission_min": 2.95,
+    "buy_commission_max": 19.0,
+    "buy_commission_fixed": 0.0,
+    "stamp_duty_period": "quarterly",
+    "purchase_date": "2026-02-16",
+    "purchase_price": 97.0,
+    "sale_date": "2027-09-15",
+    "sale_price": 99.1,
+    "sell_commission_pct": 0.19,
+    "sell_commission_min": 2.95,
+    "sell_commission_max": 19.0
+  },
+  "expected": {
+    "purchase": {
+      "accrued_interest_F36": 0.528846,
+      "accrued_interest_tax_K28": -6.610575,
+      "unit_discount_F30": 0.838692,
+      "discount_tax_K27": -10.483653,
+      "commission_K24": 18.43,
+      "total_paid_K29": 9754.220372
+    },
+    "sale": {
+      "accrued_interest_F52": 0.724043,
+      "accrued_interest_tax_K40": -9.050538,
+      "unit_discount_F46": 1.1876,
+      "discount_tax_K39_F16": -14.844996,
+      "commission_K36": 18.829
+    },
+    "capital_gain": {
+      "theoretical_purchase_price_F29": 98.498692,
+      "theoretical_sale_price_F45": 98.8476,
+      "load_price_K26": 96.345608,
+      "unload_price_K38": 97.72411,
+      "unit_gain_loss_K46": 1.378503,
+      "total_gain_loss_K48": 137.850253,
+      "capital_gain_tax_K52": 17.231282,
+      "remaining_loss_K53": 0.0
+    },
+    "coupons_in_holding": 3,
+    "summary": {
+      "gross_gain_K10": 604.5197,
+      "compound_gross_yield_K9": 3.958935,
+      "net_gain_before_duty_K7": 496.353113,
+      "compound_net_yield_before_duty_K6": 3.248885
+    }
+  }
+}

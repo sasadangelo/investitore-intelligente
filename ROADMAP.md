@@ -24,10 +24,11 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
 > Phases, status and technical details live only in [`docs/roadmap-btp.md`](docs/roadmap-btp.md).
 
 **Status:**
-- ✅ Done (phases 1–8): coupon schedule and accrued interest, multi-flow XIRR, BTP catalogue with
+- ✅ Done (phases 1–9): coupon schedule and accrued interest, multi-flow XIRR, BTP catalogue with
   yields, import of 108 fixed-rate BTPs, MOT quote sync, single BOT/BTP calculator with the issue
-  discount (checked against the spreadsheet).
-- 🔴 Next (phases 9–10): accrued interest convention and taxes, irregular first coupon.
+  discount, accrued interest convention and taxes, zainetto in the capital gain tax (all checked
+  against the spreadsheet).
+- 🔴 Next (phase 10): irregular first coupon.
 - 🟡 Then (phases 11–14): BTP calculator page, modified duration, yield comparison (formerly
   item 4.5), refinements.
 - Phases are numbered in execution order. User guides and tests are updated with every phase.

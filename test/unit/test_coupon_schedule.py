@@ -23,7 +23,6 @@ from intelligent_investor.utils.coupon_schedule import (
     _days_in_month,
     _subtract_months,
 )
-from intelligent_investor.utils.yield_calculator import YearfracBasis, yearfrac
 
 # ------------------------------------------------------------------
 # CouponSchedule.dates: basic generation, anchored to maturity, going backward
@@ -197,18 +196,26 @@ def test_accrued_interest_zero_on_stacco_date() -> None:
 
 
 def test_accrued_interest_known_value_mid_period() -> None:
+    """ICMA, as in the reference spreadsheet (F36): coupon of the period (1.8) × 90 days
+    elapsed (15/01→15/04) / 181 days of the period (15/01→15/07), floored to 6 decimals."""
     settlement = date(2025, 4, 15)
     cs = CouponSchedule(date(2025, 1, 15), date(2030, 1, 15), coupon_frequency=2, nominal_rate=3.6)
-    expected = 3.6 * yearfrac(date(2025, 1, 15), settlement, YearfracBasis.ACT_ACT)
-    assert cs.accrued_interest(settlement) == pytest.approx(expected)
+    assert cs.accrued_interest(settlement) == 0.895027  # 1.8 × 90 / 181 = 0.8950276...
 
 
-def test_accrued_interest_before_first_coupon_uses_issue_date() -> None:
-    issue = date(2025, 1, 15)
-    settlement = date(2025, 3, 1)
+def test_accrued_interest_exact_value_is_not_floored_down() -> None:
+    """2.5% semi-annual, half of a 184-day period: exactly 0.625, not 0.624999."""
+    cs = CouponSchedule(date(2025, 6, 1), date(2032, 12, 1), coupon_frequency=2, nominal_rate=2.5)
+    assert cs.accrued_interest(date(2026, 3, 2)) == 0.625  # 1.25 × 92 / 184
+
+
+def test_accrued_interest_before_first_coupon_counts_from_issue_date() -> None:
+    """Issued in the middle of a regular period: days are counted from the issue date,
+    but the denominator is still the whole regular period (15/01→15/07, 181 days)."""
+    issue = date(2025, 3, 1)
+    settlement = date(2025, 4, 1)
     cs = CouponSchedule(issue, date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6)
-    expected = 3.6 * yearfrac(issue, settlement, YearfracBasis.ACT_ACT)
-    assert cs.accrued_interest(settlement) == pytest.approx(expected)
+    assert cs.accrued_interest(settlement) == 0.308287  # 1.8 × 31 / 181 = 0.3082872...
 
 
 def test_accrued_interest_zero_frequency() -> None:

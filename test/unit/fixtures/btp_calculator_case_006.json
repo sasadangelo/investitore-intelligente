@@ -1,0 +1,64 @@
+{
+  "description": "BTP Dc32 comprato a metà periodo e tenuto a scadenza: rateo e credito sul rateo; le commissioni di vendita passate vengono ignorate a scadenza",
+  "source": "ObbligazioniTF v5.0.ods, foglio Bond (F6=2): formule replicate cella per cella; le chiavi riportano la cella",
+  "bond": {
+    "name": "Btp Tf 2,5% Dc32 Eur",
+    "isin": "IT0005494239",
+    "bond_type": "BTP",
+    "issue_date": "2022-05-03",
+    "maturity_date": "2032-12-01",
+    "issue_price": 97.66,
+    "redemption_price": 100.0,
+    "nominal_rate": 2.5,
+    "coupon_frequency": 2,
+    "tax_rate": 12.5
+  },
+  "transaction": {
+    "purchase_venue": "mot",
+    "face_value": 10000.0,
+    "buy_commission_pct": 0.19,
+    "buy_commission_min": 2.95,
+    "buy_commission_max": 19.0,
+    "buy_commission_fixed": 0.0,
+    "stamp_duty_period": "quarterly",
+    "purchase_date": "2026-03-02",
+    "purchase_price": 97.8,
+    "sell_commission_pct": 0.19,
+    "sell_commission_min": 2.95,
+    "sell_commission_max": 19.0
+  },
+  "expected": {
+    "purchase": {
+      "accrued_interest_F36": 0.625,
+      "accrued_interest_tax_K28": -7.8125,
+      "unit_discount_F30": 0.84717,
+      "discount_tax_K27": -10.589625,
+      "commission_K24": 18.582,
+      "total_paid_K29": 9842.679875
+    },
+    "sale": {
+      "accrued_interest_F52": 0.0,
+      "accrued_interest_tax_K40": 0.0,
+      "unit_discount_F46": 2.34,
+      "discount_tax_K39_F16": -29.25,
+      "commission_K36": 0.0
+    },
+    "capital_gain": {
+      "theoretical_purchase_price_F29": 98.50717,
+      "theoretical_sale_price_F45": 100.0,
+      "load_price_K26": 97.13865,
+      "unload_price_K38": 97.66,
+      "unit_gain_loss_K46": 0.52135,
+      "total_gain_loss_K48": 52.134997,
+      "capital_gain_tax_K52": 6.516875,
+      "remaining_loss_K53": 0.0
+    },
+    "coupons_in_holding": 14,
+    "summary": {
+      "gross_gain_K10": 1907.5,
+      "compound_gross_yield_K9": 2.878207,
+      "net_gain_before_duty_K7": 1652.80325,
+      "compound_net_yield_before_duty_K6": 2.494421
+    }
+  }
+}

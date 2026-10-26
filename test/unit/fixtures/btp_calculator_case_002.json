@@ -26,12 +26,16 @@
   },
   "expected": {
     "purchase": {
+      "accrued_interest_F36": 0.0,
+      "accrued_interest_tax_K28": 0.0,
       "unit_discount_F30": 0.791956,
       "discount_tax_K27": -9.899452,
       "commission_K24": 18.335,
       "total_paid_K29": 9658.435548
     },
     "sale": {
+      "accrued_interest_F52": 0.0,
+      "accrued_interest_tax_K40": 0.0,
       "unit_discount_F46": 2.34,
       "discount_tax_K39_F16": -29.25,
       "commission_K36": 0.0
@@ -43,7 +47,8 @@
       "unload_price_K38": 97.66,
       "unit_gain_loss_K46": 1.768606,
       "total_gain_loss_K48": 176.860613,
-      "capital_gain_tax_K52": 22.107577
+      "capital_gain_tax_K52": 22.107577,
+      "remaining_loss_K53": 0.0
     },
     "coupons_in_holding": 14,
     "summary": {

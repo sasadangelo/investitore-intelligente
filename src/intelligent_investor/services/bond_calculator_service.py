@@ -28,9 +28,8 @@ from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.utils.coupon_schedule import CouponPayment, CouponSchedule, next_coupon_date
 from intelligent_investor.utils.yield_calculator import YearfracBasis, YieldCalculator, xirr, yearfrac
 
-# Reduction factor applied to the capital gain taxable base for government bonds
-# (TdS): 12.5% tax / 26% standard rate = 0.4808 reduction → effective rate = 12.5%
-_TDS_REDUCTION: float = 0.4808
+# Standard capital gain rate: a government-bond (TdS) gain taxed at tax_rate counts for
+# tax_rate / 26% (48.08% at 12.5%) of its amount against the zainetto (cell C10)
 _CAPITAL_GAIN_RATE: float = 0.26
 STAMP_DUTY_RATE: float = 0.002  # 0.20% per year
 
@@ -68,9 +67,10 @@ class BondCalculatorService:
         sale_date: date = transaction.sale_date or bond.maturity_date
         sale_price: float = transaction.sale_price or bond.redemption_price
 
-        purchase = self._calc_purchase(transaction, coupon_schedule, discount_rule, quantity)
+        tax_rate: float = bond.tax_rate / 100
+        purchase = self._calc_purchase(transaction, coupon_schedule, discount_rule, quantity, tax_rate)
         coupon_plan = self._calc_coupon_plan(coupon_schedule, transaction.purchase_date, sale_date)
-        sale = self._calc_sale(transaction, coupon_schedule, discount_rule, quantity, sale_date, sale_price)
+        sale = self._calc_sale(transaction, coupon_schedule, discount_rule, quantity, tax_rate, sale_date, sale_price)
         capital_gain = self._calc_capital_gain(
             tx=transaction,
             bond=bond,
@@ -121,6 +121,7 @@ class BondCalculatorService:
         coupon_schedule: CouponSchedule,
         discount_rule: "_DiscountRule",
         quantity: float,
+        tax_rate: float,
     ) -> PurchaseResultDTO:
         # Accrued interest (rateo) owed to the seller for the running coupon period
         # (always 0.0 for a BOT, which has no coupons)
@@ -138,7 +139,10 @@ class BondCalculatorService:
         )
         fixed_commission: float = tx.buy_commission_fixed
         unit_discount, discount_tax = discount_rule.purchase_withholding(tx.purchase_date, quantity)
-        total_paid: float = dirty_amount + commission + fixed_commission + discount_tax
+        # The next coupon is taxed in full, including the part paid to the seller as
+        # rateo: the buyer gets a 12.5% credit on that part (cell K28)
+        accrued_interest_tax: float = -accrued_interest * quantity * tax_rate
+        total_paid: float = dirty_amount + commission + fixed_commission + discount_tax + accrued_interest_tax
 
         return PurchaseResultDTO(
             clean_price=tx.purchase_price,
@@ -150,6 +154,7 @@ class BondCalculatorService:
             fixed_commission=fixed_commission,
             unit_discount=unit_discount,
             discount_tax=discount_tax,
+            accrued_interest_tax=accrued_interest_tax,
             total_paid=total_paid,
         )
 
@@ -171,6 +176,7 @@ class BondCalculatorService:
         coupon_schedule: CouponSchedule,
         discount_rule: "_DiscountRule",
         quantity: float,
+        tax_rate: float,
         sale_date: date,
         sale_price: float,
     ) -> SaleResultDTO:
@@ -181,16 +187,23 @@ class BondCalculatorService:
         dry_amount: float = sale_price * quantity
         dirty_amount: float = dirty_price * quantity
 
-        # Commission base: clean amount (cell A44)
-        commission: float = calc_commission(
-            base=dry_amount,
-            pct=tx.sell_commission_pct,
-            min_fee=tx.sell_commission_min,
-            max_fee=tx.sell_commission_max,
-        )
-        fixed_commission: float = tx.sell_commission_fixed
+        if tx.holds_to_maturity:
+            # Redemption is not a sale: no sale commission applies (cell K36)
+            commission: float = 0.0
+            fixed_commission: float = 0.0
+        else:
+            # Commission base: clean amount (cell A44)
+            commission = calc_commission(
+                base=dry_amount,
+                pct=tx.sell_commission_pct,
+                min_fee=tx.sell_commission_min,
+                max_fee=tx.sell_commission_max,
+            )
+            fixed_commission = tx.sell_commission_fixed
         unit_discount, discount_tax = discount_rule.sale_withholding(sale_date, tx.holds_to_maturity, quantity)
-        total_received: float = dirty_amount - commission - fixed_commission + discount_tax
+        # The rateo cashed from the buyer is coupon income: 12.5% is withheld on it (cell K40)
+        accrued_interest_tax: float = -accrued_interest * quantity * tax_rate
+        total_received: float = dirty_amount - commission - fixed_commission + discount_tax + accrued_interest_tax
 
         return SaleResultDTO(
             clean_price=sale_price,
@@ -202,6 +215,7 @@ class BondCalculatorService:
             fixed_commission=fixed_commission,
             unit_discount=unit_discount,
             discount_tax=discount_tax,
+            accrued_interest_tax=accrued_interest_tax,
             total_received=total_received,
         )
 
@@ -239,25 +253,24 @@ class BondCalculatorService:
 
         unit_gain_loss: float = unload_price - load_price
         tax_rate: float = bond.tax_rate / 100  # 0.125 for TdS
+        tds_factor: float = tax_rate / _CAPITAL_GAIN_RATE  # 0.4808 for TdS (cell C10)
 
-        # Step 1 — Plus/Minus Realizzata
+        # Step 1 — Plus/Minus Realizzata (K48)
         total_gain_loss: float = unit_gain_loss * quantity
 
-        # Step 2 — Riduzione Imponibile per TdS — informativa
-        tds_reduction: float = total_gain_loss * _TDS_REDUCTION
-
-        # Step 3 — Imposta sulla plusvalenza: tax_rate% applied directly on the gain,
-        # withheld by the broker at sale/redemption (the TdS reduction is only an
-        # alternative representation of the same amount)
-        capital_gain_tax: float = total_gain_loss * tax_rate if total_gain_loss > 0 else 0.0
+        # Step 2 — Riduzione Imponibile per TdS (K49): the part of the gain or loss that
+        # counts against the zainetto
+        tds_reduction: float = total_gain_loss * tds_factor
 
         if total_gain_loss > 0:
-            # Zainetto residuo: part of the zainetto not consumed by the gain
-            scaled_losses: float = tx.portfolio_losses * tax_rate / _CAPITAL_GAIN_RATE
-            plus_after_tds: float = total_gain_loss - tds_reduction
-            consumed: float = min(scaled_losses, plus_after_tds)
-            remaining_loss: float = max(0.0, tx.portfolio_losses - consumed * _CAPITAL_GAIN_RATE / tax_rate)
+            # Step 3 — the zainetto offsets the reduced gain (K51); the tax on what is left,
+            # brought back to the full gain, is withheld at sale/redemption (K52)
+            taxable: float = max(0.0, tds_reduction - tx.portfolio_losses)
+            capital_gain_tax: float = taxable / tds_factor * tax_rate if tds_factor > 0 else 0.0
+            # Zainetto residuo: part of the zainetto not consumed by the gain (K53)
+            remaining_loss: float = max(0.0, tx.portfolio_losses - tds_reduction)
         else:
+            capital_gain_tax = 0.0
             # Loss to add to the zainetto: abs(total) × 48.08%
             remaining_loss = abs(tds_reduction)
 

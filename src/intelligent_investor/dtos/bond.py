@@ -32,7 +32,7 @@ class BondDTO(BaseModel):
 
     # Price parameters
     issue_price: float                 # Price at issuance
-    redemption_price: float = 100.0   # Reimbursement price at maturity (usually 100.0)
+    redemption_price: float = 100.0    # Reimbursement price at maturity (usually 100.0)
 
     # Coupon parameters (0 for BOTs/zero coupons, active for BTPs)
     nominal_rate: float = 0.0         # Annual coupon % (e.g. 3.5)

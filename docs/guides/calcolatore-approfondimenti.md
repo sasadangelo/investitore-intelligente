@@ -126,20 +126,32 @@ Plus/Minus realizzata = Plus/Minus valenza (per BOT) × Quantità
 
 ### Imposta sulla plusvalenza (12,5%)
 
-I BOT sono titoli di Stato (TdS), soggetti a imposta sostitutiva agevolata al **12,5%**. In caso di plusvalenza, il sostituto d'imposta (la banca) trattiene direttamente l'imposta al momento del rimborso o della vendita:
+I BOT sono titoli di Stato (TdS), soggetti a imposta sostitutiva agevolata al **12,5%**. In caso di plusvalenza, il sostituto d'imposta (la banca) trattiene direttamente l'imposta al momento del rimborso o della vendita. Se nel campo **Minusvalenze** hai indicato perdite pregresse (il tuo *zainetto fiscale*), queste riducono l'imposta:
 
 ```
-Imposta sulla plusvalenza = Plus/Minus realizzata × 12,5%   (solo se positiva, altrimenti 0)
+Imposta sulla plusvalenza = max(0, Plus realizzata × 48,08% − Minusvalenze) / 48,08% × 12,5%
 ```
+
+Senza minusvalenze la formula si riduce a `Plus realizzata × 12,5%`. In caso di minusvalenza l'imposta è zero.
 
 Questa è la cifra che la banca trattiene e che riduce il **Totale ricevuto** nella sezione Rimborso.
 
-### Riduzione imponibile TdS (48,08%) — voce informativa
+> **Esempio**: plus realizzata = 100€, minusvalenze = 20€. La plus conta 100 × 48,08% = 48,08€; tolte le minusvalenze restano 28,08€, che riportati alla plus intera fanno 28,08 / 48,08% = 58,40€. Imposta: 58,40 × 12,5% = **7,30€** invece di 12,50€.
 
-Il fattore 48,08% (= 12,5% / 26%) è esposto a titolo informativo e serve esclusivamente per calcolare la quota di **minusvalenza** da iscrivere nello zainetto fiscale in forma comparabile con strumenti tassati al 26%.
+### Riduzione imponibile TdS (48,08%)
+
+Il fattore 48,08% (= 12,5% / 26%) rende una plusvalenza o minusvalenza su titoli di Stato comparabile con quelle degli strumenti tassati al 26%. Serve per compensare la plusvalenza con lo zainetto (sopra) e per calcolare quanta **minusvalenza** iscrivere nello zainetto (sotto).
 
 ```
-Riduzione imponibile TdS = |Plus/Minus realizzata| × 48,08%
+Riduzione imponibile TdS = Plus/Minus realizzata × 48,08%
+```
+
+### Zainetto fiscale residuo
+
+In caso di plusvalenza, la parte delle minusvalenze che la plusvalenza non ha usato resta nello zainetto:
+
+```
+Zainetto fiscale residuo = max(0, Minusvalenze − Plus realizzata × 48,08%)
 ```
 
 ### Minus valenza da zainetto

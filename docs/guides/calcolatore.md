@@ -95,8 +95,8 @@ Mostra il costo totale dell'operazione:
 Per acquisti sul mercato secondario si calcola la plusvalenza o minusvalenza:
 - **Prezzo teorico di acquisto/vendita**: il prezzo di carico/scarico depurato del rateo disaggio fiscale. Per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
 - **Plus/Minus realizzata**: guadagno o perdita effettiva sull'operazione.
-- **Riduzione imponibile TdS (48,08%)**: quota informativa — i TdS godono di aliquota agevolata al 12,5%; il 48,08% è il fattore di riduzione rispetto all'aliquota standard 26%, usato per rendere la minusvalenza compensabile con altri strumenti. Per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
-- **Imposta sulla plusvalenza (12,5%)**: imposta trattenuta dal sostituto d'imposta (banca) al rimborso o alla vendita. È `Plus realizzata × 12,5%`. Zero in caso di minusvalenza.
+- **Riduzione imponibile TdS (48,08%)**: i TdS godono di aliquota agevolata al 12,5%; il 48,08% è il fattore di riduzione rispetto all'aliquota standard 26%, usato per compensare la plusvalenza con le minusvalenze pregresse e per rendere la minusvalenza compensabile con altri strumenti. Per i dettagli consulta la **[guida Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**.
+- **Imposta sulla plusvalenza (12,5%)**: imposta trattenuta dal sostituto d'imposta (banca) al rimborso o alla vendita. Senza minusvalenze pregresse è `Plus realizzata × 12,5%`; se hai indicato delle **Minusvalenze**, queste riducono l'imposta. Zero in caso di minusvalenza.
 
 ### Rimborso / Vendita anticipata
 

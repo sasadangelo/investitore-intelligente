@@ -279,8 +279,8 @@ sono ferme ai soli BOT):
 
 | Fase | Guida |
 |---|---|
-| 8 — Scarto di emissione | `cosa-e-un-btp.md`, `calcolatore-btp.md` |
-| 9 — Imposta sul rateo | `calcolatore-btp.md` |
+| 8 — Scarto di emissione | ✅ `cosa-e-un-btp.md` (la parte per `calcolatore-btp.md` passa alla Fase 11) |
+| 9 — Rateo: convenzione e imposte | ✅ `cosa-e-un-btp.md`, `calcolatore.md`, `calcolatore-approfondimenti.md` (la parte per `calcolatore-btp.md` passa alla Fase 11) |
 | 10 — Prima cedola irregolare | `cosa-e-un-btp.md` |
 | 11 — Calcolatore BTP in pagina | `calcolatore-btp.md` (nuova), con esempio completo |
 | 12 — Duration modificata | `cosa-e-un-btp.md`, `catalogo.md` |
@@ -399,7 +399,36 @@ Comportamento da replicare (stessa logica dei BOT, con accrescimento lineare):
   previsto se è stato emesso sotto la pari (la tassa sullo scarto), con un esempio; in
   `calcolatore-btp.md` spiegare le nuove righe (prezzo teorico, disaggio, corso super secco).
 
-## Fase 9 — Rateo: convenzione e imposte (🔴)
+## Fase 9 — Rateo: convenzione e imposte (🔴) ✅
+
+**Fatto:**
+- `CouponSchedule.accrued_interest` usa la convenzione del foglio (ICMA, `F36`/`F52`): cedola del
+  periodo × giorni da `max(stacco precedente, emissione)` / giorni del periodo regolare, troncato
+  alla sesta cifra decimale (con `Decimal`, così 0,625 resta 0,625). Alla scadenza il rateo è 0.
+- Nuovo campo `accrued_interest_tax` su acquisto e vendita, con segno come `discount_tax`:
+  credito del 12,5% sul rateo pagato (`K28`), trattenuta del 12,5% sul rateo incassato (`K40`).
+- Zainetto: l'imposta sulla plusvalenza è `max(0, plus × 48,08% − minusvalenze) / 48,08% × 12,5%`
+  e lo zainetto residuo è `max(0, minusvalenze − plus × 48,08%)` (`K49`–`K53`). Il fattore è ora
+  esatto (`12,5% / 26%`, cella `C10`) invece di 0,4808.
+- A scadenza non si applicano commissioni di vendita (`K36`). Verificato prima del cambiamento:
+  la pagina del calcolatore svuota le commissioni di vendita quando la vendita non è spuntata,
+  quindi nessun risultato BOT visibile in pagina cambia per questo.
+- Effetto sui BOT misurato su 5.000 casi casuali contro il commit precedente: senza zainetto e
+  senza commissioni a scadenza (il caso della pagina) cambiano solo "Riduzione imponibile TdS" e
+  lo zainetto residuo, di al più 0,44 €, per il fattore esatto; imposte, totali e rendimenti no.
+- Test: 4 nuovi casi del foglio `Bond` (`btp_calculator_case_006`–`009`: acquisto e vendita a
+  metà periodo, zainetto parziale e totale) e i 5 della Fase 8 estesi con rateo, imposte sul rateo
+  e zainetto residuo; 2 test BOT per zainetto e commissioni a scadenza.
+- Guide: la sezione "Il rateo e le tasse" in [cosa-e-un-btp.md](../docs/guides/cosa-e-un-btp.md)
+  (al posto di `calcolatore-btp.md`, che nascerà con la Fase 11); formula dello zainetto corretta
+  in [calcolatore.md](../docs/guides/calcolatore.md) e
+  [calcolatore-approfondimenti.md](../docs/guides/calcolatore-approfondimenti.md).
+
+**Scelta da confermare:** in caso di **minusvalenza** `remaining_loss` resta "minus da aggiungere
+allo zainetto" (`|minus| × 48,08%`), come mostra oggi la pagina, mentre il foglio (`K53`) riporta lo
+zainetto totale (minusvalenze pregresse + nuova minus). I due coincidono quando non ci sono
+minusvalenze pregresse.
+
 
 Tre differenze sul rateo cedolare, emerse confrontando il servizio con il foglio `Bond` (le prime
 due durante la Fase 8):
@@ -463,7 +492,9 @@ Viene dopo le fasi 8–10 così l'utente vede da subito risultati corretti.
   nessuna modifica allo schema: le commissioni MOT sono le stesse indipendentemente dallo
   strumento.
 - **Guide**: nuova `calcolatore-btp.md` con un esempio completo su un BTP reale (acquisto,
-  piano cedole, rateo, capital gain, bollo, rendimenti) e cosa significa ogni riga del risultato.
+  piano cedole, rateo, capital gain, bollo, rendimenti) e cosa significa ogni riga del risultato,
+  incluse le righe rimaste dalle fasi 8 e 9: prezzo teorico, disaggio e corso super secco; credito
+  sul rateo pagato all'acquisto e imposta sul rateo incassato vendendo prima della scadenza.
 
 ## Fase 12 — Duration modificata (🟡)
 

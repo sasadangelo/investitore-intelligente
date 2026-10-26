@@ -9,13 +9,17 @@ A BOT is the no-coupon case of a BTP: its coupon plan is empty and its accrued
 interest (rateo) is always 0, so clean and dirty amounts coincide. Amounts are
 in Euro for the whole lot; prices are per 100 of nominal.
 
-Sign convention for discount_tax (imposta sul disaggio), mirroring the reference
-spreadsheet (foglio `Bond`, cells K27/K39): it is added to total_paid on the
-purchase leg and to total_received on the sale leg, so
-  - BOT: positive on both legs (paid upfront at purchase on the discount still to
-    accrue, reimbursed at sale for the part after the sale date);
-  - coupon bond: negative on both legs (credit at purchase for the discount
-    already accrued, withheld at sale/maturity on the discount accrued so far).
+Sign convention for discount_tax (imposta sul disaggio) and accrued_interest_tax
+(imposta sul rateo), mirroring the reference spreadsheet (foglio `Bond`, cells
+K27/K28 and K39/K40): they are added to total_paid on the purchase leg and to
+total_received on the sale leg, so
+  - discount_tax, BOT: positive on both legs (paid upfront at purchase on the
+    discount still to accrue, reimbursed at sale for the part after the sale date);
+  - discount_tax, coupon bond: negative on both legs (credit at purchase for the
+    discount already accrued, withheld at sale/maturity on the discount accrued so far);
+  - accrued_interest_tax: negative on both legs (credit at purchase on the rateo paid
+    to the seller, since the next coupon is taxed in full; withheld at an early sale
+    on the rateo cashed from the buyer). Always 0.0 for a BOT.
 """
 from pydantic import BaseModel
 
@@ -53,7 +57,9 @@ class PurchaseResultDTO(BaseModel):
     unit_discount: float
     # imposta sul disaggio, signed (see module docstring): + paid (BOT), − credit (coupon bond)
     discount_tax: float
-    # total outflow: dirty_amount + commission + fixed_commission + discount_tax
+    # 12.5% credit on the rateo paid to the seller, signed: always ≤ 0
+    accrued_interest_tax: float
+    # total outflow: dirty_amount + commission + fixed_commission + discount_tax + accrued_interest_tax
     total_paid: float
 
 
@@ -67,7 +73,7 @@ class SaleResultDTO(BaseModel):
     dirty_price: float
     dry_amount: float
     dirty_amount: float
-    # commission on dry_amount, clamped to [min, max]
+    # commission on dry_amount, clamped to [min, max]; 0.0 at maturity, where nothing is sold
     commission: float
     fixed_commission: float
     # discount per 100 of nominal the withholding of this leg is based on:
@@ -76,7 +82,10 @@ class SaleResultDTO(BaseModel):
     unit_discount: float
     # imposta sul disaggio, signed: + reimbursed by the buyer (BOT), − withheld (coupon bond)
     discount_tax: float
-    # total inflow: dirty_amount - commission - fixed_commission + discount_tax - capital_gain_tax
+    # 12.5% withheld on the rateo cashed from the buyer at an early sale, signed: always ≤ 0
+    accrued_interest_tax: float
+    # total inflow: dirty_amount - commission - fixed_commission + discount_tax + accrued_interest_tax
+    #               - capital_gain_tax
     total_received: float
 
 
@@ -91,9 +100,13 @@ class CapitalGainResultDTO(BaseModel):
     Sequence:
       1. unit_gain_loss   = unload_price - load_price        (per 100 of nominal)
       2. total_gain_loss  = unit_gain_loss × quantity        (Plus/Minus Realizzata in €)
-      3. tds_reduction    = total_gain_loss × 48.08%         (Riduzione Imponibile per TdS — informativa)
-      4. capital_gain_tax = total_gain_loss × 12.5%  (if >0) — trattenuta dal sostituto al rimborso
+      3. tds_reduction    = total_gain_loss × 48.08%         (Riduzione Imponibile per TdS)
+      4. capital_gain_tax = max(0, tds_reduction − portfolio_losses) / 48.08% × 12.5%  (if gain)
+                            — trattenuta dal sostituto al rimborso, after offsetting the zainetto
       5. remaining_loss   = zainetto residuo (if gain) or minus da aggiungere allo zainetto (if loss)
+
+    48.08% is tax_rate / 26% (cell C10): a government-bond gain counts for 48.08% of
+    its amount when offset against the zainetto (cells K49–K53).
     """
 
     theoretical_purchase_price: float
