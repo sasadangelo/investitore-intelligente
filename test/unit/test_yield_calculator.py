@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
 """
-Unit tests for yield_calculator.py.
+Unit tests for yield_calculator.py and the YEARFRAC primitives in day_count.py.
 
 All tests are pure (no DB, no I/O) — they only exercise:
   - yearfrac() for all five bases
@@ -17,14 +17,8 @@ from datetime import date
 
 import pytest
 
-from intelligent_investor.utils.yield_calculator import (
-    YearfracBasis,
-    YieldCalculator,
-    _yearfrac_30_360,
-    _yearfrac_act_act,
-    xirr,
-    yearfrac,
-)
+from intelligent_investor.utils.day_count import YearfracBasis, _yearfrac_30_360, _yearfrac_act_act, yearfrac
+from intelligent_investor.utils.yield_calculator import YieldCalculator, xirr
 
 # ------------------------------------------------------------------
 # yearfrac: identical dates

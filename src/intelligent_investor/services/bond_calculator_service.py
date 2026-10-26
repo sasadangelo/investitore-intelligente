@@ -10,6 +10,9 @@ spreadsheet (docs/ObbligazioniTF v5.0.ods), which uses one sheet for every bond
 type. The only type-dependent part is the issue discount (scarto di emissione):
 how it accrues and when its 12.5% withholding is paid. That rule is isolated in
 _BotDiscountRule and _CouponBondDiscountRule; everything else is shared.
+
+Every time-dependent step (rateo, discount accrual, simple and compound yields)
+uses the day-count convention of the bond type from utils/day_count.py.
 """
 from datetime import date
 from decimal import Decimal
@@ -26,7 +29,8 @@ from intelligent_investor.dtos.bond_calculation_result import (
 )
 from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.utils.coupon_schedule import CouponPayment, CouponSchedule, next_coupon_date
-from intelligent_investor.utils.yield_calculator import YearfracBasis, YieldCalculator, xirr, yearfrac
+from intelligent_investor.utils.day_count import BondConventions, DayCountConvention, conventions_for
+from intelligent_investor.utils.yield_calculator import YieldCalculator, xirr
 
 # Standard capital gain rate: a government-bond (TdS) gain taxed at tax_rate counts for
 # tax_rate / 26% (48.08% at 12.5%) of its amount against the zainetto (cell C10)
@@ -58,9 +62,15 @@ class BondCalculatorService:
             The fully populated result
         """
         quantity: float = transaction.quantity
-        discount_rule = _discount_rule_for(bond)
+        conventions: BondConventions = conventions_for(bond.bond_type)
+        discount_rule = _discount_rule_for(bond, conventions.issue_discount)
         coupon_schedule = CouponSchedule(
-            bond.issue_date, bond.maturity_date, bond.coupon_frequency, bond.nominal_rate, bond.tax_rate
+            bond.issue_date,
+            bond.maturity_date,
+            bond.coupon_frequency,
+            bond.nominal_rate,
+            bond.tax_rate,
+            accrued_interest_convention=conventions.accrued_interest,
         )
 
         # Effective sale date and price (maturity when no early sale)
@@ -92,6 +102,7 @@ class BondCalculatorService:
             stamp_duty_period=transaction.stamp_duty_period,
         )
         summary = self._calc_summary(
+            conventions=conventions,
             purchase=purchase,
             coupon_plan=coupon_plan,
             sale=sale,
@@ -288,6 +299,7 @@ class BondCalculatorService:
 
     def _calc_summary(
         self,
+        conventions: BondConventions,
         purchase: PurchaseResultDTO,
         coupon_plan: list[CouponPayment],
         sale: SaleResultDTO,
@@ -310,7 +322,12 @@ class BondCalculatorService:
         )
         net_gain: float = float(Decimal(str(net_gain_before_duty)) - Decimal(str(stamp_duty.estimated_duty)))
 
-        yc = YieldCalculator(purchase_date, sale_date)
+        yc = YieldCalculator(
+            purchase_date,
+            sale_date,
+            simple_convention=conventions.simple_yield,
+            compound_convention=conventions.compound_yield,
+        )
         simple_gross_yield: float = yc.simple(gross_gain, purchase.dirty_amount)
         simple_net_yield_before_duty: float = yc.simple(net_gain_before_duty, purchase.total_paid)
         simple_net_yield: float = yc.simple(net_gain, purchase.total_paid)
@@ -331,9 +348,12 @@ class BondCalculatorService:
                 ]
                 return [(purchase_date, -outflow)] + coupons + [(sale_date, inflow)]
 
-            compound_gross_yield = xirr(flows(purchase.dirty_amount, "gross", sale.dirty_amount))
-            compound_net_yield_before_duty = xirr(flows(purchase.total_paid, "net", sale.total_received))
-            compound_net_yield = xirr(flows(purchase.total_paid, "net", net_proceeds))
+            compound = conventions.compound_yield
+            compound_gross_yield = xirr(flows(purchase.dirty_amount, "gross", sale.dirty_amount), convention=compound)
+            compound_net_yield_before_duty = xirr(
+                flows(purchase.total_paid, "net", sale.total_received), convention=compound
+            )
+            compound_net_yield = xirr(flows(purchase.total_paid, "net", net_proceeds), convention=compound)
 
         return SummaryResultDTO(
             gross_gain=gross_gain,
@@ -375,19 +395,20 @@ class _DiscountRule(Protocol):
 
 class _BotDiscountRule:
     """
-    BOT (`Bond` sheet with F6 = 3): the discount accrues linearly in days from issue
-    to maturity. The buyer pays upfront the tax on the discount still to accrue, and
-    an early seller gets back the part that will accrue after the sale.
+    BOT (`Bond` sheet with F6 = 3): the discount accrues in proportion to the time
+    elapsed from issue to maturity, measured in the BOT discount convention (act/365:
+    the ratio of actual days). The buyer pays upfront the tax on the discount still
+    to accrue, and an early seller gets back the part that will accrue after the sale.
     """
 
-    def __init__(self, bond: BondDTO) -> None:
+    def __init__(self, bond: BondDTO, convention: DayCountConvention) -> None:
         self._bond = bond
-        self._total_days: int = (bond.maturity_date - bond.issue_date).days
+        self._convention = convention
+        self._discount: Decimal = Decimal(str(bond.redemption_price)) - Decimal(str(bond.issue_price))
 
     def theoretical_price(self, d: date, at_maturity: bool = False) -> float:
         bond = self._bond
-        days_from_issue: int = (d - bond.issue_date).days
-        return bond.issue_price + (bond.redemption_price - bond.issue_price) * days_from_issue / self._total_days
+        return bond.issue_price + (bond.redemption_price - bond.issue_price) * float(self._elapsed(d))
 
     def accrued_discount(self, d: date, at_maturity: bool = False) -> float:
         return self.theoretical_price(d) - self._bond.issue_price
@@ -399,34 +420,34 @@ class _BotDiscountRule:
         # 0.0 at maturity: no discount is left to accrue
         return self._residual_discount_tax(sale_date, quantity)
 
+    def _elapsed(self, d: date) -> Decimal:
+        """Share of the BOT life elapsed at *d*."""
+        return self._convention.accrual_fraction(self._bond.issue_date, d, self._bond.maturity_date)
+
     def _residual_discount_tax(self, d: date, quantity: float) -> tuple[float, float]:
         """Discount still to accrue from *d* to maturity, and the (positive) tax on it."""
         bond = self._bond
-        days_to_maturity: int = (bond.maturity_date - d).days
-        unit_discount: float = (bond.redemption_price - bond.issue_price) * days_to_maturity / self._total_days
+        residual: Decimal = 1 - self._elapsed(d)
+        unit_discount: float = float(self._discount * residual)
         # Decimal keeps the tax exact to the cent, as in the reference spreadsheet
         discount_tax: float = float(
-            (Decimal(str(bond.redemption_price)) - Decimal(str(bond.issue_price)))
-            * Decimal(days_to_maturity)
-            / Decimal(self._total_days)
-            * Decimal(str(bond.tax_rate))
-            / Decimal("100")
-            * Decimal(str(quantity))
+            self._discount * residual * Decimal(str(bond.tax_rate)) / Decimal("100") * Decimal(str(quantity))
         )
         return unit_discount, discount_tax
 
 
 class _CouponBondDiscountRule:
     """
-    Coupon bond (`Bond` sheet with F6 = 2): the discount accrues by YEARFRAC ACT/ACT
-    from the fiscal issue date (F29). The buyer gets a tax credit on the discount
+    Coupon bond (`Bond` sheet with F6 = 2): the discount accrues by YEARFRAC in the
+    BTP discount convention (act/act) from the fiscal issue date (F29). The buyer gets a tax credit on the discount
     already accrued (K27); the seller is withheld the tax on the discount accrued up
     to the sale (K39), or on the whole discount at maturity (F16). Bonds issued at
     or above par have no discount (F30 = 0).
     """
 
-    def __init__(self, bond: BondDTO) -> None:
+    def __init__(self, bond: BondDTO, convention: DayCountConvention) -> None:
         self._bond = bond
+        self._convention = convention
         self._tax_rate: float = bond.tax_rate / 100
         # Gross issue discount per 100 of nominal (F15), 0.0 when issued at or above par
         self._discount: float = max(0.0, bond.redemption_price - bond.issue_price)
@@ -435,7 +456,7 @@ class _CouponBondDiscountRule:
         self._accrual_start: date = max(
             bond.issue_date, next_coupon_date(_DISCOUNT_RULE_START, bond.maturity_date, bond.coupon_frequency)
         )
-        self._life: float = yearfrac(bond.issue_date, bond.maturity_date, YearfracBasis.ACT_ACT)
+        self._life: float = convention.year_fraction(bond.issue_date, bond.maturity_date)
 
     def theoretical_price(self, d: date, at_maturity: bool = False) -> float:
         bond = self._bond
@@ -443,7 +464,7 @@ class _CouponBondDiscountRule:
             return bond.redemption_price
         accrued_years: float = 0.0
         if d > self._accrual_start:
-            accrued_years = yearfrac(self._accrual_start, d, YearfracBasis.ACT_ACT)
+            accrued_years = self._convention.year_fraction(self._accrual_start, d)
         # Unclamped, as in F29: for a bond issued above par it moves down towards par
         return bond.issue_price + (bond.redemption_price - bond.issue_price) / self._life * accrued_years
 
@@ -463,17 +484,17 @@ class _CouponBondDiscountRule:
         return unit_discount, -unit_discount * self._tax_rate * quantity
 
 
-def _discount_rule_for(bond: BondDTO) -> _DiscountRule:
+def _discount_rule_for(bond: BondDTO, convention: DayCountConvention) -> _DiscountRule:
     """
-    Pick the discount rule for *bond*.
+    Pick the discount rule for *bond* (only BOTs and fixed-rate BTPs are handled).
 
-    Zero-coupon bonds other than BOTs (e.g. CTZ, F6 = 1 in the sheet) accrue the
-    discount with a compound formula that is not implemented: they are not in the
-    catalogue, which only imports BOTs and fixed-rate BTPs.
+    Args:
+        bond: The bond being traded
+        convention: Day count of the discount accrual for its bond type
     """
     if bond.bond_type == "BOT":
-        return _BotDiscountRule(bond)
-    return _CouponBondDiscountRule(bond)
+        return _BotDiscountRule(bond, convention)
+    return _CouponBondDiscountRule(bond, convention)
 
 
 # ---------------------------------------------------------------------------

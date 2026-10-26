@@ -11,7 +11,8 @@ case throughout: schedules are empty and accrued interest is always 0.0.
 """
 from dataclasses import dataclass
 from datetime import date
-from decimal import ROUND_FLOOR, Decimal
+
+from intelligent_investor.utils.day_count import DayCountConvention
 
 
 @dataclass(frozen=True)
@@ -41,6 +42,8 @@ class CouponSchedule:
         nominal_rate:     Annual coupon rate, in % (e.g. 3.6).
         tax_rate:         Withholding tax on coupons and accrued interest (rateo),
                            in % (default 12.5).
+        accrued_interest_convention: Day count of the rateo (default act/act, the
+                           ICMA rule; see BondConventions.accrued_interest).
 
     Usage — BTP calculator::
 
@@ -58,6 +61,7 @@ class CouponSchedule:
         coupon_frequency: int,
         nominal_rate: float,
         tax_rate: float = 12.5,
+        accrued_interest_convention: DayCountConvention = DayCountConvention.ACT_ACT,
     ) -> None:
         if coupon_frequency > 0:
             if issue_date >= maturity_date:
@@ -69,6 +73,7 @@ class CouponSchedule:
         self._coupon_frequency = coupon_frequency
         self._nominal_rate = nominal_rate
         self._tax_rate = tax_rate
+        self._accrued_interest_convention = accrued_interest_convention
         self._dates: list[date] | None = None  # lazy cache
 
     # ------------------------------------------------------------------
@@ -134,11 +139,10 @@ class CouponSchedule:
         Gross accrued interest (rateo cedolare lordo) at settlement_date
         (data di regolamento), per 100 of nominal.
 
-        ACT/ACT ICMA, as in the reference spreadsheet (foglio `Bond`, cells F36/F52):
-        the running coupon times the days elapsed since the last coupon date (or
-        since issue_date, if later) over the days of the whole coupon period,
-        rounded down to the 6th decimal. The coupon period is the regular one
-        anchored to maturity, even when the bond was issued in the middle of it.
+        Computed in the bond's accrued-interest convention (act/act ICMA for BOT and
+        BTP, see utils/day_count.py), over the regular coupon period anchored to
+        maturity, starting from the issue date when the bond was issued in the
+        middle of it (foglio `Bond`, cells F36/F52).
 
         This is owed by the buyer to the seller at purchase (added on top of the
         clean price), and by the seller to the buyer at an early sale: the coupon
@@ -152,16 +156,14 @@ class CouponSchedule:
         if self._coupon_frequency <= 0 or settlement_date >= self._maturity_date:
             return 0.0
         period_start, period_end = self._coupon_period(settlement_date)
-        accrual_start = max(period_start, self._issue_date)
-        elapsed_days = max(0, (settlement_date - accrual_start).days)
-        # Decimal so that exact values (e.g. 0.625) are not floored to 0.624999 by float error
-        accrued = (
-            Decimal(str(self._nominal_rate))
-            / Decimal(self._coupon_frequency)
-            * Decimal(elapsed_days)
-            / Decimal((period_end - period_start).days)
+        return self._accrued_interest_convention.accrued_coupon(
+            nominal_rate=self._nominal_rate,
+            coupon_frequency=self._coupon_frequency,
+            period_start=period_start,
+            period_end=period_end,
+            accrual_start=max(period_start, self._issue_date),
+            settlement_date=settlement_date,
         )
-        return float(accrued.quantize(Decimal("0.000001"), rounding=ROUND_FLOOR))
 
     def net_accrued_interest(self, settlement_date: date) -> float:
         """Net accrued interest (rateo cedolare netto) at settlement_date, after withholding tax_rate%."""

@@ -334,6 +334,41 @@ ACT/ACT dalla data fiscale di emissione con la regola del 1997, `F6=2`; zero cou
 particolari già noti del BOT: capital gain `None` per acquisti in asta e `bond_id = 0` per i BOT
 inseriti a mano.
 
+## Decisione di design — convenzioni di calcolo dei giorni ✅
+
+Ogni calcolo che dipende dal tempo trascorso prende la sua convenzione da un unico posto,
+[day_count.py](../src/intelligent_investor/utils/day_count.py), anche quando per BOT e BTP non
+cambia mai: così le regole sono scritte una volta sola e con il loro perché.
+
+- `DayCountConvention`: le convenzioni del file di riferimento (`act/act`, `act/360` =
+  "Effettiva/360", `act/365` = "Effettiva/365", `30/360`), ciascuna con frazione d'anno (YEARFRAC),
+  quota di periodo trascorsa e calcolo del rateo. Per il rateo `act/act` è la regola ICMA (giorni
+  trascorsi / giorni del periodo cedolare), come nel foglio `Bond` (`F36`).
+- `BOND_CONVENTIONS`: la convenzione di ogni calcolo per tipo di titolo.
+
+| Calcolo | BOT | BTP | Perché |
+|---|---|---|---|
+| Rateo cedolare | act/act (non usato: niente cedole) | act/act | foglio `Emissioni`, colonna Q, per tutti i BTP |
+| Maturazione dello scarto | act/365 | act/act | BOT: quota di giorni effettivi (`F29` con `F6=3`), che con act/365 è esattamente il rapporto tra giorni; BTP: colonna P |
+| Durata del rendimento semplice | act/act | act/act | cella `K15`, YEARFRAC base 1 |
+| Rendimento composto (XIRR) | act/365 | act/365 | XIRR conta sempre giorni / 365 |
+
+Verifica: tutti i casi del foglio `Bond` coincidono come prima; su 5.000 casi casuali i BTP danno
+risultati identici bit per bit a prima, i BOT differiscono di al più 2,6e-11 € negli importi
+intermedi (la quota di vita trascorsa ora passa dalla convenzione).
+
+- **Solo BOT e BTP a tasso fisso**: `BondDTO.bond_type` accetta solo `"BOT"` e `"BTP"`, e il form
+  di gestione propone solo questi due tipi.
+- **Rimandato — convenzioni per singolo titolo**: nel foglio `Emissioni` la convenzione è scelta
+  titolo per titolo, ma per tutti i BOT e i BTP è act/act (l'unica eccezione è un corporate a
+  30/360). Salvarla per titolo richiederebbe due colonne nel database, una migrazione e due campi
+  nel form per avere sempre lo stesso valore: si farà solo se entreranno titoli con convenzioni
+  diverse.
+- **Da verificare — base 360 per i BOT**: il rendimento BOT del catalogo e la previsione delle aste
+  ([bot_forecast_service.py](../src/intelligent_investor/services/bot_forecast_service.py), che usa
+  ancora giorni / 365 scritti nel codice) andrebbero confrontati con la convenzione con cui il MEF
+  pubblica i rendimenti dei BOT, che potrebbe essere su base 360.
+
 ## Fase 8 — Calcolatore unico e scarto di emissione (🔴) ✅
 
 **Fatto:**

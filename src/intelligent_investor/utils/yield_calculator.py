@@ -3,55 +3,10 @@
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
 from datetime import date
-from enum import IntEnum
 
+from intelligent_investor.utils.day_count import DayCountConvention, YearfracBasis, yearfrac
 
-class YearfracBasis(IntEnum):
-    """Day-count conventions for YEARFRAC, matching LibreOffice/Excel basis codes.
-
-    Basis  Name        Calculation
-    -----  ----------  -------------------------------------------------------
-      0    US_30_360   US method (NASD): 12 months of 30 days each
-      1    ACT_ACT     Exact days in month, exact days in year (actual/actual)
-      2    ACT_360     Exact days in month, year has 360 days
-      3    ACT_365     Exact days in month, year has 365 days (fixed)
-      4    EUR_30_360  European method: 12 months of 30 days each
-    """
-    US_30_360  = 0
-    ACT_ACT    = 1
-    ACT_360    = 2
-    ACT_365    = 3
-    EUR_30_360 = 4
-
-
-def yearfrac(d1: date, d2: date, basis: YearfracBasis = YearfracBasis.ACT_ACT) -> float:
-    """Return the year fraction between *d1* and *d2* using the given day-count basis.
-
-    Mirrors ``YEARFRAC(d1; d2; basis)`` in LibreOffice/Excel.
-
-    Args:
-        d1:    Start date.
-        d2:    End date.
-        basis: Day-count convention (default: ACT_ACT = basis 1).
-
-    Returns:
-        Year fraction as a float (e.g. 0.9589 for 350 days on a 365-day year).
-    """
-    if d1 == d2:
-        return 0.0
-    if d1 > d2:
-        d1, d2 = d2, d1
-
-    if basis == YearfracBasis.ACT_ACT:
-        return _yearfrac_act_act(d1, d2)
-    elif basis == YearfracBasis.ACT_360:
-        return (d2 - d1).days / 360.0
-    elif basis == YearfracBasis.ACT_365:
-        return (d2 - d1).days / 365.0
-    elif basis in (YearfracBasis.US_30_360, YearfracBasis.EUR_30_360):
-        return _yearfrac_30_360(d1, d2, european=(basis == YearfracBasis.EUR_30_360))
-    else:
-        raise ValueError(f"Unsupported basis: {basis}")
+__all__ = ["YearfracBasis", "YieldCalculator", "xirr", "yearfrac"]  # yearfrac re-exported from day_count
 
 
 class YieldCalculator:
@@ -59,21 +14,21 @@ class YieldCalculator:
 
     All yield methods return a percentage value (e.g. 3.396 for 3.396%).
 
-    Two distinct year-fraction conventions are used — matching LibreOffice/Excel:
+    Two distinct day-count conventions are used — matching LibreOffice/Excel —
+    both taken from utils/day_count.py (BondConventions.simple_yield/compound_yield):
 
-    * **Simple yield** uses ``YEARFRAC(start, end, basis)`` (default ACT_ACT = basis 1).
+    * **Simple yield** uses ``YEARFRAC(start, end, basis)`` (default act/act = basis 1).
       The denominator depends on whether 29-Feb falls in the period (<=1yr case)
       or on the average of spanned years (>1yr case).
 
-    * **Compound yield (XIRR)** always uses ``days / 365`` regardless of basis.
-      This matches Excel ``XIRR`` behaviour for two-cashflow investments and produces
-      values identical to the ODS reference spreadsheet's TIR column.
+    * **Compound yield (XIRR)** uses ``days / 365`` (act/365), as Excel ``XIRR``
+      always does, so values match the ODS reference spreadsheet's TIR column.
 
     Args:
-        start_date: Purchase / settlement date of the investment.
-        end_date:   Maturity / sale date of the investment.
-        basis:      Day-count convention for the *simple* year fraction
-                    (default: ACT_ACT = LibreOffice/Excel basis 1).
+        start_date:          Purchase / settlement date of the investment.
+        end_date:            Maturity / sale date of the investment.
+        simple_convention:   Day count of the *simple* year fraction (default act/act).
+        compound_convention: Day count of the *compound* time exponent (default act/365).
 
     Usage — BOT calculator::
 
@@ -94,15 +49,17 @@ class YieldCalculator:
         self,
         start_date: date,
         end_date: date,
-        basis: YearfracBasis = YearfracBasis.ACT_ACT,
+        simple_convention: DayCountConvention = DayCountConvention.ACT_ACT,
+        compound_convention: DayCountConvention = DayCountConvention.ACT_365,
     ) -> None:
         if start_date >= end_date:
             raise ValueError("end_date must be strictly after start_date")
         self._start = start_date
         self._end = end_date
-        self._basis = basis
-        self._yf_simple: float | None = None   # yearfrac(basis), lazy
-        self._yf_xirr: float | None = None     # days/365, lazy
+        self._simple_convention = simple_convention
+        self._compound_convention = compound_convention
+        self._yf_simple: float | None = None   # simple_convention year fraction, lazy
+        self._yf_xirr: float | None = None     # compound_convention year fraction, lazy
 
     # ------------------------------------------------------------------
     # Public API
@@ -110,22 +67,22 @@ class YieldCalculator:
 
     @property
     def year_fraction(self) -> float:
-        """Year fraction for simple yields: ``YEARFRAC(start, end, basis)``."""
+        """Year fraction for simple yields: ``YEARFRAC(start, end, basis)`` of simple_convention."""
         if self._yf_simple is None:
-            self._yf_simple = yearfrac(self._start, self._end, self._basis)
+            self._yf_simple = self._simple_convention.year_fraction(self._start, self._end)
         return self._yf_simple
 
     @property
     def year_fraction_xirr(self) -> float:
-        """Year fraction for compound (XIRR) yields: ``days / 365`` (always)."""
+        """Year fraction for compound (XIRR) yields, in compound_convention (``days / 365`` by default)."""
         if self._yf_xirr is None:
-            self._yf_xirr = (self._end - self._start).days / 365.0
+            self._yf_xirr = self._compound_convention.year_fraction(self._start, self._end)
         return self._yf_xirr
 
     def simple(self, gain: float, capital: float) -> float:
         """Annualised simple yield: ``(gain / capital) / year_fraction × 100``.
 
-        Uses YEARFRAC with the chosen basis (default ACT_ACT).
+        Uses YEARFRAC in simple_convention (default act/act).
 
         Args:
             gain:    Total gain over the holding period (e.g. net_gain, gross_gain).
@@ -141,7 +98,7 @@ class YieldCalculator:
 
         Replicates Excel/LibreOffice ``XIRR`` for a two-cashflow investment
         (−capital at start_date, +final_proceeds at end_date).
-        Always uses ``days / 365`` as the time exponent, regardless of basis.
+        Uses year_fraction_xirr (``days / 365`` by default) as the time exponent.
 
         Args:
             final_proceeds: Total amount received at maturity/sale
@@ -154,7 +111,11 @@ class YieldCalculator:
         return (final_proceeds / capital) ** (1 / self.year_fraction_xirr) * 100 - 100
 
 
-def xirr(cashflows: list[tuple[date, float]], guess: float = 0.1) -> float:
+def xirr(
+    cashflows: list[tuple[date, float]],
+    guess: float = 0.1,
+    convention: DayCountConvention = DayCountConvention.ACT_365,
+) -> float:
     """Annualised compound yield (XIRR) for a series of dated cash flows.
 
     Generalises ``YieldCalculator.compound()`` from a two-flow (purchase → final
@@ -173,6 +134,8 @@ def xirr(cashflows: list[tuple[date, float]], guess: float = 0.1) -> float:
                    the purchase price) are negative, inflows (coupons, sale
                    proceeds, redemption) positive.
         guess:     Initial rate guess for Newton-Raphson (default 0.10 = 10%).
+        convention: Day count of the time exponents (default act/365 = ``days / 365``,
+                   as Excel XIRR).
 
     Returns:
         Annualised yield as a percentage (e.g. 3.399 for 3.399%), consistent
@@ -188,7 +151,7 @@ def xirr(cashflows: list[tuple[date, float]], guess: float = 0.1) -> float:
         raise ValueError("xirr requires at least one negative and one positive cash flow")
 
     t0 = min(d for d, _ in cashflows)
-    years = [(d - t0).days / 365.0 for d, _ in cashflows]
+    years = [convention.year_fraction(t0, d) for d, _ in cashflows]
     amounts = [amount for _, amount in cashflows]
 
     def npv(rate: float) -> float:
@@ -218,61 +181,6 @@ def xirr(cashflows: list[tuple[date, float]], guess: float = 0.1) -> float:
 # ---------------------------------------------------------------------------
 # Private helpers
 # ---------------------------------------------------------------------------
-
-def _is_leap(y: int) -> bool:
-    return (y % 4 == 0 and y % 100 != 0) or y % 400 == 0
-
-
-def _yearfrac_act_act(d1: date, d2: date) -> float:
-    """ACT/ACT (basis 1) — LibreOffice/Excel exact-days convention.
-
-    * Period <= 1 year: denominator = 366 if 29-Feb falls strictly inside
-      the period (d1 < 29-Feb <= d2), otherwise 365.
-    * Period >  1 year: arithmetic mean of the lengths of every calendar year
-      fully or partially spanned by the period.
-    """
-    total_days = (d2 - d1).days
-
-    try:
-        one_year_later = date(d1.year + 1, d1.month, d1.day)
-    except ValueError:
-        one_year_later = date(d1.year + 1, 3, 1)
-
-    if d2 <= one_year_later:
-        has_feb29 = False
-        for y in (d1.year, d2.year):
-            if _is_leap(y):
-                feb29 = date(y, 2, 29)
-                if d1 < feb29 <= d2:
-                    has_feb29 = True
-                    break
-        denom: float = 366.0 if has_feb29 else 365.0
-    else:
-        years_spanned = range(d1.year, d2.year + 1)
-        denom = sum(366.0 if _is_leap(y) else 365.0 for y in years_spanned) / len(years_spanned)
-
-    return total_days / denom
-
-
-def _yearfrac_30_360(d1: date, d2: date, european: bool) -> float:
-    """30/360 convention (basis 0 = US/NASD, basis 4 = European)."""
-    d1m, d1d = d1.month, d1.day
-    d2m, d2d = d2.month, d2.day
-
-    if european:
-        if d1d == 31:
-            d1d = 30
-        if d2d == 31:
-            d2d = 30
-    else:
-        if d2d == 31 and d1d >= 30:
-            d2d = 30
-        if d1d == 31:
-            d1d = 30
-
-    days = (d2.year - d1.year) * 360 + (d2m - d1m) * 30 + (d2d - d1d)
-    return days / 360.0
-
 
 def _xirr_bisection(
     amounts: list[float],

@@ -25,8 +25,8 @@ bond_bp = Blueprint("bonds", __name__, url_prefix="/bonds")
 _service = BondService()
 _quote_service = BondQuoteService()
 
-# Bond types offered by the create/edit form dropdown
-BOND_TYPES = ["BOT", "BTP", "BTP_ITALIA", "CORPORATE"]
+# Bond types offered by the create/edit form dropdown: only BOTs and fixed-rate BTPs are handled
+BOND_TYPES = ["BOT", "BTP"]
 
 
 # ---------------------------------------------------------------------------

@@ -3,6 +3,7 @@
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
 from datetime import date, timedelta
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -18,7 +19,7 @@ class BondDTO(BaseModel):
     id: int | None = None
     name: str                          # e.g. "Bot Zc Jul25 A Eur"
     isin: str                          # e.g. "IT0005603342"
-    bond_type: str                     # 'BOT', 'BTP', 'BTP_ITALIA', 'CORPORATE'
+    bond_type: Literal["BOT", "BTP"]   # only BOTs and fixed-rate BTPs are handled
 
     # Key financial dates
     issue_date: date

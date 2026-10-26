@@ -140,6 +140,7 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
 | Topic | Description | Priority |
 |---|---|---|
 | **DB migrations** | Introduce Alembic for controlled schema migrations | 🔴 |
+| **Per-bond day-count conventions** | Store the day-count conventions per bond instead of per bond type ([`day_count.py`](src/intelligent_investor/utils/day_count.py)); only needed if bonds other than BOT/BTP are added | 🟢 |
 | **REST API** | JSON API endpoints for future mobile clients or external integrations | 🟡 |
 | **Production deploy** | gunicorn + nginx + HTTPS, environment variables, Docker image | 🟡 |
 | **i18n** | Optional multilingual support (Italian / English) | 🟢 |

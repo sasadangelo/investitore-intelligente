@@ -23,7 +23,7 @@ class BondDAO(Base):
     id: Column[int] = Column(Integer, primary_key=True)
     name: Column[str] = Column(String(length=100), unique=True, nullable=False)   # e.g. "Bot Zc Jul25 A Eur"
     isin: Column[str] = Column(String(length=20), unique=True, nullable=False)    # e.g. "IT0005603342"
-    bond_type: Column[str] = Column(String(length=20), nullable=False)  # 'BOT', 'BTP', 'BTP_ITALIA', 'CORPORATE'
+    bond_type: Column[str] = Column(String(length=20), nullable=False)  # 'BOT' or 'BTP' (fixed rate), see BondDTO
 
     # Key financial dates
     issue_date: Column[date] = Column(Date, nullable=False)

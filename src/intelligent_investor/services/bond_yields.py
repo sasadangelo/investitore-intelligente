@@ -15,6 +15,7 @@ from datetime import date
 from intelligent_investor.dtos import BondDTO
 from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.services.bond_calculator_service import BondCalculatorService
+from intelligent_investor.utils.day_count import conventions_for
 from intelligent_investor.utils.yield_calculator import YieldCalculator
 
 _calculator = BondCalculatorService()
@@ -24,9 +25,10 @@ def bot_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | N
     """
     Compute gross and net annualised compound yield for a zero-coupon BOT.
 
-    Uses YieldCalculator with ACT_ACT (YEARFRAC basis 1), qty=1:
+    Uses YieldCalculator in the BOT conventions (utils/day_count.py), qty=1:
         gross = compound(redemption_price, last_price)
         net   = compound(redemption_price - imposta_disaggio, last_price)
+    where imposta_disaggio is the tax on the discount still to accrue until maturity.
 
     Args:
         bond: The BOT to evaluate
@@ -36,16 +38,20 @@ def bot_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | N
     Returns:
         (gross_pct, net_pct) as percentage values, or (None, None) if the data is insufficient
     """
-    total_days = (bond.maturity_date - bond.issue_date).days
-    residual_days = (bond.maturity_date - today).days
-
-    if residual_days <= 0 or total_days <= 0 or last_price <= 0:
+    if bond.maturity_date <= today or bond.maturity_date <= bond.issue_date or last_price <= 0:
         return None, None
 
-    disaggio_lordo = (bond.redemption_price - bond.issue_price) * residual_days / total_days
+    conventions = conventions_for(bond.bond_type)
+    residual = 1 - float(conventions.issue_discount.accrual_fraction(bond.issue_date, today, bond.maturity_date))
+    disaggio_lordo = (bond.redemption_price - bond.issue_price) * residual
     imposta_disaggio = disaggio_lordo * (bond.tax_rate / 100)
 
-    yc = YieldCalculator(today, bond.maturity_date)
+    yc = YieldCalculator(
+        today,
+        bond.maturity_date,
+        simple_convention=conventions.simple_yield,
+        compound_convention=conventions.compound_yield,
+    )
     gross = yc.compound(bond.redemption_price, last_price)
     net = yc.compound(bond.redemption_price - imposta_disaggio, last_price)
 
