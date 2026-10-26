@@ -271,6 +271,12 @@ sono ferme ai soli BOT):
 - [catalogo.md](../docs/guides/catalogo.md) — si intitola ancora "Catalogo BOT": aggiungere i BTP,
   il filtro per tipo, l'ordinamento per rendimento, il bottone "Aggiorna Quotazioni" e il
   bottone "Gestisci" (lista CRUD separata dal catalogo).
+- ✅ [cosa-e-un-obbligazione.md](../docs/guides/cosa-e-un-obbligazione.md) — guida di partenza: cos'è
+  un'obbligazione, parole chiave, rischi, tasse, dove si compra, e la mappa delle famiglie (BOT, BTP a
+  tasso fisso, BTP a cedole crescenti e indicizzati, CCTeu, titoli esteri, corporate). Le guide BOT e
+  BTP partono da lì. **Regola**: quando il sito gestirà una nuova famiglia (Milestone 4 step-up,
+  Milestone 5 corporate, ...), la sua guida si collega dalla tabella "Le famiglie di obbligazioni",
+  dove "non ancora" diventa ✅.
 - ✅ [cosa-e-un-btp.md](../docs/guides/cosa-e-un-btp.md) — creata in Fase 8: cedola, corso secco e
   tel quel, rateo, tasse, scarto di emissione con esempio numerico.
 - [inizia-qui.md](../docs/guides/inizia-qui.md) — percorso di lettura che includa i BTP.

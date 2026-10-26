@@ -2,7 +2,7 @@
 title: Catalogo BOT
 description: Come leggere il catalogo, i rendimenti lordo e netto, e come navigare alle schede dettaglio.
 icon: bi-list-ul
-order: 1
+order: 3
 ---
 
 # Catalogo BOT

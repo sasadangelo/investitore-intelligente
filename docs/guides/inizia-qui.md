@@ -20,12 +20,18 @@ Benvenuto su **Investitore Intelligente**, il sito che ti aiuta a **simulare con
 
 ---
 
-## Passo 0 — Capisci cos'è un BOT
+## Passo 0 — Capisci cosa stai comprando
 
-Se non hai mai sentito parlare di BOT o non sai cosa sia un'obbligazione, inizia da qui.
+Se non sai cosa sia un'obbligazione, inizia da qui.
 
-> 📖 **[Leggi la guida completa → Cos'è un BOT](/guides/cosa-e-un-bot)**
-> Troverai: obbligazioni, Titoli di Stato, Corporate Bond, tassazione al 12,5%, rendimento lordo e netto.
+> 📖 **[Cos'è un'obbligazione](/guides/cosa-e-un-obbligazione)**
+> Troverai: le parole da conoscere, rischi, tasse, dove si comprano e le diverse famiglie di titoli (BOT, BTP, corporate, ...).
+
+Poi approfondisci il titolo che ti interessa:
+
+> 📖 **[Cos'è un BOT](/guides/cosa-e-un-bot)** — il titolo di Stato a breve termine, fino a 12 mesi.
+>
+> 📖 **[Cos'è un BTP](/guides/cosa-e-un-btp)** — il titolo di Stato a tasso fisso per orizzonti di qualche anno o più.
 
 ---
 

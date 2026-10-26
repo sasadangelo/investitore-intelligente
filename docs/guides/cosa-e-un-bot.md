@@ -1,31 +1,13 @@
 ---
 title: Cos'è un BOT
-description: Obbligazioni, Titoli di Stato, disaggio e rendimento spiegati dall'inizio.
+description: "Il titolo di Stato a breve termine: disaggio, tasse e rendimento lordo e netto."
 icon: bi-info-circle
-order: 0
+order: 1
 ---
 
 # Cos'è un BOT
 
-## Partiamo dall'inizio: cos'è un'obbligazione
-
-Un'**obbligazione** è, nella sua forma più semplice, un prestito. Invece di andare in banca, un'azienda o uno Stato emette un titolo che chiunque può comprare: il compratore presta i soldi, e l'emittente si impegna a restituirli alla scadenza, aggiungendo una remunerazione (interesse) per il prestito.
-
-- Se l'obbligazione è emessa dallo **Stato italiano** si chiama **Titolo di Stato**.
-- Se è emessa da un'**azienda privata** si chiama **Corporate Bond** (*bond* è semplicemente la parola inglese per *obbligazione*).
-
-## I Titoli di Stato italiani
-
-Lo Stato italiano emette diverse tipologie di titoli di Stato, ciascuna con caratteristiche diverse di durata e modalità di rendimento:
-
-| Sigla | Nome | Durata | Cedole |
-|---|---|---|---|
-| **BOT** | Buono Ordinario del Tesoro | fino a 12 mesi | nessuna (zero-coupon) |
-| **BTP** | Buono del Tesoro Poliennale | da 3 a 50 anni | semestrali, tasso fisso |
-| **BTP Valore / BTP Italia / BTP Più** | Varianti del BTP | da 4 a 10 anni | crescenti o indicizzate |
-| **CCT / CCTeu** | Certificato di Credito del Tesoro | 7 anni | variabili (Euribor + spread) |
-
-Questo sito si concentra per ora sui **BOT** — la scelta più adatta per chi vuole parcheggiare liquidità per un periodo breve (da 3 a 12 mesi) con piena garanzia dello Stato.
+Se non sai ancora cos'è un'obbligazione o quali tipi di titoli di Stato esistono, parti dalla guida **[Cos'è un'obbligazione](/guides/cosa-e-un-obbligazione)**: qui diamo per buone quelle basi.
 
 ## Cos'è un BOT
 

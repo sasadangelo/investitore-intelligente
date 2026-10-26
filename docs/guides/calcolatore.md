@@ -2,7 +2,7 @@
 title: Calcolatore BOT
 description: Come usare il calcolatore per simulare acquisto e vendita di un BOT, con commissioni bancarie e tasse.
 icon: bi-calculator
-order: 2
+order: 4
 ---
 
 # Calcolatore BOT

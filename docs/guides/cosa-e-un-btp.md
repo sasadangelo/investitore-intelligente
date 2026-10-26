@@ -2,12 +2,12 @@
 title: Cos'è un BTP
 description: Cedole, rateo, corso secco e tel quel, scarto di emissione e tasse dei BTP a tasso fisso spiegati dall'inizio.
 icon: bi-info-circle
-order: 0
+order: 2
 ---
 
 # Cos'è un BTP
 
-Se non sai ancora cos'è un'obbligazione o un titolo di Stato, parti dalla guida **[Cos'è un BOT](/guides/cosa-e-un-bot)**: qui diamo per buone quelle basi.
+Se non sai ancora cos'è un'obbligazione o un titolo di Stato, parti dalla guida **[Cos'è un'obbligazione](/guides/cosa-e-un-obbligazione)**: qui diamo per buone quelle basi. Molte cose valgono anche per il BOT, spiegato in **[Cos'è un BOT](/guides/cosa-e-un-bot)**.
 
 ## Il BTP in due righe
 

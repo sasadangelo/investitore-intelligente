@@ -2,7 +2,7 @@
 title: Previsione Prezzo Emissione BOT
 description: Come viene stimata la previsione del prezzo di emissione e il rendimento atteso per i BOT non ancora emessi.
 icon: bi-graph-up-arrow
-order: 4
+order: 6
 ---
 
 # Previsione Prezzo Emissione BOT

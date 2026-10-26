@@ -2,7 +2,7 @@
 title: Calendario Aste BOT
 description: Come funziona il sistema delle aste BOT, il calendario MEF e come interpretare le date.
 icon: bi-calendar3
-order: 3
+order: 5
 ---
 
 # Calendario Aste BOT

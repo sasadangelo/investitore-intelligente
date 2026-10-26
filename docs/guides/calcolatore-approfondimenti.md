@@ -2,7 +2,7 @@
 title: Approfondimenti sul Calcolatore BOT
 description: Spiegazione dettagliata dei calcoli interni del Calcolatore BOT — disaggio, capital gain e imposta sui TdS.
 icon: bi-journal-text
-order: 5
+order: 7
 ---
 
 # Approfondimenti sul Calcolatore BOT
