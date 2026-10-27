@@ -5,9 +5,10 @@
 """
 Controller for the "Calcolatore" menu entry.
 
-Lets the user simulate a BOT purchase (and optional sale) on a catalogue bond or
-on a manually entered one, and renders the net result computed by
-BondCalculatorService.
+Lets the user simulate a BOT or BTP purchase (and optional sale) on a catalogue
+bond, or a BOT purchase on a manually entered one, and renders the net result
+computed by BondCalculatorService. Coupon bonds also show rateo, tel quel price
+and coupon plan.
 """
 import json
 from datetime import date
@@ -226,7 +227,7 @@ def compute() -> str | tuple[str, int]:
     form = request.form
     bond_id_raw = form.get("bond_id", "").strip()
     if not bond_id_raw:
-        flash("Seleziona un BOT.", "warning")
+        flash("Seleziona un titolo.", "warning")
         return _render(bond=None, tx=form), 422
 
     # Resolve the bond: either entered manually or loaded from the catalogue
@@ -242,7 +243,7 @@ def compute() -> str | tuple[str, int]:
         bond_id = int(bond_id_raw)
         bond = _service.get_by_id(bond_id)
         if bond is None:
-            flash("BOT non trovato.", "warning")
+            flash("Titolo non trovato.", "warning")
             return _render(bond=None, tx=form), 422
 
     # Build the transaction and calculate. ValidationError is caught first because

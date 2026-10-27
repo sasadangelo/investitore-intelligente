@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Calcolatore BOT — Investitore Intelligente{% endblock %}
+{% block title %}Calcolatore BOT e BTP — Investitore Intelligente{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -12,9 +12,15 @@
 {% endblock %}
 
 {% block content %}
+{# Coupon of a bond as shown to the user (e.g. "3,60% semestrale"); empty for a BOT #}
+{% macro coupon_label(b) -%}
+  {%- if b.coupon_frequency > 0 -%}
+    {{ ("%.2f" | format(b.nominal_rate)) | replace('.', ',') }}% {{ {1: 'annuale', 2: 'semestrale', 4: 'trimestrale'}.get(b.coupon_frequency, b.coupon_frequency ~ ' volte l\'anno') }}
+  {%- endif -%}
+{%- endmacro %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2 class="mb-0">
-    <i class="bi bi-calculator me-2 text-primary"></i>Calcolatore BOT
+    <i class="bi bi-calculator me-2 text-primary"></i>Calcolatore BOT e BTP
   </h2>
   <a href="{{ url_for('catalogue.index') }}" class="btn btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i>Torna al catalogo
@@ -43,19 +49,22 @@
             {%- endif -%}
           {%- endmacro %}
 
-          <!-- BOT selector -->
+          <!-- Bond selector (BOTs and BTPs, grouped by type) -->
           <div class="mb-3">
-            <label for="bond_id" class="form-label fw-semibold">BOT <span class="text-danger">*</span></label>
+            <label for="bond_id" class="form-label fw-semibold">Titolo <span class="text-danger">*</span></label>
             <select class="form-select" id="bond_id" name="bond_id" required>
-              <option value="">— Seleziona un BOT —</option>
+              <option value="">— Seleziona un titolo —</option>
               <option value="manual"
                 {% if tx is not none and (tx is mapping and tx.get('bond_id') == 'manual' or tx is not mapping and tx | attr('bond_id') | string == 'manual') %}selected{% endif %}>
                 ✏️ Inserisci BOT manualmente…
               </option>
-              {% for b in bonds %}
+              {% for group in bonds | groupby('bond_type') %}
+              <optgroup label="{{ group.grouper }}">
+              {% for b in group.list %}
               {% set q = quotes.get(b.id) %}
               <option value="{{ b.id }}"
                 data-isin="{{ b.isin }}"
+                data-coupon="{{ coupon_label(b) }}"
                 data-issue-date="{{ b.issue_date }}"
                 data-issue-date-display="{{ b.issue_date.strftime('%d/%m/%Y') }}"
                 data-maturity-date="{{ b.maturity_date.strftime('%d/%m/%Y') }}"
@@ -66,6 +75,8 @@
                 {% if bond and bond.id == b.id %}selected{% endif %}>
                 {{ b.name }} (scad. {{ b.maturity_date.strftime('%d/%m/%Y') }})
               </option>
+              {% endfor %}
+              </optgroup>
               {% endfor %}
             </select>
           </div>
@@ -119,6 +130,7 @@
             <span>Emissione: <span id="strip-issue-date">{{ bond.issue_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
             <span>Scadenza: <span id="strip-maturity-date">{{ bond.maturity_date.strftime('%d/%m/%Y') if bond else '' }}</span></span>
             <span>Prezzo emissione: <span id="strip-issue-price">{{ "%.4f"|format(bond.issue_price) if bond else '' }}</span></span>
+            <span id="strip-coupon-wrap" {% if not bond or not coupon_label(bond) %}class="d-none"{% endif %}>Cedola: <span id="strip-coupon">{{ coupon_label(bond) if bond else '' }}</span></span>
             {% if bond and bond.mef_auction_result_url %}
             <span><a id="strip-mef-link" href="{{ bond.mef_auction_result_url }}" target="_blank" rel="noopener" class="text-white fw-semibold">
               <i class="bi bi-file-earmark-pdf me-1"></i>Risultato asta MEF
@@ -174,7 +186,7 @@
               <input type="number" class="form-control" id="face_value" name="face_value"
                      value="{{ fval('face_value', 5000) }}" step="100" min="100" required>
             </div>
-            <div class="form-text">Multiplo di 100 (es. 5000 = 50 BOT)</div>
+            <div class="form-text">Multiplo di 100 (es. 5000 = 50 titoli da 100 € nominali)</div>
           </div>
 
           <!-- Bank profile preset -->
@@ -329,6 +341,9 @@
        ================================================================ -->
   <div class="col-lg-7">
     {% if result %}
+    {# Coupon bonds (BTP) show rateo, tel quel and coupon plan; the discount tax has the opposite
+       sign of a BOT's: a credit at purchase and a withholding at sale (see BondCalculationResultDTO) #}
+    {% set has_coupons = bond is not none and bond.coupon_frequency > 0 %}
 
     {# ---- Purchase ---- #}
     <div class="card shadow-sm mb-3">
@@ -336,20 +351,43 @@
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <tbody>
-            <tr><th class="ps-3 text-muted fw-normal w-50">Quantità BOT</th>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Quantità {{ bond.bond_type if bond else 'titoli' }}</th>
                 <td class="pe-3 text-end result-value">{{ result.quantity | int }}</td></tr>
+            {% if has_coupons %}
+            <tr><th class="ps-3 text-muted fw-normal">Corso secco</th>
+                <td class="pe-3 text-end">{{ "%.4f"|format(result.purchase.clean_price) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Rateo lordo</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.accrued_interest) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Prezzo tel quel</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.dirty_price) }}</td></tr>
+            {% endif %}
             <tr><th class="ps-3 text-muted fw-normal">Importo secco</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.dry_amount | r2 }}</td></tr>
+            {% if has_coupons %}
+            <tr><th class="ps-3 text-muted fw-normal">Rateo pagato al venditore</th>
+                <td class="pe-3 text-end">€ {{ (result.purchase.dirty_amount - result.purchase.dry_amount) | r2 }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Importo tel quel</th>
+                <td class="pe-3 text-end">€ {{ result.purchase.dirty_amount | r2 }}</td></tr>
+            {% endif %}
             <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.commission | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.fixed_commission | r2 }}</td></tr>
+            {% if has_coupons %}
+            <tr><th class="ps-3 text-muted fw-normal">Disaggio maturato pro-quota</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Credito imposta disaggio</th>
+                <td class="pe-3 text-end">€ {{ result.purchase.discount_tax | r2 }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Credito imposta sul rateo</th>
+                <td class="pe-3 text-end">€ {{ result.purchase.accrued_interest_tax | r2 }}</td></tr>
+            {% else %}
             <tr><th class="ps-3 text-muted fw-normal">Disaggio pro-quota</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount) }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio pro-quota</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount * 0.125) }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.discount_tax | r2 }}</td></tr>
+            {% endif %}
             <tr class="table-light">
               <th class="ps-3 fw-semibold">Totale pagato</th>
               <td class="pe-3 text-end fw-semibold fs-6">€ {{ result.purchase.total_paid | r2 }}</td>
@@ -358,6 +396,45 @@
         </table>
       </div>
     </div>
+
+    {# ---- Coupon plan (coupon bonds only) ---- #}
+    {% if has_coupons %}
+    <div class="card shadow-sm mb-3">
+      <div class="card-header section-header"><i class="bi bi-calendar-check me-1"></i>Piano cedole</div>
+      <div class="card-body p-0">
+        {% if result.coupon_plan %}
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Data stacco</th>
+              <th class="text-end text-muted fw-normal">Lorda (per 100)</th>
+              <th class="text-end text-muted fw-normal">Lorda (€)</th>
+              <th class="pe-3 text-end text-muted fw-normal">Netta (€)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for cp in result.coupon_plan %}
+            <tr>
+              <td class="ps-3">{{ cp.payment_date.strftime('%d/%m/%Y') }}</td>
+              <td class="text-end">{{ "%.6f"|format(cp.gross_amount) }}</td>
+              <td class="text-end">€ {{ (cp.gross_amount * result.quantity) | r2 }}</td>
+              <td class="pe-3 text-end">€ {{ (cp.net_amount * result.quantity) | r2 }}</td>
+            </tr>
+            {% endfor %}
+            <tr class="table-light">
+              <th class="ps-3 fw-semibold" colspan="2">Totale cedole ({{ result.coupon_plan | length }})</th>
+              <td class="text-end fw-semibold">€ {{ ((result.coupon_plan | sum(attribute='gross_amount')) * result.quantity) | r2 }}</td>
+              <td class="pe-3 text-end fw-semibold">€ {{ ((result.coupon_plan | sum(attribute='net_amount')) * result.quantity) | r2 }}</td>
+            </tr>
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-muted small m-3">Nessuna cedola incassata: la vendita avviene prima del prossimo stacco
+          (la cedola in corso viene pagata dal compratore come rateo).</p>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
 
     {# ---- Capital Gain (MOT only) ---- #}
     {% if result.capital_gain %}
@@ -375,7 +452,7 @@
              <tr><th class="ps-3 text-muted fw-normal">Prezzo di scarico</th>
                  <td class="pe-3 text-end">{{ "%.3f"|format(result.capital_gain.unload_price) }}</td></tr>
             <tr>
-              <th class="ps-3 text-muted fw-normal">Plus/Minus valenza (per BOT)</th>
+              <th class="ps-3 text-muted fw-normal">Plus/Minus valenza (per 100 nominale)</th>
               <td class="pe-3 text-end fw-semibold
                 {% if result.capital_gain.unit_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
                 {{ "%+.5f"|format(result.capital_gain.unit_gain_loss) }}
@@ -420,14 +497,41 @@
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <tbody>
+            {% if has_coupons %}
+            <tr><th class="ps-3 text-muted fw-normal w-50">Corso secco</th>
+                <td class="pe-3 text-end">{{ "%.4f"|format(result.sale.clean_price) }}</td></tr>
+            {% if result.sale.accrued_interest > 0 %}
+            <tr><th class="ps-3 text-muted fw-normal">Rateo lordo</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.sale.accrued_interest) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Prezzo tel quel</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.sale.dirty_price) }}</td></tr>
+            {% endif %}
+            {% endif %}
             <tr><th class="ps-3 text-muted fw-normal w-50">Importo secco</th>
                 <td class="pe-3 text-end">€ {{ result.sale.dry_amount | r2 }}</td></tr>
+            {% if has_coupons and result.sale.accrued_interest > 0 %}
+            <tr><th class="ps-3 text-muted fw-normal">Rateo incassato dal compratore</th>
+                <td class="pe-3 text-end">€ {{ (result.sale.dirty_amount - result.sale.dry_amount) | r2 }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Importo tel quel</th>
+                <td class="pe-3 text-end">€ {{ result.sale.dirty_amount | r2 }}</td></tr>
+            {% endif %}
             <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
                 <td class="pe-3 text-end">€ {{ result.sale.commission | r2 }}</td></tr>
             <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
                 <td class="pe-3 text-end">€ {{ result.sale.fixed_commission | r2 }}</td></tr>
+            {% if has_coupons %}
+            <tr><th class="ps-3 text-muted fw-normal">Disaggio maturato pro-quota</th>
+                <td class="pe-3 text-end">{{ "%.6f"|format(result.sale.unit_discount) }}</td></tr>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio trattenuta</th>
+                <td class="pe-3 text-end">€ {{ result.sale.discount_tax | r2 }}</td></tr>
+            {% if result.sale.accrued_interest > 0 %}
+            <tr><th class="ps-3 text-muted fw-normal">Imposta sul rateo incassato</th>
+                <td class="pe-3 text-end">€ {{ result.sale.accrued_interest_tax | r2 }}</td></tr>
+            {% endif %}
+            {% else %}
             <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata</th>
                 <td class="pe-3 text-end">€ {{ result.sale.discount_tax | r2 }}</td></tr>
+            {% endif %}
             {% if result.capital_gain and result.capital_gain.capital_gain_tax > 0 %}
             <tr><th class="ps-3 text-muted fw-normal">Imposta sulla plusvalenza</th>
                 <td class="pe-3 text-end text-danger">− € {{ result.capital_gain.capital_gain_tax | r2 }}</td></tr>
@@ -509,7 +613,7 @@
     <div class="d-flex align-items-center justify-content-center h-100 text-muted">
       <div class="text-center py-5">
         <i class="bi bi-calculator fs-1 d-block mb-2"></i>
-        Seleziona un BOT, inserisci i parametri e premi <strong>Calcola</strong>.
+        Seleziona un BOT o un BTP, inserisci i parametri e premi <strong>Calcola</strong>.
       </div>
     </div>
     {% endif %}
@@ -684,6 +788,10 @@
       document.getElementById('strip-maturity-date').textContent = opt.dataset.maturityDate     || '';
       const ip = parseFloat(opt.dataset.issuePrice);
       document.getElementById('strip-issue-price').textContent   = isNaN(ip) ? '' : ip.toFixed(4);
+      // Coupon (BTP only): hidden for a BOT
+      const coupon = opt.dataset.coupon || '';
+      document.getElementById('strip-coupon').textContent = coupon;
+      document.getElementById('strip-coupon-wrap').classList.toggle('d-none', !coupon);
       // Update MEF auction result link
       const mefLink = document.getElementById('strip-mef-link');
       const mefWrap = document.getElementById('strip-mef-link-wrap');

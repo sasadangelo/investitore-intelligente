@@ -278,7 +278,8 @@ sono ferme ai soli BOT):
   Milestone 5 corporate, ...), la sua guida si collega dalla tabella "Le famiglie di obbligazioni",
   dove "non ancora" diventa ✅.
 - ✅ [cosa-e-un-btp.md](../docs/guides/cosa-e-un-btp.md) — creata in Fase 8: cedola, corso secco e
-  tel quel, rateo, tasse, scarto di emissione con esempio numerico.
+  tel quel, rateo, tasse, prima cedola irregolare (Fase 10), scarto di emissione con esempio
+  numerico.
 - [inizia-qui.md](../docs/guides/inizia-qui.md) — percorso di lettura che includa i BTP.
 
 **Guide di ogni fase** (dettagli nella voce "Guide" della fase):
@@ -287,8 +288,8 @@ sono ferme ai soli BOT):
 |---|---|
 | 8 — Scarto di emissione | ✅ `cosa-e-un-btp.md` (la parte per `calcolatore-btp.md` passa alla Fase 11) |
 | 9 — Rateo: convenzione e imposte | ✅ `cosa-e-un-btp.md`, `calcolatore.md`, `calcolatore-approfondimenti.md` (la parte per `calcolatore-btp.md` passa alla Fase 11) |
-| 10 — Prima cedola irregolare | `cosa-e-un-btp.md` |
-| 11 — Calcolatore BTP in pagina | `calcolatore-btp.md` (nuova), con esempio completo |
+| 10 — Prima cedola irregolare | ✅ `cosa-e-un-btp.md` |
+| 11 — Calcolatore BTP in pagina | ✅ `calcolatore-btp.md` (nuova), con esempio completo |
 | 12 — Duration modificata | `cosa-e-un-btp.md`, `catalogo.md` |
 | 13 — Confronto rendimenti | `confronto-rendimenti.md` (nuova) |
 | 14 — Rifiniture | `calcolatore-btp.md`, guida banche |
@@ -550,7 +551,31 @@ più corto (o più lungo) di quello standard. Il foglio `Bond` la riduce in prop
 - **Guide**: in `cosa-e-un-btp.md` un paragrafo breve: perché la prima cedola di un BTP appena
   emesso può essere più piccola delle altre.
 
-## Fase 11 — Calcolatore BTP in pagina (🟡)
+## Fase 11 — Calcolatore BTP in pagina (🟡) ✅
+
+**Fatto:**
+- [calculator/index.html](../src/intelligent_investor/templates/calculator/index.html): menu
+  "Titolo" con i BOT e i BTP in due gruppi, cedola nella striscia del titolo (es. "3,35%
+  semestrale"), titolo pagina "Calcolatore BOT e BTP".
+- Per un titolo con cedole (`coupon_frequency > 0`) il risultato mostra:
+  - Acquisto: corso secco, rateo lordo, prezzo tel quel, rateo pagato al venditore, importo tel
+    quel, disaggio maturato, "Credito imposta disaggio" e "Credito imposta sul rateo";
+  - nuova sezione Piano cedole: data, lorda per 100, lorda e netta in € per il lotto, totali;
+    se è vuota spiega che la vendita avviene prima del prossimo stacco;
+  - Vendita/Rimborso: corso secco, e solo per una vendita a metà periodo rateo, tel quel, rateo
+    incassato e "Imposta sul rateo incassato"; "Imposta disaggio trattenuta" al posto di
+    "rimborsata".
+  Le righe del BOT restano identiche. Gli importi sono quelli del DTO, con il loro segno.
+- [calculator_controller.py](../src/intelligent_investor/controllers/calculator_controller.py):
+  solo testi ("Seleziona un titolo", "Titolo non trovato"); profilo bancario e schema invariati.
+- Verificato col client di test Flask su una copia di `data/investor.db` (BTP 3,35% Lug29 a
+  scadenza e con vendita anticipata, BOT invariato). Nessun test di pagina: i controller sono
+  esclusi dalla copertura.
+- Guide: nuova [calcolatore-btp.md](../docs/guides/calcolatore-btp.md) con l'esempio completo sul
+  BTP 3,35% Lug29 (acquisto MOT, piano cedole, capital gain, rimborso, bollo, rendimenti) e la
+  variante con vendita anticipata; collegata da `calcolatore.md` e `cosa-e-un-btp.md`.
+
+**Piano originale:**
 
 Viene dopo le fasi 8–10 così l'utente vede da subito risultati corretti.
 

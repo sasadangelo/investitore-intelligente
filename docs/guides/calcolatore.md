@@ -16,6 +16,8 @@ Il calcolatore tiene conto di:
 
 In questo modo conoscerai l'esatta misura dei soldi che metterai in tasca al rimborso a scadenza o alla vendita anticipata.
 
+> Lo stesso calcolatore funziona anche per i **BTP**: rateo, prezzo tel quel e piano cedole sono spiegati nella guida **[Calcolatore BTP](/guides/calcolatore-btp)**.
+
 Se intendi vendere il titolo prima della scadenza, il calcolatore ti permette di simulare l'operazione con i dati di vendita per verificare la convenienza della transazione prima di eseguirla.
 
 ## Parametri di input

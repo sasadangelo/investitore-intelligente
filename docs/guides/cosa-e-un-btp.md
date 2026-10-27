@@ -109,7 +109,7 @@ Nel [Catalogo](/catalogue/) trovi per ogni BTP:
 - il **rendimento lordo**: quanto rende all'anno se lo compri oggi all'ultimo prezzo e lo tieni a scadenza, cedole comprese, prima delle tasse;
 - il **rendimento netto**: lo stesso, dopo le tasse su cedole, scarto di emissione e plusvalenza.
 
-Entrambi sono **indicativi**: non includono le commissioni della tua banca né l'imposta di bollo, che dipendono da quanto investi e da dove compri.
+Entrambi sono **indicativi**: non includono le commissioni della tua banca né l'imposta di bollo, che dipendono da quanto investi e da dove compri. Per i numeri esatti, con le commissioni della tua banca, porta il BTP nel **[Calcolatore](/calculator/)**: la guida **[Calcolatore BTP](/guides/calcolatore-btp)** spiega ogni riga del risultato con un esempio completo.
 
 ---
 
