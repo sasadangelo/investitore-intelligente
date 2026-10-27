@@ -62,6 +62,22 @@ def test_issue_date_after_maturity_raises() -> None:
         _make_bot(issue_date=date(2025, 12, 1), maturity_date=date(2025, 1, 1))
 
 
+def test_first_coupon_date_defaults_to_none() -> None:
+    assert _make_bot().first_coupon_date is None
+
+
+def test_first_coupon_date_between_issue_and_maturity_is_valid() -> None:
+    bond = _make_bot().model_copy(update={"first_coupon_date": date(2025, 7, 15)})
+    assert BondDTO.model_validate(bond.model_dump()).first_coupon_date == date(2025, 7, 15)
+
+
+@pytest.mark.parametrize("first_coupon_date", [date(2025, 1, 15), date(2024, 12, 1), date(2026, 2, 1)])
+def test_first_coupon_date_out_of_range_raises(first_coupon_date: date) -> None:
+    raw = _make_bot().model_dump()
+    with pytest.raises(ValueError, match="first_coupon_date"):
+        BondDTO.model_validate({**raw, "first_coupon_date": first_coupon_date})
+
+
 # ------------------------------------------------------------------
 # Default field values
 # ------------------------------------------------------------------

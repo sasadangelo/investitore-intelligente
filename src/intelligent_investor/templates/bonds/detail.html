@@ -61,6 +61,12 @@
               <th class="ps-3 text-muted fw-normal">Data scadenza</th>
               <td class="pe-3">{{ bond.maturity_date.strftime('%d/%m/%Y') }}</td>
             </tr>
+            {% if bond.first_coupon_date %}
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Data prima cedola</th>
+              <td class="pe-3">{{ bond.first_coupon_date.strftime('%d/%m/%Y') }}</td>
+            </tr>
+            {% endif %}
             <tr>
               <th class="ps-3 text-muted fw-normal">Giorni residui</th>
               <td class="pe-3">{{ residual_days }}</td>

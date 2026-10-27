@@ -54,6 +54,16 @@ Il rateo è a tutti gli effetti un pezzo di cedola, quindi anche lui è tassato 
 
 > **Esempio:** con 10.000 € di nominale, nell'esempio sopra paghi 62,50 € di rateo e ricevi 7,81 € di credito. Se poi rivendi il 15 settembre 2027, a metà del semestre giugno–dicembre, il compratore ti paga 72,40 € di rateo e la banca ne trattiene 9,05 €.
 
+### Perché la prima cedola può essere più piccola
+
+Le date di stacco di un BTP sono fissate dalla scadenza, ma il titolo viene emesso quando serve al Tesoro, spesso a semestre già iniziato. Prima dell'emissione il titolo non esisteva, quindi gli interessi maturano solo dalla data di emissione: la **prima cedola** paga solo i giorni dall'emissione al primo stacco, ed è più piccola delle altre.
+
+> **Esempio:** un BTP 3% con stacchi il 15 gennaio e il 15 luglio, emesso il 1° marzo 2027. Il semestre gennaio–luglio dura 181 giorni, ma il titolo ne vive solo 136: la prima cedola è 1,50 × 136 / 181 = **1,127 €** invece di 1,50 €. Dalla seconda in poi le cedole sono tutte da 1,50 €.
+
+Se l'emissione cade troppo vicina a uno stacco, il Tesoro può anche saltarlo: la prima cedola arriva allo stacco successivo ed è **più grande** delle altre, perché copre più di sei mesi.
+
+Ti riguarda solo se tieni il titolo al primo stacco, cioè se lo compri in asta o poco dopo l'emissione. E non ci perdi nulla: se lo compri sul mercato prima del primo stacco, anche il rateo che paghi al venditore parte dalla data di emissione.
+
 ## Le tasse sui BTP
 
 Come tutti i titoli di Stato italiani, i BTP sono tassati al **12,5%** invece del 26%. L'imposta colpisce:

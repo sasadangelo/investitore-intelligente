@@ -173,6 +173,17 @@
               </div>
               <div class="form-text">12.5% titoli di stato · 26% corporate</div>
             </div>
+            <div class="col-sm-4">
+              <label for="first_coupon_date" class="form-label fw-semibold">Data prima cedola</label>
+              <input
+                type="date"
+                class="form-control"
+                id="first_coupon_date"
+                name="first_coupon_date"
+                value="{{ fval('first_coupon_date') | replace('None', '') }}"
+              />
+              <div class="form-text">Solo se la prima cedola è lunga · vuoto = prima data regolare</div>
+            </div>
           </div>
 
           <!-- Row 6: URL risultato asta MEF -->

@@ -24,11 +24,16 @@ class BondDTO(BaseModel):
     # Key financial dates
     issue_date: date
     maturity_date: date
+    # First coupon date (data prima cedola). None = the first regular coupon date after
+    # issue_date; set it only for a long first coupon (see CouponSchedule)
+    first_coupon_date: date | None = None
 
     @model_validator(mode="after")
     def check_dates(self) -> "BondDTO":
         if self.issue_date >= self.maturity_date:
             raise ValueError("issue_date must be earlier than maturity_date")
+        if self.first_coupon_date is not None and not self.issue_date < self.first_coupon_date <= self.maturity_date:
+            raise ValueError("first_coupon_date must be after issue_date and not after maturity_date")
         return self
 
     # Price parameters

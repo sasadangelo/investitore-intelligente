@@ -16,6 +16,15 @@ from intelligent_investor.utils.day_count import DayCountConvention
 
 
 @dataclass(frozen=True)
+class _FirstPeriod:
+    """Coupon period ending at the first coupon date (see CouponSchedule.first_coupon_amount)."""
+
+    start: date  # coupon date on or before issue_date (COUPPCD), cell F34
+    end: date  # first coupon date, cell AH32
+    coupon: float | None  # coupon of the whole period for a long first coupon (cell AJ32), else None
+
+
+@dataclass(frozen=True)
 class CouponPayment:
     """A single coupon date (stacco): payment date + gross/net amount per 100 of nominal."""
 
@@ -44,11 +53,20 @@ class CouponSchedule:
                            in % (default 12.5).
         accrued_interest_convention: Day count of the rateo (default act/act, the
                            ICMA rule; see BondConventions.accrued_interest).
+        first_coupon_date: First coupon date (data prima cedola, `Emissioni` column E).
+                           None (default) = the first regular coupon date after
+                           issue_date, as the `Bond` sheet does when the column is empty
+                           (cell AH32). Set it only for a long first coupon, when the
+                           first regular date is skipped.
+
+    The first coupon is irregular whenever issue_date is not a coupon date: it pays
+    only the part of the coupon accrued from issue_date (see first_coupon_amount).
 
     Usage — BTP calculator::
 
         cs = CouponSchedule(bond.issue_date, bond.maturity_date, bond.coupon_frequency,
-                             bond.nominal_rate, bond.tax_rate)
+                             bond.nominal_rate, bond.tax_rate,
+                             first_coupon_date=bond.first_coupon_date)
         gross_accrued = cs.accrued_interest(purchase_date)      # rateo lordo
         net_accrued = cs.net_accrued_interest(purchase_date)    # rateo netto
         coupon_plan = cs.schedule                                # piano cedole
@@ -62,19 +80,24 @@ class CouponSchedule:
         nominal_rate: float,
         tax_rate: float = 12.5,
         accrued_interest_convention: DayCountConvention = DayCountConvention.ACT_ACT,
+        first_coupon_date: date | None = None,
     ) -> None:
         if coupon_frequency > 0:
             if issue_date >= maturity_date:
                 raise ValueError("issue_date must be earlier than maturity_date")
             if 12 % coupon_frequency != 0:
                 raise ValueError(f"unsupported coupon_frequency: {coupon_frequency}")
+            if first_coupon_date is not None and not issue_date < first_coupon_date <= maturity_date:
+                raise ValueError("first_coupon_date must be after issue_date and not after maturity_date")
         self._issue_date = issue_date
         self._maturity_date = maturity_date
         self._coupon_frequency = coupon_frequency
         self._nominal_rate = nominal_rate
         self._tax_rate = tax_rate
         self._accrued_interest_convention = accrued_interest_convention
+        self._first_coupon_date = first_coupon_date
         self._dates: list[date] | None = None  # lazy cache
+        self._first_period: _FirstPeriod | None = None  # lazy cache
 
     # ------------------------------------------------------------------
     # Public API
@@ -87,8 +110,8 @@ class CouponSchedule:
 
         Equivalent to Excel/LibreOffice COUPNCD: coupons are anchored to
         maturity_date and generated backwards in steps of 12/coupon_frequency
-        months (e.g. maturity 15/07, semi-annual → ..., 15/01/Y, 15/07/Y).
-        Empty when coupon_frequency == 0.
+        months (e.g. maturity 15/07, semi-annual → ..., 15/01/Y, 15/07/Y), down
+        to the first coupon date. Empty when coupon_frequency == 0.
         """
         if self._dates is None:
             self._dates = self._generate_dates()
@@ -96,26 +119,53 @@ class CouponSchedule:
 
     @property
     def gross_coupon_amount(self) -> float:
-        """Gross coupon paid per 100 of nominal at each coupon date (0.0 if coupon_frequency == 0)."""
+        """Gross regular coupon paid per 100 of nominal (0.0 if coupon_frequency == 0); the first may differ."""
         if self._coupon_frequency <= 0:
             return 0.0
         return self._nominal_rate / self._coupon_frequency
 
     @property
     def net_coupon_amount(self) -> float:
-        """Net coupon paid per 100 of nominal at each coupon date, after withholding tax_rate%."""
+        """Net regular coupon paid per 100 of nominal, after withholding tax_rate%."""
         return self.gross_coupon_amount * (1 - self._tax_rate / 100)
+
+    @property
+    def first_coupon_amount(self) -> float:
+        """
+        Gross first coupon per 100 of nominal (0.0 if coupon_frequency == 0), as in the
+        `Bond` sheet (cell W4).
+
+        Interest accrues only from issue_date, so when the bond is issued in the
+        middle of a coupon period the first coupon is cut in proportion: the coupon of
+        the period ending at the first coupon date, times the days from issue to the
+        first coupon over the days of that period. It equals the regular coupon when
+        issue_date is itself a coupon date.
+
+        The period starts at the coupon date on or before issue_date (COUPPCD). When
+        the first coupon is long (the first regular date is skipped) the period spans
+        more than one regular period and its coupon is the annual rate times its year
+        fraction in the accrued-interest convention (cell AJ32).
+        """
+        if self._coupon_frequency <= 0:
+            return 0.0
+        first = self._get_first_period()
+        coupon = self.gross_coupon_amount if first.coupon is None else first.coupon
+        return coupon * (first.end - self._issue_date).days / (first.end - first.start).days
 
     @property
     def schedule(self) -> list[CouponPayment]:
         """
         Full coupon plan (piano cedole) from issue to maturity: one CouponPayment
-        per coupon date, with gross/net amount per 100 of nominal (constant across
-        coupon dates, since the coupon is fixed-rate). Empty for coupon_frequency == 0.
+        per coupon date, with gross/net amount per 100 of nominal. Every coupon is the
+        regular one (the coupon is fixed-rate) except the first, which may be shorter
+        or longer (see first_coupon_amount). Empty for coupon_frequency == 0.
         """
-        gross = self.gross_coupon_amount
-        net = self.net_coupon_amount
-        return [CouponPayment(payment_date=d, gross_amount=gross, net_amount=net) for d in self.dates]
+        net_factor = 1 - self._tax_rate / 100
+        payments: list[CouponPayment] = []
+        for i, d in enumerate(self.dates):
+            gross = self.first_coupon_amount if i == 0 else self.gross_coupon_amount
+            payments.append(CouponPayment(payment_date=d, gross_amount=gross, net_amount=gross * net_factor))
+        return payments
 
     def previous_coupon_date(self, settlement_date: date) -> date:
         """
@@ -142,7 +192,9 @@ class CouponSchedule:
         Computed in the bond's accrued-interest convention (act/act ICMA for BOT and
         BTP, see utils/day_count.py), over the regular coupon period anchored to
         maturity, starting from the issue date when the bond was issued in the
-        middle of it (foglio `Bond`, cells F36/F52).
+        middle of it (foglio `Bond`, cells F36/F52). Before the first coupon the
+        period is the one of the first coupon (see first_coupon_amount), so the
+        rateo reaches the first coupon, not the regular one, at the first coupon date.
 
         This is owed by the buyer to the seller at purchase (added on top of the
         clean price), and by the seller to the buyer at an early sale: the coupon
@@ -155,7 +207,11 @@ class CouponSchedule:
         # At (or after) maturity the last coupon is paid in full: nothing is accrued
         if self._coupon_frequency <= 0 or settlement_date >= self._maturity_date:
             return 0.0
-        period_start, period_end = self._coupon_period(settlement_date)
+        first = self._get_first_period()
+        if settlement_date < first.end:
+            period_start, period_end, period_coupon = first.start, first.end, first.coupon
+        else:
+            (period_start, period_end), period_coupon = self._coupon_period(settlement_date), None
         return self._accrued_interest_convention.accrued_coupon(
             nominal_rate=self._nominal_rate,
             coupon_frequency=self._coupon_frequency,
@@ -163,6 +219,7 @@ class CouponSchedule:
             period_end=period_end,
             accrual_start=max(period_start, self._issue_date),
             settlement_date=settlement_date,
+            period_coupon=period_coupon,
         )
 
     def net_accrued_interest(self, settlement_date: date) -> float:
@@ -187,22 +244,43 @@ class CouponSchedule:
         start = _subtract_months(self._maturity_date, (periods_back + 1) * 12 // self._coupon_frequency)
         return start, end
 
+    def _get_first_period(self) -> "_FirstPeriod":
+        """
+        Coupon period ending at the first coupon date (cells F34, AH32, AJ32), computed once.
+
+        Only meaningful when coupon_frequency > 0.
+        """
+        if self._first_period is None:
+            start = self._coupon_period(self._issue_date)[0]
+            end = self._first_coupon_date or next_coupon_date(
+                self._issue_date, self._maturity_date, self._coupon_frequency
+            )
+            # Long first coupon: the period skips at least one regular coupon date
+            is_long = end > next_coupon_date(start, self._maturity_date, self._coupon_frequency)
+            coupon = (
+                self._nominal_rate * self._accrued_interest_convention.year_fraction(start, end) if is_long else None
+            )
+            self._first_period = _FirstPeriod(start=start, end=end, coupon=coupon)
+        return self._first_period
+
     def _generate_dates(self) -> list[date]:
         if self._coupon_frequency <= 0:
             return []
         step_months = 12 // self._coupon_frequency
+        first = self._get_first_period().end
         # Coupon dates (date di stacco) are anchored to maturity_date, not
         # issue_date (COUPNCD convention): a bond's coupon calendar is fixed by
         # its final redemption date, so we walk backward from there in
-        # step_months increments (e.g. 6 for semi-annual) until issue_date is
-        # reached — matching how coupons actually fall in the real calendar.
-        dates: list[date] = []
-        current = self._maturity_date
-        while current > self._issue_date:
+        # step_months increments (e.g. 6 for semi-annual) until the first coupon
+        # date is reached — matching how coupons actually fall in the real calendar.
+        # Step back from maturity (not from the previous date) so that day clamping
+        # in short months (e.g. 31 → 30) does not drift across iterations.
+        dates: list[date] = [first]
+        periods_back = 0
+        while (current := _subtract_months(self._maturity_date, periods_back * step_months)) > first:
             dates.append(current)
-            current = _subtract_months(current, step_months)
-        dates.reverse()
-        return dates
+            periods_back += 1
+        return sorted(dates)
 
 
 # ---------------------------------------------------------------------------

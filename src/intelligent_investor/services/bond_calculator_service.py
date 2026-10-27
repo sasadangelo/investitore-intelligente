@@ -71,6 +71,7 @@ class BondCalculatorService:
             bond.nominal_rate,
             bond.tax_rate,
             accrued_interest_convention=conventions.accrued_interest,
+            first_coupon_date=bond.first_coupon_date,
         )
 
         # Effective sale date and price (maturity when no early sale)

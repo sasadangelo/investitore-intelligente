@@ -59,6 +59,7 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
         ValidationError: if the bond data is inconsistent
     """
     url = form.get("auction_result_url", "").strip() or None
+    first_coupon = form.get("first_coupon_date", "").strip()
     return BondDTO(
         id=bond_id,
         name=form["name"].strip(),
@@ -66,6 +67,7 @@ def _form_to_dto(form: dict, bond_id: int | None = None) -> BondDTO:
         bond_type=form["bond_type"],
         issue_date=_parse_date(form["issue_date"]),
         maturity_date=_parse_date(form["maturity_date"]),
+        first_coupon_date=_parse_date(first_coupon) if first_coupon else None,  # None = regular first date
         issue_price=float(form["issue_price"]),
         redemption_price=float(form.get("redemption_price", 100.0)),
         nominal_rate=float(form.get("nominal_rate", 0.0)),

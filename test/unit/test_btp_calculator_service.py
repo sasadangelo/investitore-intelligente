@@ -176,3 +176,65 @@ def test_purchase_on_stacco_and_early_sale_before_next_coupon() -> None:
     # Issued at par: no issue discount on either leg
     assert result.purchase.discount_tax == 0.0
     assert result.sale.discount_tax == 0.0
+
+
+def test_auction_purchase_cashes_prorated_first_coupon() -> None:
+    # Issued 01/03/2028 inside the regular period 15/01 → 15/07: the first coupon
+    # pays only the 136 of the 182 days accrued since issue (cell W4)
+    bond = BondDTO(
+        name="BTP TF prima cedola corta",
+        isin="IT0000000005",
+        bond_type="BTP",
+        issue_date=date(2028, 3, 1),
+        maturity_date=date(2030, 7, 15),
+        issue_price=100.0,
+        nominal_rate=3.6,
+        coupon_frequency=2,
+        tax_rate=12.5,
+    )
+    tx = BondTransactionDTO(
+        bond_id=0,
+        purchase_venue="asta",
+        purchase_date=date(2028, 3, 1),
+        purchase_price=100.0,
+        face_value=10000.0,
+    )
+
+    result = BondCalculatorService().calculate(tx, bond)
+
+    assert result.purchase.accrued_interest == pytest.approx(0.0, abs=_ABS_PRICE)
+    first, *others = result.coupon_plan
+    assert first.payment_date == date(2028, 7, 15)
+    assert first.gross_amount == pytest.approx(1.8 * 136 / 182, abs=_ABS_PRICE)
+    assert [cp.gross_amount for cp in others] == pytest.approx([1.8] * 4)
+    # Held to maturity at par: the gross gain is just the coupons cashed
+    assert result.summary.gross_gain == pytest.approx((1.8 * 136 / 182 + 1.8 * 4) * 100, abs=_ABS_EURO)
+
+
+def test_long_first_coupon_from_bond_first_coupon_date() -> None:
+    bond = BondDTO(
+        name="BTP TF prima cedola lunga",
+        isin="IT0000000006",
+        bond_type="BTP",
+        issue_date=date(2028, 6, 1),
+        maturity_date=date(2030, 7, 15),
+        first_coupon_date=date(2029, 1, 15),
+        issue_price=100.0,
+        nominal_rate=3.6,
+        coupon_frequency=2,
+        tax_rate=12.5,
+    )
+    tx = BondTransactionDTO(
+        bond_id=0,
+        purchase_venue="mot",
+        purchase_date=date(2028, 10, 1),
+        purchase_price=100.0,
+        face_value=10000.0,
+    )
+
+    result = BondCalculatorService().calculate(tx, bond)
+
+    # Rateo on the long period 15/01/2028 → 15/01/2029, accrued from issue (cell F36)
+    assert result.purchase.accrued_interest == pytest.approx(3.6 * 122 / 366, abs=_ABS_PRICE)
+    assert [cp.payment_date for cp in result.coupon_plan][0] == date(2029, 1, 15)
+    assert result.coupon_plan[0].gross_amount == pytest.approx(3.6 * 228 / 366, abs=_ABS_PRICE)

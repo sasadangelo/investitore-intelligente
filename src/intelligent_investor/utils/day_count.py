@@ -131,6 +131,7 @@ class DayCountConvention(str, Enum):
         period_end: date,
         accrual_start: date,
         settlement_date: date,
+        period_coupon: float | None = None,
     ) -> float:
         """
         Accrued interest (rateo) per 100 of nominal, as in the `Bond` sheet (cells F36/F52).
@@ -147,19 +148,22 @@ class DayCountConvention(str, Enum):
             period_end: Next coupon date
             accrual_start: Date interest starts accruing from (period_start, or the issue date if later)
             settlement_date: Date the rateo is computed at
+            period_coupon: Coupon of the whole period start→end, in act/act only, when it is
+                not the regular nominal_rate / coupon_frequency (a long first coupon,
+                cell AJ32). None for a regular period
 
         Returns:
             The gross accrued interest per 100 of nominal
         """
         if self is DayCountConvention.ACT_ACT:
             elapsed_days = max(0, (settlement_date - accrual_start).days)
-            # Decimal so that exact values (e.g. 0.625) are not floored to 0.624999 by float error
-            accrued = (
-                Decimal(str(nominal_rate))
-                / Decimal(coupon_frequency)
-                * Decimal(elapsed_days)
-                / Decimal((period_end - period_start).days)
+            coupon = (
+                Decimal(str(nominal_rate)) / Decimal(coupon_frequency)
+                if period_coupon is None
+                else Decimal(str(period_coupon))
             )
+            # Decimal so that exact values (e.g. 0.625) are not floored to 0.624999 by float error
+            accrued = coupon * Decimal(elapsed_days) / Decimal((period_end - period_start).days)
             return float(accrued.quantize(Decimal("0.000001"), rounding=ROUND_FLOOR))
         return self.year_fraction(accrual_start, settlement_date) * nominal_rate
 

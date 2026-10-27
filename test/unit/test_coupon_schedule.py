@@ -11,6 +11,7 @@ All tests are pure (no DB, no I/O) — they only exercise:
   - CouponSchedule.gross_coupon_amount / net_coupon_amount
   - CouponSchedule.accrued_interest() / net_accrued_interest()
   - CouponSchedule.schedule
+  - CouponSchedule.first_coupon_amount (irregular first coupon)
 """
 
 from datetime import date
@@ -240,10 +241,88 @@ def test_schedule_matches_dates() -> None:
     assert [p.payment_date for p in cs.schedule] == cs.dates
 
 
-def test_schedule_constant_gross_net_amounts() -> None:
+def test_schedule_constant_gross_net_amounts_after_first() -> None:
     cs = CouponSchedule(date(2028, 3, 1), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6, tax_rate=12.5)
-    assert all(p.gross_amount == pytest.approx(cs.gross_coupon_amount) for p in cs.schedule)
-    assert all(p.net_amount == pytest.approx(cs.net_coupon_amount) for p in cs.schedule)
+    assert all(p.gross_amount == pytest.approx(cs.gross_coupon_amount) for p in cs.schedule[1:])
+    assert all(p.net_amount == pytest.approx(cs.net_coupon_amount) for p in cs.schedule[1:])
+
+
+# ------------------------------------------------------------------
+# Irregular first coupon (cell W4 of the `Bond` sheet)
+# ------------------------------------------------------------------
+
+
+def test_first_coupon_short_is_prorated() -> None:
+    # Issued 01/03 inside the regular period 15/01 → 15/07: only 136 of its 182 days accrue
+    cs = CouponSchedule(date(2028, 3, 1), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6, tax_rate=12.5)
+    assert cs.first_coupon_amount == pytest.approx(1.8 * 136 / 182)
+    first = cs.schedule[0]
+    assert first.payment_date == date(2028, 7, 15)
+    assert first.gross_amount == pytest.approx(1.8 * 136 / 182)
+    assert first.net_amount == pytest.approx(1.8 * 136 / 182 * 0.875)
+
+
+def test_first_coupon_full_when_issued_on_coupon_date() -> None:
+    cs = CouponSchedule(date(2028, 1, 15), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6)
+    assert cs.first_coupon_amount == pytest.approx(1.8)
+    assert all(p.gross_amount == pytest.approx(1.8) for p in cs.schedule)
+
+
+def test_first_coupon_date_equal_to_regular_date_changes_nothing() -> None:
+    default = CouponSchedule(date(2028, 3, 1), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6)
+    explicit = CouponSchedule(
+        date(2028, 3, 1), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6, first_coupon_date=date(2028, 7, 15)
+    )
+    assert explicit.schedule == default.schedule
+    assert explicit.accrued_interest(date(2028, 5, 1)) == default.accrued_interest(date(2028, 5, 1))
+
+
+def test_first_coupon_long_skips_first_regular_date() -> None:
+    # Issued 01/06/2028, first coupon on 15/01/2029: the regular date 15/07/2028 is skipped
+    cs = CouponSchedule(
+        date(2028, 6, 1), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6, first_coupon_date=date(2029, 1, 15)
+    )
+    assert cs.dates == [date(2029, 1, 15), date(2029, 7, 15), date(2030, 1, 15), date(2030, 7, 15)]
+    # Period 15/01/2028 → 15/01/2029 is one act/act year: its coupon is the annual 3.6,
+    # of which 228 of its 366 days accrue from issue
+    assert cs.first_coupon_amount == pytest.approx(3.6 * 228 / 366)
+    assert [p.gross_amount for p in cs.schedule[1:]] == pytest.approx([1.8, 1.8, 1.8])
+
+
+def test_accrued_interest_before_long_first_coupon() -> None:
+    cs = CouponSchedule(
+        date(2028, 6, 1), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6, first_coupon_date=date(2029, 1, 15)
+    )
+    # 122 days from issue over the 366 of the long period, on its 3.6 coupon (cell F36)
+    assert cs.accrued_interest(date(2028, 10, 1)) == pytest.approx(1.2)
+    # After the skipped regular date the rateo keeps growing towards the long coupon
+    assert cs.accrued_interest(date(2029, 1, 1)) == pytest.approx(3.6 * 214 / 366, abs=1e-6)
+    assert cs.accrued_interest(date(2029, 1, 1)) > cs.gross_coupon_amount
+    # On the first coupon date the period restarts
+    assert cs.accrued_interest(date(2029, 1, 15)) == 0.0
+
+
+def test_accrued_interest_reaches_first_coupon_on_coupon_date() -> None:
+    cs = CouponSchedule(date(2028, 3, 1), date(2030, 7, 15), coupon_frequency=2, nominal_rate=3.6)
+    # The day before the first coupon, the rateo is the short first coupon minus one day
+    assert cs.accrued_interest(date(2028, 7, 14)) == pytest.approx(1.8 * 135 / 182, abs=1e-6)
+
+
+@pytest.mark.parametrize("first_coupon_date", [date(2028, 3, 1), date(2028, 1, 1), date(2030, 8, 1)])
+def test_first_coupon_date_out_of_range_raises(first_coupon_date: date) -> None:
+    with pytest.raises(ValueError, match="first_coupon_date"):
+        CouponSchedule(
+            date(2028, 3, 1),
+            date(2030, 7, 15),
+            coupon_frequency=2,
+            nominal_rate=3.6,
+            first_coupon_date=first_coupon_date,
+        )
+
+
+def test_first_coupon_amount_zero_frequency() -> None:
+    cs = CouponSchedule(date(2025, 1, 1), date(2026, 1, 1), coupon_frequency=0, nominal_rate=0.0)
+    assert cs.first_coupon_amount == 0.0
 
 
 def test_schedule_zero_frequency_returns_empty() -> None:

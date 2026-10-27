@@ -28,6 +28,8 @@ class BondDAO(Base):
     # Key financial dates
     issue_date: Column[date] = Column(Date, nullable=False)
     maturity_date: Column[date] = Column(Date, nullable=False)
+    # First coupon date, only for a long first coupon; None = first regular date after issue
+    first_coupon_date: Column[date] = Column(Date, nullable=True, default=None)
 
     # Price parameters
     issue_price = Column(Float, nullable=False)                        # Price at issuance

@@ -192,8 +192,8 @@ Mappatura colonne `Emissioni` → `BondDAO`/`BondDTO`:
 | M — TASSAZIONE | `tax_rate` | tipicamente 12,5% |
 | — | `bond_type` | costante `"BTP"` |
 
-Colonne **non** mappate in questa fase: `E` (Data prima cedola — serve per la prima cedola
-irregolare, vedi Fase 10), `N` (Premio Fedeltà, solo BTP Valore/Futura), `R`–`AK`
+Colonne **non** mappate in questa fase: `E` (Data prima cedola — vuota per tutti i BTP, vedi
+Fase 10), `N` (Premio Fedeltà, solo BTP Valore/Futura), `R`–`AK`
 (scadenzario STEP), `J`/`K` (quotazione MOT — va nel catalogo quotazioni esistente, non
 nell'anagrafica).
 
@@ -502,7 +502,40 @@ Altre due differenze fiscali emerse in Fase 8, valide anche per i BOT:
 - **Guide**: in `calcolatore-btp.md` spiegare che vendendo prima della scadenza si incassa il
   rateo dal compratore e che anche su quello si paga il 12,5%.
 
-## Fase 10 — Prima cedola irregolare (🟡)
+## Fase 10 — Prima cedola irregolare (🟡) ✅
+
+**Fatto:**
+- La colonna `E — DATA PRIMA CEDOLA` di `Emissioni` è **vuota per tutti i BTP** del foglio (è
+  compilata solo per alcuni titoli esteri: Bobl, Bund, EU, Romania, Messico). Il foglio in quel
+  caso usa `COUPNCD(emissione)` (cella `AH32`), quindi la prima cedola corta è ridotta comunque:
+  la correzione vera era in `CouponSchedule`, non nei dati. Nessun dato da importare per i 108 BTP.
+- Nuovo campo opzionale `first_coupon_date` in `BondDAO`/`BondDTO` (validato tra emissione e
+  scadenza), modificabile dal form e mostrato nel dettaglio. Vuoto = prima data regolare dopo
+  l'emissione; va compilato solo per una prima cedola **lunga** (il Tesoro salta il primo stacco).
+  Il sync Teleborsa non lo valorizza (la scheda non lo espone).
+- Migrazione: `DatabaseInitializer._migrate` aggiunge le colonne nullable elencate in
+  `_ADDED_COLUMNS` che mancano alle tabelle esistenti (`create_all` non altera le tabelle).
+  Idempotente; verificata su una copia di `data/investor.db`.
+- `CouponSchedule.first_coupon_amount` (cella `W4`): cedola del periodo che va da
+  `COUPPCD(emissione)` (`F34`) alla prima cedola, × giorni dall'emissione alla prima cedola /
+  giorni del periodo. Per una prima cedola lunga la cedola del periodo è
+  `tasso × YEARFRAC(F34; prima cedola)` nella convenzione del rateo (`AJ32`). `schedule` usa
+  questo importo per la prima cedola; le altre restano regolari.
+- Rateo prima del primo stacco (`F36`): stesso periodo e stessa cedola della prima cedola. Per la
+  prima cedola corta il risultato non cambia rispetto a prima; cambia solo per quella lunga.
+  `DayCountConvention.accrued_coupon` accetta la cedola del periodo (`period_coupon`) quando non è
+  quella regolare.
+- `_generate_dates` ora fa i passi indietro dalla scadenza (come `next_coupon_date`) invece che
+  dalla data precedente, così il troncamento del giorno nei mesi corti non si propaga.
+- Test: prima cedola corta, regolare, lunga, rateo prima della prima cedola lunga, validazione;
+  due casi del calcolatore (asta con prima cedola corta, acquisto prima di una prima cedola lunga).
+- Guide: paragrafo "Perché la prima cedola può essere più piccola" in
+  [cosa-e-un-btp.md](../docs/guides/cosa-e-un-btp.md).
+
+**Resta da fare:** una fixture `btp_calculator_case_*` cross-verificata sul foglio `Bond` per un
+acquisto in asta con prima cedola irregolare (vedi "Per ogni fase — Test"): i valori attesi dei
+test nuovi sono calcolati a mano dalle formule `W4`/`F36`/`AJ32`.
+
 
 Se la data di emissione non coincide con una data di stacco, la prima cedola copre un periodo
 più corto (o più lungo) di quello standard. Il foglio `Bond` la riduce in proporzione
