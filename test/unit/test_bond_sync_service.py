@@ -9,7 +9,7 @@ The network client and the underlying DB services are mocked so tests
 are pure, fast, and DB-free.
 """
 
-from datetime import date
+from datetime import date, timedelta
 from typing import Any
 from unittest.mock import MagicMock, patch
 
@@ -24,13 +24,16 @@ from intelligent_investor.services.bond_sync_service import BondSyncService
 TODAY = date.today()
 
 
-def _make_bond(isin: str = "IT0005000001", issue_date: date | None = None) -> BondDTO:
+def _make_bond(
+    isin: str = "IT0005000001", issue_date: date | None = None, maturity_date: date | None = None
+) -> BondDTO:
     return BondDTO(
         name="BOT Test",
         isin=isin,
         bond_type="BOT",
         issue_date=issue_date or date(2025, 1, 15),
-        maturity_date=date(2026, 1, 14),
+        # Not yet matured by default: the sync skips matured bonds
+        maturity_date=maturity_date or TODAY + timedelta(days=180),
         issue_price=98.5,
     )
 
@@ -185,3 +188,36 @@ def test_sync_existing_bond_skips_update_updates_quote() -> None:
     svc._bond_service.create.assert_not_called()
     svc._quote_service.upsert.assert_called_once()
     assert events[-1]["type"] == "done"
+
+
+# ------------------------------------------------------------------
+# sync: matured bonds are never imported
+# ------------------------------------------------------------------
+
+
+def test_sync_skips_matured_bond() -> None:
+    matured = _make_bond(isin="IT0005333333", maturity_date=TODAY - timedelta(days=1))
+    maturing_today = _make_bond(isin="IT0005444444", maturity_date=TODAY)
+    saved = maturing_today.model_copy(update={"id": 9})
+
+    client = _client_events(
+        _data_event(matured, _make_quote()), _data_event(maturing_today, _make_quote()), _done_event()
+    )
+
+    svc = BondSyncService.__new__(BondSyncService)
+    svc._bond_service = MagicMock()
+    svc._quote_service = MagicMock()
+    svc._bond_service.get_by_isin.return_value = None
+    svc._bond_service.create.return_value = saved
+
+    with patch("intelligent_investor.services.bond_sync_service.ClientRegistry") as mock_reg:
+        mock_reg.get.return_value = client
+        events = list(svc.sync("any"))
+
+    # Only the bond maturing today is created; the matured one is not even looked up
+    svc._bond_service.get_by_isin.assert_called_once_with("IT0005444444")
+    svc._bond_service.create.assert_called_once()
+    svc._quote_service.upsert.assert_called_once()
+    assert events[-1]["type"] == "done"
+    assert "1 titoli aggiornati" in events[-1]["message"]
+    assert "1 scaduti esclusi" in events[-1]["message"]

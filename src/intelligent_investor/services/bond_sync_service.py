@@ -9,7 +9,9 @@ Orchestrates a full sync cycle:
     1. Calls a network client (e.g. TeleborsaBotClient) to fetch remote data.
     2. For every (BondDTO, BondQuoteDTO) pair delivered by the client, upserts
        the Bond and its current Quote in the database via BondService and
-       BondQuoteService.
+       BondQuoteService. Bonds already matured are skipped: the source keeps
+       listing them for a while, and a matured bond deleted by the user must
+       not come back on the next sync.
     3. Streams SyncEvent progress dicts so that the caller (controller/SSE
        endpoint) can forward real-time updates to the browser.
 
@@ -80,6 +82,8 @@ class BondSyncService:
         logger.info(f"Starting bond sync from source='{source}'")
         ok = 0
         skipped = 0
+        expired = 0
+        today = date.today()
         last_pct = 0
         # Initialised here so the post-loop check is always safe even if the
         # client generator yields nothing.
@@ -101,6 +105,11 @@ class BondSyncService:
             elif event["type"] == "data":
                 bond_dto, quote_dto = cast(tuple[BondDTO, BondQuoteDTO], event["payload"])
                 name = event["message"]
+
+                # A matured bond can no longer be bought: never import it
+                if bond_dto.maturity_date < today:
+                    expired += 1
+                    continue
 
                 try:
                     bond = self._upsert_bond(bond_dto)
@@ -130,10 +139,13 @@ class BondSyncService:
             yield SyncEvent(
                 type="done",
                 pct=100,
-                message=f"Sincronizzazione completata: {ok} titoli aggiornati, {skipped} ignorati.",
+                message=(
+                    f"Sincronizzazione completata: {ok} titoli aggiornati, {skipped} ignorati, "
+                    f"{expired} scaduti esclusi."
+                ),
             )
 
-        logger.info(f"Bond sync done: ok={ok}, skipped={skipped}")
+        logger.info(f"Bond sync done: ok={ok}, skipped={skipped}, expired={expired}")
 
     # ------------------------------------------------------------------
     # Private helpers
