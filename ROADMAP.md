@@ -24,12 +24,13 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
 > Phases, status and technical details live only in [`docs/roadmap-btp.md`](docs/roadmap-btp.md).
 
 **Status:**
-- ✅ Done (phases 1–12): coupon schedule and accrued interest, multi-flow XIRR, BTP catalogue with
+- ✅ Done (phases 1–13): coupon schedule and accrued interest, multi-flow XIRR, BTP catalogue with
   yields, import of 108 fixed-rate BTPs, MOT quote sync, single BOT/BTP calculator with the issue
   discount, accrued interest convention and taxes, zainetto in the capital gain tax (all checked
   against the spreadsheet), irregular first coupon (a spreadsheet-checked test case is still to
-  add), BTP calculator page with rateo, tel quel and coupon plan, modified duration.
-- 🟡 Next (phases 13–14): yield comparison (formerly item 4.5), refinements.
+  add), BTP calculator page with rateo, tel quel and coupon plan, modified duration, real costs
+  in the catalogue as advanced options (formerly item 4.5, yield comparison).
+- 🟡 Next (phase 14): refinements.
 - Phases are numbered in execution order. User guides and tests are updated with every phase.
 
 ---
@@ -44,8 +45,8 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
 | 4.3 | BTP Più | Step-up coupon with early redemption option at year 4 | 🟡 |
 | 4.4 | Future coupon calculator | Table of expected coupons per year/semester with net amounts | 🔴 |
 
-> Item 4.5 (BOT vs BTP comparison) moved to Milestone 3 as phase 13 of [`docs/roadmap-btp.md`](docs/roadmap-btp.md);
-> step-up BTPs will be added to that comparison when this milestone is done.
+> Item 4.5 (BOT vs BTP comparison) moved to Milestone 3 as phase 13 of [`docs/roadmap-btp.md`](docs/roadmap-btp.md),
+> now real costs as advanced options in the catalogue; step-up BTPs will appear there when this milestone is done.
 
 ---
 

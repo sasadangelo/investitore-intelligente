@@ -28,7 +28,90 @@
   <input type="hidden" name="per_page" value="{{ page.per_page }}">
   <input type="hidden" name="sort" value="{{ sort }}">
   <input type="hidden" name="dir" value="{{ dir }}">
+  {% for name, value in cost_params.items() %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
+  <div class="ms-auto">
+    <button class="btn btn-outline-secondary" type="button" data-bs-toggle="collapse"
+            data-bs-target="#advanced-panel" aria-expanded="{{ 'true' if costs else 'false' }}" aria-controls="advanced-panel">
+      <i class="bi bi-sliders me-1"></i>Parametri avanzati
+    </button>
+  </div>
 </form>
+
+{# ---- Advanced parameters: real lot, commissions and zainetto (closed by default) ---- #}
+{% macro cval(name, default='') -%}{{ cost_params.get(name, default) }}{%- endmacro %}
+<div id="advanced-panel" class="collapse {{ 'show' if costs else '' }} mb-4">
+  <div class="card card-body">
+    <p class="small text-muted mb-3">
+      Simula un acquisto vero sul MOT di ogni titolo, oggi all'ultimo prezzo e tenuto a scadenza: il
+      rendimento netto include commissioni, imposta di bollo e zainetto, e compare il guadagno netto in euro.
+      Le commissioni manuali si usano solo senza profilo bancario.
+    </p>
+    <form method="get" class="row g-3 align-items-end">
+      <input type="hidden" name="bond_type" value="{{ bond_type_filter or '' }}">
+      <input type="hidden" name="sort" value="{{ sort }}">
+      <input type="hidden" name="dir" value="{{ dir }}">
+      <input type="hidden" name="per_page" value="{{ page.per_page }}">
+      <div class="col-sm-6 col-lg-2">
+        <label for="face_value" class="form-label small text-muted mb-1">Lotto nominale (€)</label>
+        <input type="number" class="form-control" id="face_value" name="face_value" required
+               value="{{ cval('face_value', 10000) }}" step="100" min="100">
+      </div>
+      <div class="col-sm-6 col-lg-3">
+        <label for="bank_profile_id" class="form-label small text-muted mb-1">Profilo bancario</label>
+        <select class="form-select" id="bank_profile_id" name="bank_profile_id">
+          <option value="">— Commissioni manuali —</option>
+          {% for p in bank_profiles %}
+          <option value="{{ p.id }}" {{ 'selected' if cval('bank_profile_id') == p.id | string else '' }}>{{ p.display_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-6 col-lg-1">
+        <label for="commission_pct" class="form-label small text-muted mb-1">Comm. %</label>
+        <input type="number" class="form-control" id="commission_pct" name="commission_pct"
+               value="{{ cval('commission_pct') }}" step="0.01" min="0" placeholder="0">
+      </div>
+      <div class="col-6 col-lg-1">
+        <label for="commission_min" class="form-label small text-muted mb-1">Min (€)</label>
+        <input type="number" class="form-control" id="commission_min" name="commission_min"
+               value="{{ cval('commission_min') }}" step="0.01" min="0" placeholder="0">
+      </div>
+      <div class="col-6 col-lg-1">
+        <label for="commission_max" class="form-label small text-muted mb-1">Max (€)</label>
+        <input type="number" class="form-control" id="commission_max" name="commission_max"
+               value="{{ cval('commission_max') }}" step="0.01" min="0" placeholder="INF">
+      </div>
+      <div class="col-6 col-lg-1">
+        <label for="commission_fixed" class="form-label small text-muted mb-1">Fissa (€)</label>
+        <input type="number" class="form-control" id="commission_fixed" name="commission_fixed"
+               value="{{ cval('commission_fixed') }}" step="0.01" min="0" placeholder="0">
+      </div>
+      <div class="col-sm-6 col-lg-2">
+        <label for="portfolio_losses" class="form-label small text-muted mb-1">Minusvalenze (€)</label>
+        <input type="number" class="form-control" id="portfolio_losses" name="portfolio_losses"
+               value="{{ cval('portfolio_losses') }}" step="0.01" min="0" placeholder="0">
+      </div>
+      <div class="col-12 d-flex gap-2">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-calculator me-1"></i>Applica</button>
+        {% if costs %}<a href="{{ reset_costs_url }}" class="btn btn-outline-secondary">Rimuovi</a>{% endif %}
+      </div>
+    </form>
+  </div>
+</div>
+
+{% if costs %}
+{% set profile = bank_profiles | selectattr('id', 'equalto', costs.bank_profile_id) | first if costs.bank_profile_id else none %}
+<div class="alert alert-info d-flex flex-wrap align-items-center gap-2 py-2 small">
+  <i class="bi bi-info-circle"></i>
+  <span>
+    Rendimenti con costi reali: lotto <strong>{{ "{:,.0f}".format(costs.face_value).replace(",", ".") }} €</strong>,
+    {% if profile %}commissioni di <strong>{{ profile.display_name }}</strong> (MOT)
+    {% else %}commissioni {{ "%.2f"|format(costs.commission_pct) }}%{% if costs.commission_min %}, min {{ "%.2f"|format(costs.commission_min) }} €{% endif %}{% if costs.commission_max is not none %}, max {{ "%.2f"|format(costs.commission_max) }} €{% endif %}{% if costs.commission_fixed %}, fissa {{ "%.2f"|format(costs.commission_fixed) }} €{% endif %}
+    {% endif %}{% if costs.portfolio_losses %}, minusvalenze {{ "%.2f"|format(costs.portfolio_losses) }} €{% endif %},
+    bollo trimestrale. Acquisto oggi sul MOT, tenuto a scadenza.
+  </span>
+  <a href="{{ reset_costs_url }}" class="ms-auto">Rimuovi</a>
+</div>
+{% endif %}
 
 <!-- Progress panel — hidden until refresh starts -->
 <div id="refresh-panel" class="card mb-4 d-none">
@@ -78,6 +161,7 @@
             {{ sort_th('yield_gross', 'Rendimento lordo', 'text-end') }}
             {{ sort_th('yield_net', 'Rendimento netto', 'text-end') }}
             <th class="text-end" title="Se i tassi salgono dell'1%, il prezzo scende circa di questa percentuale">Duration mod.</th>
+            {% if costs %}<th class="text-end">Guadagno netto</th>{% endif %}
           </tr>
         </thead>
         <tbody>
@@ -102,6 +186,9 @@
               <td class="text-end text-muted">—</td>
             {% endif %}
             <td class="text-end">{% if entry.modified_duration is not none %}{{ "%.2f"|format(entry.modified_duration) }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            {% if costs %}
+            <td class="text-end {{ 'text-danger' if entry.net_gain is not none and entry.net_gain < 0 else '' }}">{% if entry.net_gain is not none %}€ {{ entry.net_gain | r2 }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -121,6 +208,7 @@
         <input type="hidden" name="bond_type" value="{{ bond_type_filter or '' }}">
         <input type="hidden" name="sort" value="{{ sort }}">
         <input type="hidden" name="dir" value="{{ dir }}">
+        {% for name, value in cost_params.items() %}<input type="hidden" name="{{ name }}" value="{{ value }}">{% endfor %}
       </form>
       <nav aria-label="Paginazione">
         <ul class="pagination pagination-sm mb-0">

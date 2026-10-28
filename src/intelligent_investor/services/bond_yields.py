@@ -130,3 +130,41 @@ def bond_modified_duration(bond: BondDTO, net_yield: float | None, today: date) 
     if net_yield is None or bond.maturity_date <= today:
         return None
     return calc_modified_duration(bond, today, bond.maturity_date, net_yield)
+
+
+def bond_yields_with_costs(
+    bond: BondDTO, last_price: float, today: date, transaction: BondTransactionDTO
+) -> tuple[float | None, float | None, float | None]:
+    """
+    Gross/net yield and net gain of a real purchase: today at last_price, held to maturity.
+
+    Unlike bond_yields, BOTs and BTPs both go through the bond calculator, with the lot,
+    commissions and zainetto of *transaction*: the net yield is the calculator's final one
+    (commissions, taxes and stamp duty included).
+
+    Args:
+        bond: The bond to evaluate
+        last_price: Last MOT clean price per 100 of nominal
+        today: Valuation date, used as purchase date
+        transaction: Lot, commissions and portfolio losses; venue, dates and price are overridden
+
+    Returns:
+        (gross_pct, net_pct, net_gain_eur), or (None, None, None) if not computable
+    """
+    if bond.maturity_date <= today or last_price <= 0:
+        return None, None, None
+    tx = transaction.model_copy(
+        update={
+            "bond_id": bond.id or 0,
+            "purchase_venue": "mot",
+            "purchase_date": today,
+            "purchase_price": last_price,
+            "sale_date": None,
+            "sale_price": None,
+        }
+    )
+    try:
+        summary = _calculator.calculate(tx, bond).summary
+    except ValueError:  # e.g. XIRR not converging on a nonsensical quote
+        return None, None, None
+    return summary.compound_gross_yield, summary.compound_net_yield, summary.net_gain

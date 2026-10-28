@@ -291,7 +291,7 @@ sono ferme ai soli BOT):
 | 10 — Prima cedola irregolare | ✅ `cosa-e-un-btp.md` |
 | 11 — Calcolatore BTP in pagina | ✅ `calcolatore-btp.md` (nuova), con esempio completo |
 | 12 — Duration modificata | ✅ `cosa-e-un-btp.md`, `catalogo.md` (anche una riga in `calcolatore-btp.md`) |
-| 13 — Confronto rendimenti | `confronto-rendimenti.md` (nuova) |
+| 13 — Costi reali nel catalogo | ✅ `catalogo.md` (sezione "Parametri avanzati") |
 | 14 — Rifiniture | `calcolatore-btp.md`, guida banche |
 
 ## Per ogni fase — Test
@@ -633,21 +633,65 @@ mostra anche in `ConfrontoRendimenti`.
   dell'1%, il prezzo scende circa del X%". In `cosa-e-un-btp.md` e nella colonna del catalogo
   (`catalogo.md`).
 
-## Fase 13 — Confronto rendimenti (🟡)
+## Fase 13 — Costi reali nel catalogo (🟡) ✅
 
-Equivalente del foglio `ConfrontoRendimenti`: tutti i titoli a confronto sullo **stesso importo**
-e con **commissioni, spese fisse e minusvalenze reali**, mentre il catalogo calcola i rendimenti
-senza commissioni né bollo.
+**Fatto:**
+- Pannello "Parametri avanzati" nel catalogo, chiuso di default (aperto se i parametri sono
+  attivi): lotto, profilo bancario o commissioni manuali (%, min, max, fissa), minusvalenze. I
+  parametri stanno nella query string e passano a ordinamento, paginazione, filtro e "Per pagina";
+  un riquadro sopra la tabella dice quali sono attivi, "Rimuovi" li toglie. Valori non validi:
+  avviso e rendimenti di default.
+- Solo **MOT**: il catalogo parte dall'ultimo prezzo di titoli già emessi, quindi l'asta non ha
+  senso qui (resta nel calcolatore). Bollo trimestrale, tenuta a scadenza.
+- `CatalogueService.list_entries(costs=PurchaseCosts(...))`: ogni titolo, BOT compresi, passa dal
+  calcolatore (`bond_yields_with_costs`); rendimento netto = netto finale del calcolatore (`K4`),
+  nuova colonna "Guadagno netto". Con un profilo la riga MOT è risolta titolo per titolo sui giorni
+  emissione–scadenza, come fa il JavaScript del calcolatore (alcune banche, es. Unicredit, hanno
+  fasce per durata). Duration sul nuovo rendimento netto.
+- Il test "BOT via calcolatore uguale a `bot_yields`" del piano non regge: anche a commissioni zero
+  il calcolatore aggiunge il bollo e paga l'imposta sul disaggio all'acquisto invece che a scadenza.
+  Il test verifica che la differenza sia circa il bollo (0,20 punti).
+- Test: costi che abbassano il netto e lasciano il lordo, commissione che pesa ~0,34 punti su un
+  titolo a 6 mesi e meno di un quinto su uno a 5 anni, minimo su lotto piccolo, profilo risolto per
+  titolo (campi manuali ignorati), profilo senza riga MOT, parsing e validazione dei parametri.
+- Verificato col client di test su una copia di `data/investor.db`: pagina sotto 0,05 s.
+- Guide: sezione "Parametri avanzati" in `catalogo.md` con numeri reali (BOT Apr27, BTP Lug29,
+  BTP Ot53; lotto da 10.000 € e da 1.000 €) e colonna "Guadagno netto".
 
-- Colonne: nominale, importo pagato, rendimento lordo, netto al lordo del capital gain, netto al
-  lordo del bollo, netto, durata, scadenza, guadagno netto, prezzo, duration modificata,
-  minusvalenza.
-- Usa il calcolatore unico (Fase 8) per ogni titolo, con un profilo banca scelto dall'utente.
+**Piano:**
+
+**Decisione:** niente pagina separata come il foglio `ConfrontoRendimenti`. L'utente sceglie il
+titolo nel catalogo in base alla durata e al rendimento, poi usa il calcolatore per i numeri
+esatti: tra titoli di scadenza simile le commissioni pesano quasi allo stesso modo e la classifica
+cambia poco. Il catalogo resta com'è di default e offre i costi reali come opzione avanzata.
+
+**Perché serve comunque:** la commissione si paga una volta ma il rendimento è annuale, quindi
+pesa di più sui titoli brevi (0,19% vale circa −0,38 punti/anno su un BOT a 6 mesi, −0,02 su un
+BTP a 10 anni) e sui lotti piccoli, dove scatta il minimo. Lo zainetto favorisce i titoli comprati
+sotto la pari. Il confronto con i costi reali conta quindi tra durate diverse ("BOT a 6 mesi o
+BTP a 2 anni?") e per importi piccoli.
+
+- **Pannello "Parametri avanzati"** nel catalogo, chiuso di default: lotto nominale, profilo
+  bancario (riuso di `bank_profile` / `bank_commission`, commissione risolta per mercato e durata
+  come nel calcolatore), minusvalenze (mercato: solo MOT, vedi sopra). Valori nella query string, così
+  il link si può condividere e l'ordinamento/paginazione li conserva.
+- Senza parametri: rendimenti come oggi (100 nominale, nessuna commissione, nessun bollo).
+- Con i parametri: ogni titolo passa dal calcolatore unico con acquisto oggi all'ultimo prezzo e
+  tenuta a scadenza; il rendimento netto include commissioni, bollo e zainetto, e compare la
+  colonna **Guadagno netto (€)**. L'ordinamento per rendimento resta, così si vede se la classifica
+  cambia. Un'etichetta sopra la tabella dice quali parametri sono attivi.
+- I BOT del catalogo oggi usano una formula a parte (`bot_yields`): con i parametri passano anch'essi
+  dal calcolatore (stessi risultati a commissioni zero, da verificare con un test).
+- Niente colonne intermedie del foglio (netto al lordo del capital gain, al lordo del bollo,
+  minusvalenza, importo pagato): restano nel calcolatore.
 - Sostituisce la vecchia voce 4.5 di [`ROADMAP.md`](../ROADMAP.md) (spostata dalla Milestone 4,
   step-up, perché è utile già con soli BOT e BTP a tasso fisso).
-- **Guide**: nuova `confronto-rendimenti.md` — come scegliere tra più titoli: perché il
-  rendimento del catalogo e quello del confronto differiscono (commissioni, bollo), come pesano
-  le spese fisse su importi piccoli.
+- **Test**: catalogo con e senza parametri; con commissioni il titolo breve perde più rendimento
+  di quello lungo; il minimo di commissione su un lotto piccolo; BOT via calcolatore uguale a
+  `bot_yields` a commissioni zero.
+- **Guide**: in `catalogo.md` una sezione "Parametri avanzati": quando usarli, perché il rendimento
+  cambia rispetto a quello di default (commissioni, bollo, zainetto) e perché pesano di più su
+  titoli brevi e importi piccoli. Nessuna guida nuova.
 
 ## Fase 14 — Rifiniture (🟢)
 

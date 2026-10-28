@@ -5,17 +5,20 @@
 """
 Controller for the "Catalogo" menu entry.
 
-Reads and validates the catalogue query parameters (filter, sorting, pagination),
-fetches the entries from CatalogueService and renders them. Also streams the
+Reads and validates the catalogue query parameters (filter, sorting, pagination and
+the optional purchase costs of the "Parametri avanzati" panel), fetches the entries
+from CatalogueService and renders them. Also streams the
 quote refresh progress to the browser. Bond creation/editing lives in bond_controller.
 """
 import json
 from collections.abc import Generator
 
-from flask import Blueprint, Response, render_template, request, stream_with_context, url_for
+from flask import Blueprint, Response, flash, render_template, request, stream_with_context, url_for
+from werkzeug.datastructures import MultiDict
 
 from intelligent_investor.services import BondSyncService
-from intelligent_investor.services.catalogue_service import SORT_FIELDS, CatalogueService
+from intelligent_investor.services.bank_profile_service import BankProfileService
+from intelligent_investor.services.catalogue_service import SORT_FIELDS, CatalogueService, PurchaseCosts
 from intelligent_investor.utils.pagination import paginate
 
 catalogue_bp = Blueprint("catalogue", __name__, url_prefix="/catalogue")
@@ -23,6 +26,7 @@ catalogue_bp = Blueprint("catalogue", __name__, url_prefix="/catalogue")
 # Module-level singletons: services are stateless, so one instance serves every request
 _catalogue_service = CatalogueService()
 _sync_service = BondSyncService()
+_bank_service = BankProfileService()
 
 # Accepted values for the ?bond_type= filter, as (value, label) — restricted to the types in use for now.
 # The label is what the dropdown shows; any other value is ignored and the catalogue shows all types.
@@ -35,6 +39,18 @@ SORT_DEFAULT_DIR: dict[str, str] = {"maturity": "asc", "yield_gross": "desc", "y
 # Accepted values for the ?per_page= parameter, and the fallback for missing/invalid values
 PER_PAGE_OPTIONS: tuple[int, ...] = (10, 20, 50, 100)
 DEFAULT_PER_PAGE = 20
+
+# Query parameters of the "Parametri avanzati" panel. They are carried over by every catalogue
+# link (sorting, pagination, filter) so the costs stay applied while browsing.
+COST_PARAMS: tuple[str, ...] = (
+    "face_value",
+    "bank_profile_id",
+    "commission_pct",
+    "commission_min",
+    "commission_max",
+    "commission_fixed",
+    "portfolio_losses",
+)
 
 # Quote sources refreshed by "Aggiorna Quotazioni", in order: (sync source, log label)
 _SYNC_SOURCES: tuple[tuple[str, str], ...] = (("teleborsa_bot", "BOT"), ("teleborsa_btp", "BTP"))
@@ -65,6 +81,50 @@ def _toggle_sort_dir(current_sort: str, current_dir: str, field: str) -> str:
     return SORT_DEFAULT_DIR[field]
 
 
+def _read_costs(args: MultiDict[str, str]) -> tuple[PurchaseCosts | None, dict[str, str]]:
+    """
+    Read the purchase costs of the "Parametri avanzati" panel from the query string.
+
+    The costs are active only when a lot (face_value) is given. Blank fields count as 0,
+    except commission_max, where blank means "no cap", and bank_profile_id, where blank
+    means "commissions entered by hand".
+
+    Args:
+        args: The request query parameters
+
+    Returns:
+        (costs, params): costs is None when the panel is not used; params holds the
+        non-blank COST_PARAMS as received, to carry over in the catalogue links
+
+    Raises:
+        ValueError: if a value is not a number, or the lot is not a positive multiple of 100
+    """
+    params = {name: args[name].strip() for name in COST_PARAMS if args.get(name, "").strip()}
+    if "face_value" not in params:
+        return None, params
+
+    def number(name: str) -> float:
+        """Parse *name* as a non-negative float (blank -> 0)."""
+        value = float(params.get(name, "0").replace(",", "."))
+        if value < 0:
+            raise ValueError(f"{name} must not be negative")
+        return value
+
+    face_value = number("face_value")
+    if face_value <= 0 or face_value % 100 != 0:
+        raise ValueError("face_value must be a positive multiple of 100")
+    costs = PurchaseCosts(
+        face_value=face_value,
+        bank_profile_id=int(params["bank_profile_id"]) if "bank_profile_id" in params else None,
+        commission_pct=number("commission_pct"),
+        commission_min=number("commission_min"),
+        commission_max=number("commission_max") if "commission_max" in params else None,
+        commission_fixed=number("commission_fixed"),
+        portfolio_losses=number("portfolio_losses"),
+    )
+    return costs, params
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -79,6 +139,8 @@ def index() -> str:
         bond_type: optional filter, one of CATALOG_FILTERS
         sort, dir: one of SORT_FIELDS and "asc"|"desc" (default: maturity ascending)
         page, per_page: pagination, per_page restricted to PER_PAGE_OPTIONS
+        COST_PARAMS: optional lot, commissions and zainetto of a real purchase; invalid
+            values are ignored with a warning
 
     Returns:
         The rendered catalogue page
@@ -98,16 +160,29 @@ def index() -> str:
     if per_page not in PER_PAGE_OPTIONS:
         per_page = DEFAULT_PER_PAGE
 
+    try:
+        costs, cost_params = _read_costs(request.args)
+    except ValueError:
+        flash("Parametri avanzati non validi: il lotto deve essere un multiplo di 100 e gli importi numeri "
+              "non negativi. Rendimenti mostrati senza costi.", "warning")
+        costs, cost_params = None, {}
+
     # ---- Fetch the filtered/sorted entries and cut out the requested page ----
     # An out-of-range ?page= is clamped by paginate(), not rejected
-    entries = _catalogue_service.list_entries(bond_type=bond_type, sort=sort, direction=direction)
+    entries = _catalogue_service.list_entries(bond_type=bond_type, sort=sort, direction=direction, costs=costs)
     page = paginate(entries, page=request.args.get("page", type=int) or 1, per_page=per_page)
 
     # ---- Build the URLs the template needs, preserving the current filter/sort/page size ----
     def page_url(number: int) -> str:
         """URL of page *number* with the current filter, sorting and page size (used by the pager)."""
         return url_for(
-            "catalogue.index", bond_type=bond_type, sort=sort, dir=direction, per_page=per_page, page=number
+            "catalogue.index",
+            bond_type=bond_type,
+            sort=sort,
+            dir=direction,
+            per_page=per_page,
+            page=number,
+            **cost_params,
         )
 
     # One URL per sortable column header; changing the sort always goes back to page 1
@@ -118,6 +193,7 @@ def index() -> str:
             sort=field,
             dir=_toggle_sort_dir(sort, direction, field),
             per_page=per_page,
+            **cost_params,
         )
         for field in SORT_FIELDS
     }
@@ -132,6 +208,11 @@ def index() -> str:
         per_page_options=PER_PAGE_OPTIONS,
         page_url=page_url,
         sort_urls=sort_urls,
+        costs=costs,
+        cost_params=cost_params,
+        bank_profiles=_bank_service.list_profiles(),
+        # Link that keeps filter/sort/page size but drops the costs ("Rimuovi")
+        reset_costs_url=url_for("catalogue.index", bond_type=bond_type, sort=sort, dir=direction, per_page=per_page),
     )
 
 
