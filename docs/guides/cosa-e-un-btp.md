@@ -1,6 +1,6 @@
 ---
 title: Cos'è un BTP
-description: Cedole, rateo, corso secco e tel quel, scarto di emissione e tasse dei BTP a tasso fisso spiegati dall'inizio.
+description: Cedole, rateo, corso secco e tel quel, scarto di emissione, tasse e duration dei BTP a tasso fisso spiegati dall'inizio.
 icon: bi-info-circle
 order: 2
 ---
@@ -102,12 +102,37 @@ Comprando **sopra** il prezzo teorico la sorpresa c'è. Il tuo guadagno sul prez
 
 > **In pratica:** sui BTP emessi sotto la pari il rendimento netto può essere più basso di quanto ti aspetti guardando solo prezzo e cedola. Il [Catalogo](/catalogue/) ne tiene già conto nel **rendimento netto** di ogni BTP: confronta sempre quello, non solo il lordo.
 
+## Quanto si muove il prezzo: la duration
+
+Se tieni il BTP fino alla scadenza, sai già oggi quanto incasserai: cedole e 100 € di rimborso. Se invece pensi di **venderlo prima**, il prezzo a cui venderai dipende dai tassi di quel momento:
+
+- se i tassi di mercato **salgono**, i nuovi BTP pagano cedole più alte e il tuo, che paga meno, vale meno: il prezzo **scende**;
+- se i tassi **scendono**, il tuo BTP diventa più interessante e il prezzo **sale**.
+
+La **duration modificata** dice di quanto: **se i tassi salgono dell'1%, il prezzo scende circa della duration in percentuale**, e sale di altrettanto se scendono. Una duration di 2,5 vuol dire: tassi +1% → prezzo circa −2,5%.
+
+Con le quotazioni di fine ottobre 2026:
+
+| BTP | Scadenza | Duration modificata | Tassi +1%: su 10.000 € investiti perdi circa |
+|---|---|---|---|
+| BTP 3,35% Lug 2029 | 3 anni | 2,52 | 252 € |
+| BTP 4,5% Ott 2053 | 27 anni | 15,52 | 1.552 € |
+| BTP 2,15% Mar 2072 | 45 anni | 23,22 | 2.322 € |
+
+Due regole pratiche:
+
+- **più la scadenza è lontana, più il prezzo si muove**: un BTP a 3 anni oscilla poco, uno a 30 o 50 anni può perdere (o guadagnare) il 15–20% e oltre per un solo punto di tassi;
+- **a parità di scadenza, una cedola più bassa muove di più il prezzo**, perché una parte maggiore del guadagno arriva solo con il rimborso finale.
+
+La duration è una stima: vale bene per variazioni piccole dei tassi e cambia col passare del tempo, man mano che la scadenza si avvicina. Non è un rischio di perdere i soldi a scadenza (lo Stato rimborsa sempre 100), ma di dover vendere a un prezzo più basso se ti servono prima. Per questo, **se potresti aver bisogno dei soldi prima della scadenza, preferisci una duration bassa**.
+
 ## Rendimento lordo e netto nel Catalogo
 
 Nel [Catalogo](/catalogue/) trovi per ogni BTP:
 
 - il **rendimento lordo**: quanto rende all'anno se lo compri oggi all'ultimo prezzo e lo tieni a scadenza, cedole comprese, prima delle tasse;
-- il **rendimento netto**: lo stesso, dopo le tasse su cedole, scarto di emissione e plusvalenza.
+- il **rendimento netto**: lo stesso, dopo le tasse su cedole, scarto di emissione e plusvalenza;
+- la **duration modificata**, spiegata sopra. Manca per i BTP che scadono entro un anno, dove il prezzo si muove poco.
 
 Entrambi sono **indicativi**: non includono le commissioni della tua banca né l'imposta di bollo, che dipendono da quanto investi e da dove compri. Per i numeri esatti, con le commissioni della tua banca, porta il BTP nel **[Calcolatore](/calculator/)**: la guida **[Calcolatore BTP](/guides/calcolatore-btp)** spiega ogni riga del risultato con un esempio completo.
 

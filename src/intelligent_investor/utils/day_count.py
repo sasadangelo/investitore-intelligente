@@ -249,6 +249,9 @@ class BondConventions:
     simple_yield: DayCountConvention
     # Time exponent of the compound yield (XIRR, which always counts days / 365)
     compound_yield: DayCountConvention
+    # Fraction of period before the first remaining flow in the modified duration
+    # (cell K16: MDURATION without a basis, i.e. basis 0). Irrelevant for bonds without coupons.
+    duration: DayCountConvention
 
 
 BOND_CONVENTIONS: dict[str, BondConventions] = {
@@ -260,6 +263,7 @@ BOND_CONVENTIONS: dict[str, BondConventions] = {
         issue_discount=DayCountConvention.ACT_365,
         simple_yield=DayCountConvention.ACT_ACT,
         compound_yield=DayCountConvention.ACT_365,
+        duration=DayCountConvention.THIRTY_360,
     ),
     # Fixed-rate BTP: act/act for both rateo and discount, as for every BTP in the
     # `Emissioni` sheet. Yields as in the sheet.
@@ -268,6 +272,7 @@ BOND_CONVENTIONS: dict[str, BondConventions] = {
         issue_discount=DayCountConvention.ACT_ACT,
         simple_yield=DayCountConvention.ACT_ACT,
         compound_yield=DayCountConvention.ACT_365,
+        duration=DayCountConvention.THIRTY_360,
     ),
 }
 

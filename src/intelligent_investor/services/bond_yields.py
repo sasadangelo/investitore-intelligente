@@ -3,7 +3,7 @@
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
 """
-Indicative gross/net yields for bonds quoted on the MOT.
+Indicative gross/net yields and modified duration for bonds quoted on the MOT.
 
 Shared by the bond catalogue and the bond detail page. Yields are computed per
 100 of nominal; commissions and stamp duty are not modelled (unknown at
@@ -14,7 +14,7 @@ from datetime import date
 
 from intelligent_investor.dtos import BondDTO
 from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
-from intelligent_investor.services.bond_calculator_service import BondCalculatorService
+from intelligent_investor.services.bond_calculator_service import BondCalculatorService, calc_modified_duration
 from intelligent_investor.utils.day_count import conventions_for
 from intelligent_investor.utils.yield_calculator import YieldCalculator
 
@@ -109,3 +109,24 @@ def bond_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | 
     if bond.bond_type == "BTP":
         return btp_yields(bond=bond, last_price=last_price, today=today)
     return bot_yields(bond=bond, last_price=last_price, today=today)
+
+
+def bond_modified_duration(bond: BondDTO, net_yield: float | None, today: date) -> float | None:
+    """
+    Modified duration of a bond bought today and held to maturity, at its indicative net yield.
+
+    Same rule as the calculator (cell K16): None for a bond without coupons (BOT), with
+    less than 365 days to maturity or without a positive yield. The catalogue net yield
+    leaves stamp duty out, unlike K4: the difference on the duration is negligible.
+
+    Args:
+        bond: The bond to evaluate
+        net_yield: Its indicative net yield in %, None when not computable (no quote)
+        today: Valuation date
+
+    Returns:
+        The modified duration, or None when not computable
+    """
+    if net_yield is None or bond.maturity_date <= today:
+        return None
+    return calc_modified_duration(bond, today, bond.maturity_date, net_yield)

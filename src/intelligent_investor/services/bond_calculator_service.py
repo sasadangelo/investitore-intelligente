@@ -30,6 +30,7 @@ from intelligent_investor.dtos.bond_calculation_result import (
 from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.utils.coupon_schedule import CouponPayment, CouponSchedule, next_coupon_date
 from intelligent_investor.utils.day_count import BondConventions, DayCountConvention, conventions_for
+from intelligent_investor.utils.duration import modified_duration
 from intelligent_investor.utils.yield_calculator import YieldCalculator, xirr
 
 # Standard capital gain rate: a government-bond (TdS) gain taxed at tax_rate counts for
@@ -103,6 +104,7 @@ class BondCalculatorService:
             stamp_duty_period=transaction.stamp_duty_period,
         )
         summary = self._calc_summary(
+            bond=bond,
             conventions=conventions,
             purchase=purchase,
             coupon_plan=coupon_plan,
@@ -300,6 +302,7 @@ class BondCalculatorService:
 
     def _calc_summary(
         self,
+        bond: BondDTO,
         conventions: BondConventions,
         purchase: PurchaseResultDTO,
         coupon_plan: list[CouponPayment],
@@ -366,6 +369,8 @@ class BondCalculatorService:
             compound_net_yield_before_duty=compound_net_yield_before_duty,
             simple_net_yield=simple_net_yield,
             compound_net_yield=compound_net_yield,
+            # On the net yield, as cell K16 (K4 = net yield after stamp duty)
+            modified_duration=calc_modified_duration(bond, purchase_date, sale_date, compound_net_yield),
         )
 
 
@@ -514,6 +519,37 @@ def calc_commission(base: float, pct: float, min_fee: float, max_fee: float | No
     if max_fee is not None:
         clamped = min(clamped, max_fee)
     return clamped
+
+
+def calc_modified_duration(bond: BondDTO, settlement_date: date, end_date: date, yield_pct: float) -> float | None:
+    """
+    Modified duration of a bond bought on settlement_date, as cell K16 of the `Bond` sheet.
+
+    MDURATION runs on the flows up to maturity even when the bond is sold earlier,
+    but the sheet leaves it blank when the holding (settlement to end_date, cell M15)
+    is shorter than 365 days, for a bond without coupons and for a non-positive yield.
+
+    Args:
+        bond: The bond (maturity, coupon rate and frequency, bond type)
+        settlement_date: Purchase settlement date
+        end_date: Sale date, or maturity when the bond is held to maturity
+        yield_pct: Annual yield the flows are discounted at, in %
+
+    Returns:
+        The modified duration, or None where the sheet shows nothing
+    """
+    if bond.coupon_frequency <= 0 or bond.nominal_rate <= 0 or yield_pct <= 0:
+        return None
+    if (end_date - settlement_date).days < 365:
+        return None
+    return modified_duration(
+        settlement_date,
+        bond.maturity_date,
+        bond.nominal_rate,
+        yield_pct,
+        bond.coupon_frequency,
+        conventions_for(bond.bond_type).duration,
+    )
 
 
 def calc_stamp_duty(

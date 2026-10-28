@@ -290,7 +290,7 @@ sono ferme ai soli BOT):
 | 9 — Rateo: convenzione e imposte | ✅ `cosa-e-un-btp.md`, `calcolatore.md`, `calcolatore-approfondimenti.md` (la parte per `calcolatore-btp.md` passa alla Fase 11) |
 | 10 — Prima cedola irregolare | ✅ `cosa-e-un-btp.md` |
 | 11 — Calcolatore BTP in pagina | ✅ `calcolatore-btp.md` (nuova), con esempio completo |
-| 12 — Duration modificata | `cosa-e-un-btp.md`, `catalogo.md` |
+| 12 — Duration modificata | ✅ `cosa-e-un-btp.md`, `catalogo.md` (anche una riga in `calcolatore-btp.md`) |
 | 13 — Confronto rendimenti | `confronto-rendimenti.md` (nuova) |
 | 14 — Rifiniture | `calcolatore-btp.md`, guida banche |
 
@@ -353,6 +353,7 @@ cambia mai: così le regole sono scritte una volta sola e con il loro perché.
 | Maturazione dello scarto | act/365 | act/act | BOT: quota di giorni effettivi (`F29` con `F6=3`), che con act/365 è esattamente il rapporto tra giorni; BTP: colonna P |
 | Durata del rendimento semplice | act/act | act/act | cella `K15`, YEARFRAC base 1 |
 | Rendimento composto (XIRR) | act/365 | act/365 | XIRR conta sempre giorni / 365 |
+| Duration modificata | 30/360 (non usata: niente cedole) | 30/360 | cella `K16`: `MDURATION` senza base, cioè base 0 (Fase 12) |
 
 Verifica: tutti i casi del foglio `Bond` coincidono come prima; su 5.000 casi casuali i BTP danno
 risultati identici bit per bit a prima, i BOT differiscono di al più 2,6e-11 € negli importi
@@ -595,7 +596,32 @@ Viene dopo le fasi 8–10 così l'utente vede da subito risultati corretti.
   incluse le righe rimaste dalle fasi 8 e 9: prezzo teorico, disaggio e corso super secco; credito
   sul rateo pagato all'acquisto e imposta sul rateo incassato vendendo prima della scadenza.
 
-## Fase 12 — Duration modificata (🟡)
+## Fase 12 — Duration modificata (🟡) ✅
+
+**Fatto:**
+- [duration.py](../src/intelligent_investor/utils/duration.py): `macaulay_duration` e
+  `modified_duration`, come `DURATION`/`MDURATION` di LibreOffice (`GetDuration`): flussi residui
+  (cedole + rimborso a 100), il primo a una frazione di periodo dal regolamento,
+  `frazione d'anno × frequenza − numero cedole`. Nuova `coupon_count` (COUPNUM) in
+  `coupon_schedule.py`. Convenzione nella tabella `BOND_CONVENTIONS` (campo `duration`, 30/360).
+- Regola della cella `K16`, in `calc_modified_duration` del calcolatore: settlement = acquisto,
+  flussi sempre fino alla scadenza anche con vendita anticipata, rendimento = netto composto
+  (`K4`); vuota senza cedole, con rendimento ≤ 0 o se il possesso (`M15`) è sotto i 365 giorni.
+- Esposta in `SummaryResultDTO.modified_duration` (riepilogo del calcolatore), nel dettaglio bond
+  e come colonna "Duration mod." del catalogo. Catalogo e dettaglio usano il loro rendimento
+  netto, che esclude il bollo (`K6` invece di `K4`): sul BTP 3,35% Lug29 2,52 contro 2,51.
+- Test: niente LibreOffice sulla macchina e Numbers non ha `MDURATION`, quindi i valori attesi di
+  3 BTP reali (Lug29 a metà periodo, Dc32 a data cedola, Ap30 sotto la pari) sono
+  `−(dP/dy)/P` con `PRICE` e `COUPDAYBS/COUPDAYS` di Numbers (base 0): coincidono a 1e-9, perché
+  `PRICE` sconta con gli stessi esponenti. Più formula chiusa per un titolo alla pari, cedola
+  annuale, ultimo periodo, regola dei 365 giorni nel calcolatore e nel catalogo.
+- Differenza nota: in base act/act la frazione di periodo di LibreOffice (da YEARFRAC) differisce
+  da Excel (giorni cedola): sull'esempio di Excel 5,7339 contro 5,7357. Non tocca il foglio, che
+  usa base 0.
+- Guide: sezione "Quanto si muove il prezzo: la duration" in `cosa-e-un-btp.md` con BTP reali a
+  3, 27 e 45 anni; colonna e paragrafo in `catalogo.md`; una riga in `calcolatore-btp.md`.
+
+**Piano originale:**
 
 Il foglio `Bond` la calcola con `MDURATION` (`K16`, solo per durate residue ≥ 1 anno) e la
 mostra anche in `ConfrontoRendimenti`.

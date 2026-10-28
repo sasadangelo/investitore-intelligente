@@ -121,6 +121,8 @@ A scadenza non c'è rateo: l'ultima cedola è pagata per intero ed è nel piano 
 | Netto (pre-bollo) | 3,162% | 3,207% |
 | **Netto** | **2,958%** | **3,004%** |
 
+Sotto i rendimenti trovi la **duration modificata**, qui **2,51**: se i tassi di mercato salgono dell'1% il prezzo del BTP scende di circa il 2,51%. Conta se pensi di vendere prima della scadenza; è spiegata in **[Cos'è un BTP](/guides/cosa-e-un-btp)**. Il calcolatore la mostra solo se tieni il titolo almeno un anno, e la calcola sempre fino alla scadenza, anche se simuli una vendita anticipata.
+
 Il **rendimento composto** è il tasso interno di rendimento (TIR) calcolato su tutti i flussi con le loro date: il pagamento iniziale, ogni cedola e il rimborso. Per un BTP è il numero da guardare, perché tiene conto che le cedole arrivano prima della scadenza. Il **rendimento semplice** divide il guadagno per il capitale e per gli anni, senza badare a quando arrivano i soldi.
 
 ## Stesso BTP, venduto prima della scadenza

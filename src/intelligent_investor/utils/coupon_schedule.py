@@ -316,6 +316,30 @@ def next_coupon_date(settlement_date: date, maturity_date: date, coupon_frequenc
     return candidate
 
 
+def coupon_count(settlement_date: date, maturity_date: date, coupon_frequency: int) -> int:
+    """
+    Number of coupon dates after settlement_date, up to maturity — equivalent of COUPNUM.
+
+    Like next_coupon_date, coupon dates are anchored to maturity_date and do not depend
+    on the issue date.
+
+    Args:
+        settlement_date: Reference date
+        maturity_date: Bond maturity, the last coupon date
+        coupon_frequency: Coupons per year; 0 (no coupons) returns 0
+
+    Returns:
+        The number of coupons still to be paid (0 on or after maturity)
+    """
+    if coupon_frequency <= 0:
+        return 0
+    step_months = 12 // coupon_frequency
+    count = 0
+    while _subtract_months(maturity_date, count * step_months) > settlement_date:
+        count += 1
+    return count
+
+
 def _subtract_months(d: date, months: int) -> date:
     """Subtract *months* calendar months from *d*, clamping the day to the target month length.
 

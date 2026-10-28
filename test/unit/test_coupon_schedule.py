@@ -12,6 +12,7 @@ All tests are pure (no DB, no I/O) — they only exercise:
   - CouponSchedule.accrued_interest() / net_accrued_interest()
   - CouponSchedule.schedule
   - CouponSchedule.first_coupon_amount (irregular first coupon)
+  - coupon_count() (COUPNUM)
 """
 
 from datetime import date
@@ -23,6 +24,7 @@ from intelligent_investor.utils.coupon_schedule import (
     CouponSchedule,
     _days_in_month,
     _subtract_months,
+    coupon_count,
 )
 
 # ------------------------------------------------------------------
@@ -334,3 +336,25 @@ def test_coupon_payment_is_frozen_dataclass() -> None:
     payment = CouponPayment(payment_date=date(2025, 1, 1), gross_amount=1.8, net_amount=1.575)
     with pytest.raises(AttributeError):
         payment.gross_amount = 2.0  # type: ignore[misc]
+
+
+# ------------------------------------------------------------------
+# coupon_count (COUPNUM)
+# ------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "settlement,expected",
+    [
+        (date(2026, 10, 29), 6),  # 01/01/2027 ... 01/07/2029
+        (date(2027, 1, 1), 5),  # on a coupon date: that coupon is not counted
+        (date(2029, 6, 30), 1),  # last period
+        (date(2029, 7, 1), 0),  # on maturity
+    ],
+)
+def test_coupon_count(settlement: date, expected: int) -> None:
+    assert coupon_count(settlement, date(2029, 7, 1), 2) == expected
+
+
+def test_coupon_count_zero_frequency() -> None:
+    assert coupon_count(date(2026, 1, 1), date(2029, 7, 1), 0) == 0

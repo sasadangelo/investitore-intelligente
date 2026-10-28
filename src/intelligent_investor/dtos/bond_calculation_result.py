@@ -159,6 +159,11 @@ class SummaryResultDTO(BaseModel):
     simple_net_yield: float                 # % netto
     compound_net_yield: float               # % netto annualised
 
+    # Modified duration at purchase, on the flows to maturity discounted at compound_net_yield
+    # (cell K16). None for a bond without coupons, a holding shorter than 365 days or a
+    # non-positive yield, where the sheet leaves the cell blank.
+    modified_duration: float | None
+
 
 class BondCalculationResultDTO(BaseModel):
     """

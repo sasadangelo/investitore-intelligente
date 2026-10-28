@@ -8,7 +8,7 @@ Unit tests for CatalogueService and sort_entries.
 CatalogueService depends on BondService and BondQuoteService (both DB-backed).
 We mock them so tests are pure, fast, and DB-free.
 Covers:
-  - list_entries: maturity filter, bond_type filter, quote pairing and yields, argument validation
+  - list_entries: maturity filter, bond_type filter, quote pairing, yields and duration, argument validation
   - sort_entries: maturity / gross yield / net yield, entries without yield always last
 """
 
@@ -89,6 +89,19 @@ def test_list_entries_pairs_quotes_and_computes_yields() -> None:
     assert by_id[1].gross_yield is not None and by_id[1].net_yield is not None
     assert by_id[2].quote is None
     assert by_id[2].gross_yield is None and by_id[2].net_yield is None
+
+
+def test_list_entries_computes_duration_for_coupon_bonds_only() -> None:
+    btp = _bond(1, date(2029, 7, 1)).model_copy(update={"nominal_rate": 3.35, "coupon_frequency": 2})
+    bot = _bond(2, date(2027, 1, 1), bond_type="BOT")
+    short_btp = _bond(3, date(2027, 6, 1)).model_copy(update={"nominal_rate": 3.0, "coupon_frequency": 2})
+    svc = _service_with_mocks([btp, bot, short_btp], [_quote(1, 99.18), _quote(2, 98.0), _quote(3, 99.5)])
+
+    by_id = {e.bond.id: e for e in svc.list_entries(today=TODAY)}
+
+    assert by_id[1].modified_duration == pytest.approx(2.8, abs=0.1)
+    assert by_id[2].modified_duration is None  # BOT: no coupons
+    assert by_id[3].modified_duration is None  # less than 365 days to maturity (cell K16)
 
 
 @pytest.mark.parametrize("sort, direction", [("name", "asc"), ("maturity", "up")])

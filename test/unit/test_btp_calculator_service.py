@@ -26,6 +26,7 @@ from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.services.bond_calculator_service import BondCalculatorService
 from intelligent_investor.utils.coupon_schedule import CouponSchedule
+from intelligent_investor.utils.duration import modified_duration
 
 _FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -238,3 +239,59 @@ def test_long_first_coupon_from_bond_first_coupon_date() -> None:
     assert result.purchase.accrued_interest == pytest.approx(3.6 * 122 / 366, abs=_ABS_PRICE)
     assert [cp.payment_date for cp in result.coupon_plan][0] == date(2029, 1, 15)
     assert result.coupon_plan[0].gross_amount == pytest.approx(3.6 * 228 / 366, abs=_ABS_PRICE)
+
+
+# ---------------------------------------------------------------------------
+# Modified duration (cell K16)
+# ---------------------------------------------------------------------------
+
+
+def _btp_lug29() -> BondDTO:
+    return BondDTO(
+        name="Btp Fx 3.35% Jul29 Eur",
+        isin="IT0005584849",
+        bond_type="BTP",
+        issue_date=date(2024, 3, 1),
+        maturity_date=date(2029, 7, 1),
+        issue_price=99.82,
+        nominal_rate=3.35,
+        coupon_frequency=2,
+        tax_rate=12.5,
+    )
+
+
+def _mot_purchase(sale_date: date | None = None) -> BondTransactionDTO:
+    return BondTransactionDTO(
+        bond_id=0,
+        purchase_venue="mot",
+        purchase_date=date(2026, 10, 29),
+        purchase_price=99.18,
+        face_value=10000.0,
+        buy_commission_pct=0.10,
+        buy_commission_min=5.0,
+        sale_date=sale_date,
+        sale_price=100.5 if sale_date else None,
+    )
+
+
+def test_modified_duration_on_net_yield_to_maturity() -> None:
+    summary = BondCalculatorService().calculate(_mot_purchase(), _btp_lug29()).summary
+
+    # MDURATION(purchase; maturity; rate; K4 = net yield; frequency), basis 0
+    expected = modified_duration(date(2026, 10, 29), date(2029, 7, 1), 3.35, summary.compound_net_yield, 2)
+    assert summary.modified_duration == pytest.approx(expected)
+    assert summary.modified_duration == pytest.approx(2.51, abs=0.01)
+
+
+def test_modified_duration_uses_maturity_even_with_an_early_sale() -> None:
+    summary = BondCalculatorService().calculate(_mot_purchase(sale_date=date(2027, 12, 15)), _btp_lug29()).summary
+
+    expected = modified_duration(date(2026, 10, 29), date(2029, 7, 1), 3.35, summary.compound_net_yield, 2)
+    assert summary.modified_duration == pytest.approx(expected)
+
+
+def test_modified_duration_blank_for_holding_under_365_days() -> None:
+    # Sold after 364 days (cell M15 < 365): the sheet leaves K16 blank
+    summary = BondCalculatorService().calculate(_mot_purchase(sale_date=date(2027, 10, 28)), _btp_lug29()).summary
+
+    assert summary.modified_duration is None

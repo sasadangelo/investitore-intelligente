@@ -6,7 +6,8 @@
 Bond catalogue service.
 
 The catalogue is the set of bonds still on the market (not yet matured), each
-paired with its last MOT quote and the indicative gross/net yield implied by it.
+paired with its last MOT quote and the indicative gross/net yield and modified
+duration implied by it.
 Entries can be filtered by bond type and sorted by maturity or yield.
 """
 from dataclasses import dataclass
@@ -17,7 +18,7 @@ from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bond_quote import BondQuoteDTO
 from intelligent_investor.services.bond_quote_service import BondQuoteService
 from intelligent_investor.services.bond_service import BondService
-from intelligent_investor.services.bond_yields import bond_yields
+from intelligent_investor.services.bond_yields import bond_modified_duration, bond_yields
 
 logger = LoggerManager.get_logger("CatalogueService")
 
@@ -33,6 +34,7 @@ class CatalogueEntry:
     quote: BondQuoteDTO | None = None  # None until the first quote sync
     gross_yield: float | None = None  # percentage, None when not computable
     net_yield: float | None = None  # percentage, None when not computable
+    modified_duration: float | None = None  # None for BOTs and when not computable
 
 
 class CatalogueService:
@@ -95,12 +97,18 @@ class CatalogueService:
             today: Valuation date for the yields
 
         Returns:
-            The catalogue entry; yields stay None without a quote
+            The catalogue entry; yields and duration stay None without a quote
         """
         if quote is None:
             return CatalogueEntry(bond=bond)
         gross, net = bond_yields(bond=bond, last_price=quote.last_price, today=today)
-        return CatalogueEntry(bond=bond, quote=quote, gross_yield=gross, net_yield=net)
+        return CatalogueEntry(
+            bond=bond,
+            quote=quote,
+            gross_yield=gross,
+            net_yield=net,
+            modified_duration=bond_modified_duration(bond=bond, net_yield=net, today=today),
+        )
 
 
 def sort_entries(entries: list[CatalogueEntry], sort: str, direction: str) -> list[CatalogueEntry]:

@@ -604,6 +604,17 @@
                 {{ "%.3f"|format(result.summary.compound_net_yield) }}%
               </td>
             </tr>
+            {% if result.summary.modified_duration is not none %}
+            <tr><td colspan="2"><hr class="my-1"></td></tr>
+            <tr>
+              <th class="ps-3 text-muted fw-normal">Duration modificata</th>
+              <td class="pe-3 text-end">{{ "%.2f"|format(result.summary.modified_duration) }}</td>
+            </tr>
+            <tr><td colspan="2" class="ps-3 pe-3 text-muted small">
+              Se i tassi salgono dell'1%, il prezzo scende di circa il
+              {{ ("%.2f"|format(result.summary.modified_duration)) | replace('.', ',') }}% (e sale di tanto se scendono).
+            </td></tr>
+            {% endif %}
           </tbody>
         </table>
       </div>

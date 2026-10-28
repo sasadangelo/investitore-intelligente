@@ -77,6 +77,7 @@
             <th class="text-end">Ultimo Prezzo</th>
             {{ sort_th('yield_gross', 'Rendimento lordo', 'text-end') }}
             {{ sort_th('yield_net', 'Rendimento netto', 'text-end') }}
+            <th class="text-end" title="Se i tassi salgono dell'1%, il prezzo scende circa di questa percentuale">Duration mod.</th>
           </tr>
         </thead>
         <tbody>
@@ -100,6 +101,7 @@
               <td class="text-end text-muted">—</td>
               <td class="text-end text-muted">—</td>
             {% endif %}
+            <td class="text-end">{% if entry.modified_duration is not none %}{{ "%.2f"|format(entry.modified_duration) }}{% else %}<span class="text-muted">—</span>{% endif %}</td>
           </tr>
           {% endfor %}
         </tbody>

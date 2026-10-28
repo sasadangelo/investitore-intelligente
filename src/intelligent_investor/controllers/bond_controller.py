@@ -17,7 +17,7 @@ from werkzeug.wrappers.response import Response
 from intelligent_investor.dtos import BondDTO
 from intelligent_investor.services import BondService
 from intelligent_investor.services.bond_quote_service import BondQuoteService
-from intelligent_investor.services.bond_yields import bond_yields
+from intelligent_investor.services.bond_yields import bond_modified_duration, bond_yields
 
 bond_bp = Blueprint("bonds", __name__, url_prefix="/bonds")
 
@@ -123,6 +123,7 @@ def detail(bond_id: int) -> str | Response:
     # Yields are available only once the bond has a quote
     quote = _quote_service.get_by_bond_id(bond_id)
     gross_yield, net_yield = bond_yields(bond, quote.last_price, today) if quote else (None, None)
+    modified_duration = bond_modified_duration(bond, net_yield, today)
     residual_days = (bond.maturity_date - today).days if bond.maturity_date >= today else 0
     total_days = (bond.maturity_date - bond.issue_date).days
 
@@ -139,6 +140,7 @@ def detail(bond_id: int) -> str | Response:
         quote=quote,
         gross_yield=gross_yield,
         net_yield=net_yield,
+        modified_duration=modified_duration,
         residual_days=residual_days,
         disaggio_lordo=disaggio_lordo,
         imposta_disaggio=imposta_disaggio,
