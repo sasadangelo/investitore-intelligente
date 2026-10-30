@@ -2,7 +2,7 @@
 
 > Ambito: solo BTP a **tasso fisso** (cedola costante, `Tipo Obbl. = "Cedola Fissa"` nel foglio
 > `Emissioni`). BTP Valore, BTP Italia, BTP Più e ogni titolo a cedola *STEP* sono **esclusi**
-> da questa fase e restano nella Milestone 4 di [`ROADMAP.md`](../ROADMAP.md).
+> da questa fase e restano nella Milestone 4 di [`ROADMAP.md`](ROADMAP.md).
 
 **Riferimento di calcolo**: `ObbligazioniTF v5.0.ods` (foglio `Bond` per la logica finanziaria,
 foglio `Emissioni` per l'anagrafica titoli). I riferimenti a celle/colonne in questo documento
@@ -280,7 +280,10 @@ sono ferme ai soli BOT):
 - ✅ [cosa-e-un-btp.md](../docs/guides/cosa-e-un-btp.md) — creata in Fase 8: cedola, corso secco e
   tel quel, rateo, tasse, prima cedola irregolare (Fase 10), scarto di emissione con esempio
   numerico.
-- [inizia-qui.md](../docs/guides/inizia-qui.md) — percorso di lettura che includa i BTP.
+- ✅ [inizia-qui.md](../docs/guides/inizia-qui.md) — riscritta per le obbligazioni (BOT e BTP): "Catalogo
+  Obbligazioni" e "Calcolatore Obbligazioni", scelta per orizzonte e poi rendimento netto, parametri
+  avanzati, calcolatore su MOT, asta BOT (Previsioni + BOT manuale) e riaperture BTP; corretti il
+  capital gain (12,5%, non 26%) e i "prezzi in tempo reale".
 
 **Aiuto sui campi** ✅: ogni campo del calcolatore (form e risultato) e ogni intestazione del
 catalogo, pannello "Parametri avanzati" compreso, ha un'icona ⓘ che al clic apre un popover con
@@ -301,6 +304,7 @@ testo o se un testo non è più usato.
 | 12 — Duration modificata | ✅ `cosa-e-un-btp.md`, `catalogo.md` (anche una riga in `calcolatore-btp.md`) |
 | 13 — Costi reali nel catalogo | ✅ `catalogo.md` (sezione "Parametri avanzati") |
 | 14 — Rifiniture | ✅ `calcolatore-btp.md`, `calcolatore.md`, `catalogo.md` (spesa per cedola) |
+| 15 — Calendario aste BTP | `calendario.md`, `inizia-qui.md` |
 
 ## Per ogni fase — Test
 
@@ -698,7 +702,7 @@ BTP a 2 anni?") e per importi piccoli.
   dal calcolatore (stessi risultati a commissioni zero, da verificare con un test).
 - Niente colonne intermedie del foglio (netto al lordo del capital gain, al lordo del bollo,
   minusvalenza, importo pagato): restano nel calcolatore.
-- Sostituisce la vecchia voce 4.5 di [`ROADMAP.md`](../ROADMAP.md) (spostata dalla Milestone 4,
+- Sostituisce la vecchia voce 4.5 di [`ROADMAP.md`](ROADMAP.md) (spostata dalla Milestone 4,
   step-up, perché è utile già con soli BOT e BTP a tasso fisso).
 - **Test**: catalogo con e senza parametri; con commissioni il titolo breve perde più rendimento
   di quello lungo; il minimo di commissione su un lotto piccolo; BOT via calcolatore uguale a
@@ -760,3 +764,46 @@ Stessa linea della Fase 13 (niente colonne intermedie di `ConfrontoRendimenti`).
 - **Book di negoziazione** (foglio `QuotazioneIsin`): proporre come prezzo di acquisto il miglior
   prezzo in lettera invece dell'ultimo prezzo.
 - **Guide**: aggiornare `calcolatore-btp.md` e la guida delle banche per la spesa per cedola.
+
+## Fase 15 — Calendario aste anche per i BTP (🟡)
+
+Oggi il [Calendario Aste](../src/intelligent_investor/templates/auctions/index.html) contiene solo
+i BOT (tabella `bot_auction`, 23 aste 2026 inserite a mano): per ogni asta comunicazione,
+presentazione, asta, regolamento, durata (annuale/semestrale) e scadenza, che per i BOT si
+conoscono già dal calendario annuale.
+
+Il [Calendario Emissioni Titoli di Stato 2026](https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/debito_pubblico/calendario/Calendario-Emissioni-Titoli-di-Stato-2026.pdf)
+del MEF dà per ogni famiglia i giorni di **comunicazione**, **asta** e **regolamento**:
+- **BOT** (metà e fine mese);
+- **medio-lungo** (metà mese): BTP a tasso fisso da 3 a 30/50 anni (BTP Green compresi), insieme
+  ai CCTeu;
+- **BTP Short e BTP€i** (fine mese): BTP Short Term, cioè BTP a tasso fisso a circa 2–3 anni
+  (es. BTP Fx 2.2% Feb28, emesso il 28/02/2026), insieme ai BTP€i.
+
+Medio-lungo e BTP Short sono **sessioni d'asta**, non tipi di titolo: i BTP a tasso fisso gestiti
+dal sito escono da entrambe. CCTeu e BTP€i non sono gestiti (cedola variabile o indicizzata).
+
+Differenza chiave: per i BTP il calendario **non dice quali titoli** vanno in asta. Titoli, importi
+e se sono nuovi o riaperture si sanno solo dal **comunicato** del giorno di comunicazione (e, a
+grandi linee, dal programma trimestrale di emissione). Quindi una riga di calendario BTP nasce con
+le sole date e si completa dopo il comunicato.
+
+Proposta (da confermare prima di scrivere codice):
+- **Una sola tabella** per tutte le aste: rinominare `bot_auction` in `auction` (o aggiungere una
+  colonna) con `session` = `bot` | `medium_long` | `short` (la sessione del calendario MEF, non il
+  tipo di titolo). I campi BOT (`duration_type`,
+  `maturity_date`) restano validi solo per `bot`; i BOT esistenti diventano `family = bot` con una
+  migrazione.
+- **Titoli offerti** di un'asta BTP: tabella figlia con un riferimento al titolo del catalogo
+  (`bond_id`, per le riaperture) oppure ISIN, nome e scadenza per un titolo nuovo non ancora in
+  archivio. Vuota finché non esce il comunicato; si registrano solo i BTP a tasso fisso (non
+  CCTeu e BTP€i, che il sito non gestisce).
+- **Inserimento**: come per i BOT, a mano dal form, per le date dell'anno (circa 12 aste
+  medio-lungo e 12 BTP Short); i titoli dopo ogni comunicato. L'estrazione automatica dal PDF non è
+  affidabile: è un calendario grafico e il testo estratto perde l'allineamento giorno/evento.
+- **Pagina**: filtro per sessione (BOT, BTP medio-lungo, BTP Short) come nel catalogo; per un BTP in riapertura un link al
+  calcolatore con il titolo già selezionato e il mercato Asta.
+- **Previsioni**: restano solo BOT. Stimare il prezzo d'asta di un BTP in riapertura dal suo
+  ultimo prezzo di mercato è possibile, ma è un'altra fase.
+- **Guide**: `calendario.md` (oggi "Calendario Aste BOT") per BOT e BTP, cosa sono comunicazione e
+  riapertura; `inizia-qui.md`, tabella "Cosa trovi" e Passo 3.

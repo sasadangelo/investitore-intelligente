@@ -11,7 +11,7 @@
 
 Milestone numbers are stable identifiers (other documents refer to them), not the order of work.
 
-1. **Now — Milestone 3** (fixed-rate BTP): see [`docs/roadmap-btp.md`](docs/roadmap-btp.md) for phases and status.
+1. **Now — Milestone 3** (fixed-rate BTP): see [`roadmap-btp.md`](roadmap-btp.md) for phases and status.
 2. **Next** — Milestones 4 to 8, in the order listed below.
 3. **Deferred — Milestone 1** (more bank profiles): listed last.
 
@@ -21,7 +21,7 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
 > Goal: support standard fixed-coupon BTPs in the catalogue and the calculator, with results
 > matching the reference spreadsheet (`docs/ObbligazioniTF v5.0.ods`).
 >
-> Phases, status and technical details live only in [`docs/roadmap-btp.md`](docs/roadmap-btp.md).
+> Phases, status and technical details live only in [`roadmap-btp.md`](roadmap-btp.md).
 
 **Status:**
 - ✅ Done (phases 1–14): coupon schedule and accrued interest, multi-flow XIRR, BTP catalogue with
@@ -32,8 +32,9 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
   in the catalogue as advanced options (formerly item 4.5, yield comparison), fixed fee per
   coupon and stamp duty spread by year in the net yield, field help on every calculator and
   catalogue field.
+- 🟡 Next (phase 15): BTP auctions in the auction calendar (design to confirm).
 - Still open: the spreadsheet-checked test case for the irregular first coupon (phase 10), and the
-  `catalogo.md` / `inizia-qui.md` guides still written for BOTs only.
+  `catalogo.md` guide still written for BOTs only.
 - Phases are numbered in execution order. User guides and tests are updated with every phase.
 
 ---
@@ -48,7 +49,7 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
 | 4.3 | BTP Più | Step-up coupon with early redemption option at year 4 | 🟡 |
 | 4.4 | Future coupon calculator | Table of expected coupons per year/semester with net amounts | 🔴 |
 
-> Item 4.5 (BOT vs BTP comparison) moved to Milestone 3 as phase 13 of [`docs/roadmap-btp.md`](docs/roadmap-btp.md),
+> Item 4.5 (BOT vs BTP comparison) moved to Milestone 3 as phase 13 of [`roadmap-btp.md`](roadmap-btp.md),
 > now real costs as advanced options in the catalogue; step-up BTPs will appear there when this milestone is done.
 
 ---
@@ -143,7 +144,7 @@ Milestone numbers are stable identifiers (other documents refer to them), not th
 | Topic | Description | Priority |
 |---|---|---|
 | **DB migrations** | Introduce Alembic for controlled schema migrations | 🔴 |
-| **Per-bond day-count conventions** | Store the day-count conventions per bond instead of per bond type ([`day_count.py`](src/intelligent_investor/utils/day_count.py)); only needed if bonds other than BOT/BTP are added | 🟢 |
+| **Per-bond day-count conventions** | Store the day-count conventions per bond instead of per bond type ([`day_count.py`](../src/intelligent_investor/utils/day_count.py)); only needed if bonds other than BOT/BTP are added | 🟢 |
 | **REST API** | JSON API endpoints for future mobile clients or external integrations | 🟡 |
 | **Production deploy** | gunicorn + nginx + HTTPS, environment variables, Docker image | 🟡 |
 | **i18n** | Optional multilingual support (Italian / English) | 🟢 |

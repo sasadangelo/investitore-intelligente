@@ -7,16 +7,21 @@ order: -1
 
 # Sei Nuovo? Inizia Qui
 
-Benvenuto su **Investitore Intelligente**, il sito che ti aiuta a **simulare con precisione** l'acquisto o la vendita di BOT (Buoni Ordinari del Tesoro) — calcolando esattamente quanto spendi, quanto incassi e quale rendimento ottieni, commissioni e tasse incluse.
+Benvenuto su **Investitore Intelligente**, il sito che ti aiuta a **simulare con precisione** l'acquisto o la vendita di un'**obbligazione**, calcolando esattamente quanto spendi, quanto incassi e quale rendimento ottieni, commissioni e tasse incluse.
+
+Oggi il sito tratta i **titoli di Stato italiani**: i **BOT**, per orizzonti fino a un anno, e i **BTP a tasso fisso**, per orizzonti di qualche anno o più.
 
 ## Cosa trovi su questo sito
 
 | Sezione | A cosa serve |
 |---|---|
-| [Catalogo BOT](/catalogue/) | Vedi tutti i BOT in circolazione con rendimento lordo e netto |
-| [Calcolatore BOT](/calculator/) | Simula acquisto e vendita con le commissioni della tua banca |
-| [Calendario Aste](/auctions/) | Consulta le date delle prossime aste MEF |
+| [Catalogo Obbligazioni](/catalogue/) | Tutti i BOT e i BTP in circolazione, con ultimo prezzo e rendimento lordo e netto |
+| [Calcolatore Obbligazioni](/calculator/) | Simula acquisto, cedole e vendita o rimborso con le commissioni della tua banca |
+| [Calendario Aste](/auctions/) | Le date delle prossime aste dei BOT |
+| [Previsioni](/auctions/forecast) | Il prezzo stimato dei BOT alla prossima asta |
 | [Guide](/guides/) | Approfondimenti su ogni funzionalità del sito |
+
+> 💡 In catalogo e calcolatore, accanto a ogni campo trovi l'icona **ⓘ**: cliccala per sapere cosa significa quel valore.
 
 ---
 
@@ -29,165 +34,160 @@ Se non sai cosa sia un'obbligazione, inizia da qui.
 
 Poi approfondisci il titolo che ti interessa:
 
-> 📖 **[Cos'è un BOT](/guides/cosa-e-un-bot)** — il titolo di Stato a breve termine, fino a 12 mesi.
+> 📖 **[Cos'è un BOT](/guides/cosa-e-un-bot)**: il titolo di Stato a breve termine, fino a 12 mesi, senza cedole.
 >
-> 📖 **[Cos'è un BTP](/guides/cosa-e-un-btp)** — il titolo di Stato a tasso fisso per orizzonti di qualche anno o più.
+> 📖 **[Cos'è un BTP](/guides/cosa-e-un-btp)**: il titolo di Stato a tasso fisso, che paga una cedola ogni sei mesi e dura anni, fino a 50.
 
 ---
 
-## Passo 1 — Consulta il Catalogo BOT
+## Passo 1 — Scegli l'obbligazione nel Catalogo
 
-Il primo strumento concreto da usare è il **[Catalogo BOT](/catalogue/)**.
+Il primo strumento da usare è il **[Catalogo Obbligazioni](/catalogue/)**. Per ogni BOT e BTP in circolazione mostra:
 
-Il catalogo mostra in tempo reale tutti i BOT attualmente in circolazione sul mercato, con:
+- la **data di scadenza**;
+- l'**ultimo prezzo** sul MOT, il mercato di Borsa Italiana dove si comprano e vendono i titoli già emessi. Le quotazioni si aggiornano con il pulsante **Aggiorna Quotazioni**;
+- il **rendimento lordo** e il **rendimento netto** annui, se compri oggi a quel prezzo e tieni il titolo fino alla scadenza.
 
-- **Scadenza**
-- **Ultimo Prezzo** (la quotazione attuale sul mercato secondario MOT)
-- **Rendimento lordo** e **rendimento netto** annualizzati
+Con il menu **Tipo** puoi vedere solo i BOT o solo i BTP, e cliccando sulle intestazioni ordini la tabella per scadenza o per rendimento.
 
-### Come scegliere il BOT giusto
+### Come scegliere l'obbligazione giusta
 
-La scelta dipende principalmente da due fattori:
+La scelta dipende da due cose, in quest'ordine.
 
-1. **Orizzonte temporale** — per quanto tempo vuoi immobilizzare i tuoi soldi?
-   - Hai liquidità da parcheggiare per 3 mesi? Guarda i BOT trimestrali o quelli che scadono fra tre mesi.
-   - Puoi aspettare 6 mesi? Considera i BOT semestrali o quelli che scadono fra sei mesi.
-   - Vuoi massimizzare il rendimento entro l'anno? Scegli un BOT annuale.
-   In linea generale, **più lungo è l'orizzonte, maggiore è il rendimento offerto**.
+**1. Per quanto tempo puoi lasciare fermi i soldi?** È il tuo **orizzonte**, e lo leggi nella colonna **Data Scadenza**.
 
-2. **Rendimento netto desiderato** — il Catalogo è ordinato per data di scadenza crescente, quindi i BOT con scadenza più vicina appaiono in cima e quelli più lontani in fondo. Confronta la colonna "Rendimento netto" tra i BOT della fascia di durata che ti interessa e scegli quello con il rendimento più alto.
+- **Fino a un anno**: guarda i **BOT**. Ce ne sono con scadenze sparse lungo tutto l'anno: scegli quello che scade quando ti serviranno i soldi.
+- **Più di un anno**: guarda i **BTP**. In cambio di un orizzonte più lungo, di solito rendono di più e pagano una cedola ogni sei mesi.
 
-   > **Attenzione ai BOT in scadenza imminente.** Un BOT che scade tra pochi giorni può mostrare un rendimento annualizzato apparentemente attraente: la formula annualizza un guadagno minuscolo su una finestra temporale brevissima, gonfiando la percentuale. In pratica, l'importo netto che incasseresti sarebbe così piccolo da essere interamente eroso dalle commissioni bancarie. La regola è semplice: **prima di prendere qualsiasi decisione, porta sempre il BOT scelto nel [Calcolatore BOT](/calculator/)** — solo lì vedrai i numeri reali in euro, commissioni e imposte incluse.
+In generale, **più lontana è la scadenza, più alto è il rendimento**, ma anche più si muove il prezzo se ti servono i soldi prima: un BTP a 30 anni può perdere il 15–20% del suo valore se i tassi salgono di un punto. Se tieni il titolo fino alla scadenza questo non ti tocca, perché lo Stato rimborsa sempre 100. La spiegazione è in **[Cos'è un BTP](/guides/cosa-e-un-btp)**, alla voce duration.
 
-> Il limite naturale dei BOT è **12 mesi**: per investire su orizzonti più lunghi esistono i **BTP** (Buoni del Tesoro Poliennali), che pagano cedole semestrali e hanno scadenze fino a 50 anni.
+**2. Quanto rende?** Tra i titoli con la scadenza che fa per te, confronta la colonna **Rendimento netto**: è quello che ti resta dopo le tasse.
 
-### Puoi cambiare idea: il Mercato Secondario (MOT)
-
-Un BOT non è uno strumento "bloccato" fino alla scadenza. Se dopo l'acquisto hai bisogno di liquidità o semplicemente vuoi uscire dall'investimento, puoi **vendere il tuo BOT in qualsiasi momento** sul **MOT (Mercato Telematico delle Obbligazioni)**, il mercato secondario di Borsa Italiana. Il prezzo di vendita sarà quello di mercato del momento — potrebbe essere leggermente superiore o inferiore al tuo prezzo di acquisto, a seconda di come si sono mossi i tassi nel frattempo.
+> **Attenzione ai titoli in scadenza imminente.** Un titolo che scade tra pochi giorni può mostrare un rendimento annuo che sembra alto: la formula porta su base annua un guadagno minuscolo su pochissimi giorni. In euro guadagneresti così poco che le commissioni se lo mangerebbero tutto. Prima di decidere, **porta sempre il titolo nel [Calcolatore Obbligazioni](/calculator/)**: lì vedi i numeri veri in euro, commissioni e tasse incluse.
 
 ### Il Catalogo è solo il punto di partenza
 
-Il Catalogo ti serve per fare una **prima scrematura**: scegli il BOT che si avvicina al tuo orizzonte temporale e al rendimento che cerchi. I rendimenti mostrati però sono **indicativi** — non tengono conto delle commissioni della tua banca, dell'imposta di bollo né di eventuali plusvalenze da vendita anticipata. Per sapere con precisione **quanti euro incasserai davvero**, una volta scelto il BOT devi portarlo nel **[Calcolatore BOT](/calculator/)**.
+I rendimenti del catalogo sono **indicativi**: non contano le commissioni della tua banca né l'imposta di bollo. Pesano di più sui titoli brevi e sugli importi piccoli. Hai due modi per vedere i numeri veri:
 
-A questo punto hai due opzioni **mutuamente esclusive** — scegli una sola:
+- nel catalogo apri **Parametri avanzati**, inserisci lotto e banca, e tutti i rendimenti vengono ricalcolati con i tuoi costi, con in più il guadagno netto in euro. È utile per confrontare titoli di durata diversa (per esempio "BOT a 6 mesi o BTP a 2 anni?");
+- oppure porta il titolo scelto nel **[Calcolatore Obbligazioni](/calculator/)**, cliccandone il nome e poi **Calcolatore**.
 
-- **Passo 2 — Acquisto sul MOT**: hai deciso di comprare il BOT subito sul mercato secondario, al prezzo di mercato corrente.
-- **Passo 3 — Acquisto in Asta**: preferisci aspettare la prossima asta MEF per spuntare commissioni più basse e un possibile prezzo leggermente migliore.
+> 📖 **[Leggi la guida completa → Catalogo](/guides/catalogo)**
+
+### Puoi cambiare idea: vendere prima della scadenza
+
+Un'obbligazione non è "bloccata" fino alla scadenza. Se ti servono i soldi prima, puoi **venderla in qualsiasi momento sul MOT**, al prezzo di mercato del momento. Potrebbe essere più alto o più basso di quello che hai pagato, a seconda di come si sono mossi i tassi nel frattempo. Per un BTP, il compratore ti paga anche la parte di cedola maturata fino a quel giorno (il rateo).
+
+A questo punto scegli **come comprare**:
+
+- **Passo 2 — Acquisto sul MOT**: compri subito, al prezzo di mercato. Vale per tutti i titoli del catalogo.
+- **Passo 3 — Acquisto in asta**: aspetti la prossima asta del Tesoro, per un BOT nuovo o per una nuova tranche di un BTP.
 
 ---
 
 ## Passo 2 — Acquisto sul MOT: simula con il Calcolatore
 
-Se hai scelto di acquistare il BOT sul **mercato secondario (MOT)**, usa subito il **[Calcolatore BOT](/calculator/)** per ottenere il calcolo completo e preciso con il prezzo attuale di mercato.
+Il **[Calcolatore Obbligazioni](/calculator/)** si apre già pronto per un acquisto sul MOT di oggi, all'ultimo prezzo. Ti basta:
 
-Il Calcolatore ti permette di:
+1. scegliere il titolo dal menu **Titolo** (BOT e BTP sono in due gruppi);
+2. scegliere la tua banca da **Profilo bancario**, che compila le commissioni (o inserirle a mano);
+3. indicare il **lotto nominale**, cioè quanto valore nominale vuoi comprare (di default 10.000 €);
+4. se pensi di vendere prima della scadenza, attivare **Vendita anticipata** e inserire data e prezzo.
 
-- Selezionare il BOT e il mercato di acquisto **MOT**
-- Scegliere il profilo della tua banca (o inserire le commissioni manualmente)
-- Specificare il lotto nominale (importo che vuoi investire)
-- Simulare anche una **vendita anticipata** — se hai già i dati di vendita
+Il risultato ti mostra:
 
-Il risultato è un riepilogo completo con:
+- il **totale pagato**: prezzo, commissioni e, per un BTP, il rateo della cedola in corso, più o meno le imposte e i crediti fiscali;
+- per un BTP, il **piano cedole**: data e importo netto di ogni cedola che incasserai;
+- il **totale ricevuto** al rimborso o alla vendita, dopo commissioni e tasse;
+- il **guadagno netto in euro** e il **rendimento netto** annuo, bollo compreso;
+- per un BTP tenuto almeno un anno, la **duration**: di quanto scende il prezzo se i tassi salgono dell'1%.
 
-- Totale pagato (prezzo + commissioni + imposta disaggio in anticipo)
-- Totale ricevuto (rimborso o incasso vendita, al netto di commissioni e tasse)
-- **Guadagno netto in euro** e **rendimento netto annualizzato**
-
-> 📖 **[Leggi la guida completa → Calcolatore BOT](/guides/calcolatore)**
+> 📖 **[Guida al Calcolatore per i BOT](/guides/calcolatore)** · **[Guida al Calcolatore per i BTP](/guides/calcolatore-btp)**, con un esempio completo su un BTP reale
 
 ---
 
-## Passo 3 — Acquisto in Asta: risparmia sulle commissioni e stima il rendimento con le Previsioni
+## Passo 3 — Acquisto in asta
 
-Acquistare all'**asta primaria** significa comprare il BOT direttamente al momento dell'emissione, tramite la propria banca che trasmette l'ordine al MEF.
+Comprare in **asta** significa comprare il titolo all'emissione: la tua banca trasmette l'ordine al Tesoro (MEF), e il prezzo è quello che esce dall'asta.
 
 ### Perché l'asta può convenire
 
-- Per legge, le banche applicano sugli acquisti in asta **commissioni fisse regolamentate**, determinate dalla durata del BOT (es. BOT annuale, semestrale, trimestrale). Queste commissioni sono tipicamente **inferiori** a quelle applicate sul mercato secondario (MOT), dove invece valgono le tariffe negoziazione della banca.
-- Il prezzo di emissione è spesso leggermente più conveniente rispetto al MOT.
-- È possibile avere un **piccolo vantaggio di rendimento** rispetto all'acquisto sul secondario, perché all'asta si detiene il BOT per l'intera sua durata di vita — dal giorno di regolamento alla scadenza — senza perdere giorni sul mercato secondario.
+- Per i BOT comprati in asta le banche possono applicare al massimo le **commissioni fissate per legge** in base alla durata, di solito **più basse** di quelle per comprare sul MOT. Per i BTP controlla le condizioni della tua banca.
+- Il prezzo d'asta è spesso leggermente più conveniente di quello di mercato.
 
-### Il problema del prezzo ignoto — e come risolverlo con le Previsioni
+### BOT: stima il prezzo con le Previsioni
 
-Simulare un acquisto in asta nel Calcolatore BOT ha però un limite pratico: **la data di emissione e la scadenza sono già noti** fin dall'inizio dell'anno, perché il MEF pubblica il **[Calendario delle Aste](/auctions/)** a dicembre dell'anno precedente con tutte le date pianificate. Quello che manca è il **prezzo di emissione** — viene fissato dal MEF solo il giorno stesso dell'asta, dopo le 13:00.
+Le date delle aste dei BOT sono note fin da dicembre dell'anno prima, perché il MEF pubblica il **[Calendario delle Aste](/auctions/)**. Quello che non si conosce è il **prezzo**: lo fissa il MEF il giorno dell'asta. Il BOT dell'asta è un titolo nuovo, quindi non è ancora nel catalogo.
 
-Per aggirare questo problema puoi usare la pagina **[Previsione Prezzi BOT](/auctions/forecast)**, che calcola una **stima del prezzo di emissione e del rendimento atteso** basandosi sulle quotazioni di mercato dei BOT della stessa durata già in circolazione.
+Per simularlo:
 
-Procedura consigliata prima di un'asta:
+1. vai su **[Previsioni](/auctions/forecast)** e annota il prezzo stimato per la prossima asta, calcolato dai BOT di durata simile già sul mercato;
+2. apri il **[Calcolatore Obbligazioni](/calculator/)**, scegli il mercato **Asta** e, nel menu **Titolo**, **Inserisci BOT manualmente**;
+3. inserisci date di emissione e scadenza dal calendario e il prezzo stimato come **Prezzo emissione** e **Prezzo acquisto**;
+4. scegli la tua banca e il lotto: il risultato ti dà un'idea realistica del guadagno netto.
 
-1. Vai su **[Previsione Prezzi BOT](/auctions/forecast)** e annota il prezzo stimato per la prossima asta.
-2. Apri il **[Calcolatore BOT](/calculator/)**, seleziona il mercato **Asta** e inserisci il prezzo stimato nei campi **Prezzo Emissione** e **Prezzo Acquisto**.
-3. Inserisci il lotto nominale che vuoi acquistare (es. 1.000 €, 2.000 €, 5.000 €, 10.000 €, …).
-4. Seleziona la tua banca dal menu **Profilo bancario** per caricare automaticamente le commissioni, oppure inseriscile manualmente.
-5. Il risultato ti darà un'**idea realistica del guadagno netto atteso e del rendimento**, tenendo conto delle commissioni della tua banca.
+> ⚠️ È una **stima**: il prezzo reale dell'asta può essere diverso, e con lui il guadagno.
 
-> ⚠️ Si tratta comunque di una **stima indicativa**: il prezzo reale dell'asta può differire, e con esso il guadagno finale.
+> 📖 **[Leggi la guida → Previsione Prezzo Emissione BOT](/guides/forecast)** · **[Leggi la guida → Calendario Aste BOT](/guides/calendario)**
 
-> 📖 **[Leggi la guida completa → Previsione Prezzo Emissione BOT](/guides/forecast)**
+### BTP: le riaperture
 
----
-
-## Come funzionano le aste?
-
-Per tutti i dettagli sul ciclo di emissione, le date fondamentali (Comunicazione, Presentazione, Asta, Regolamento) e come dare l'ordine alla tua banca in tempo, consulta la guida dedicata.
-
-> 📖 **[Leggi la guida completa → Calendario Aste BOT](/guides/calendario)**
+Il Tesoro emette spesso nuove tranche di BTP **già in circolazione** (le riaperture): in quel caso il BTP è già nel catalogo. Nel calcolatore sceglilo, seleziona il mercato **Asta** e inserisci la data di regolamento dell'asta e il prezzo di aggiudicazione. Come sul MOT, paghi anche il rateo della cedola in corso. Le Previsioni oggi stimano solo i prezzi dei BOT.
 
 ---
 
-## Come si acquista un BOT tramite la tua Banca?
+## Come si compra un titolo di Stato tramite la tua banca?
 
-Per comprare un BOT — sia in asta che sul mercato secondario — oltre al normale conto corrente è necessario disporre di un **Conto Deposito Titoli (Deposito Amministrato)**, il conto su cui vengono custoditi i titoli acquistati. Alcune banche lo offrono a **canone zero**; altre applicano un canone annuo: verifica le condizioni della tua banca prima di procedere.
+Per comprare BOT e BTP, sia in asta sia sul MOT, ti serve un **conto titoli** (deposito amministrato) collegato al conto corrente: è il conto dove vengono custoditi i titoli. Alcune banche lo offrono a **canone zero**, altre fanno pagare un canone annuo: verifica le condizioni della tua.
 
-Dal punto di vista fiscale, tutto è gestito automaticamente dalla banca:
+Dal punto di vista fiscale fa tutto la banca, come **sostituto d'imposta**: non devi dichiarare nulla.
 
-- **Imposta sostitutiva (12,5%)** — viene trattenuta direttamente dalla banca al momento dell'acquisto. Non è necessaria alcuna dichiarazione aggiuntiva da parte dell'investitore.
-- **Imposta di bollo (0,20% annuo)** — è applicata per legge sul controvalore dei titoli in portafoglio. Viene addebitata **trimestralmente** (per i conti titoli con giacenza superiore a determinate soglie) oppure **annualmente**, in base all'ammontare di BOT posseduti alla data di calcolo. Anche questa è trattenuta automaticamente dalla banca.
+- **Imposta sostitutiva del 12,5%**: sui titoli di Stato, invece del 26% delle altre obbligazioni. La banca la trattiene sullo scarto di emissione (per un BOT all'acquisto, per un BTP alla vendita o a scadenza), su ogni cedola quando te la paga e sull'eventuale plusvalenza.
+- **Imposta di bollo dello 0,20% l'anno** sul valore dei titoli che hai: la banca la addebita ogni trimestre o una volta l'anno.
 
 ---
 
 ## Riepilogo del flusso consigliato
 
 ```
-1. Leggi cos'è un BOT
-2. Consulta il Catalogo
-3. Scegli il BOT (durata + resa)
-4. Decidi come acquistare (Asta o MOT)
+1. Leggi cos'è un'obbligazione, poi la guida del BOT o del BTP
+2. Nel Catalogo scegli il titolo: prima la scadenza, poi il rendimento netto
+3. (facoltativo) Nei Parametri avanzati del Catalogo confronta i titoli con i tuoi costi
+4. Decidi come comprare
 
-   ┌─ Acquisto sul MOT ──────────────────────────────────────────┐
-   │  4a: Consulta il Catalogo per l'Ultimo Prezzo corrente      │
-   └─────────────────────────────────────────────────────────────┘
-                            oppure
-   ┌─ Acquisto in Asta ──────────────────────────────────────────┐
-   │  4a: Consulta le Previsioni per il prezzo stimato           │
-   │  4b: Usa il prezzo stimato come Prezzo Emissione e Acquisto │
-   │  4c: Dai l'ordine alla banca entro la data di Presentazione │
-   └─────────────────────────────────────────────────────────────┘
+   ┌─ Sul MOT ────────────────────────────────────────────────────────┐
+   │  Calcolatore: titolo scelto, mercato MOT, ultimo prezzo           │
+   └───────────────────────────────────────────────────────────────────┘
+                              oppure
+   ┌─ In asta ────────────────────────────────────────────────────────┐
+   │  BOT: prezzo stimato dalle Previsioni, BOT inserito a mano        │
+   │  BTP (riapertura): titolo dal catalogo, prezzo di aggiudicazione  │
+   │  Dai l'ordine alla banca entro la data di presentazione           │
+   └───────────────────────────────────────────────────────────────────┘
 
-5. Simula con il Calcolatore BOT
+5. Simula con il Calcolatore Obbligazioni e guarda guadagno e rendimento netti
 ```
 
 ---
 
 ## Domande frequenti
 
-**1. Posso perdere i soldi investiti in BOT?**
-I BOT sono garantiti dallo Stato italiano. Il rischio di credito (insolvenza) è considerato molto basso. Tuttavia, se vendi prima della scadenza sul MOT, il prezzo potrebbe essere inferiore a quello pagato — quindi potresti realizzare una minusvalenza.
+**1. Posso perdere i soldi investiti in BOT e BTP?**
+Sono garantiti dallo Stato italiano: il rischio che non ti rimborsi è considerato molto basso. Se però vendi prima della scadenza, il prezzo potrebbe essere più basso di quello che hai pagato e realizzeresti una perdita (minusvalenza). Per i BTP lunghi questo rischio è più alto, perché il loro prezzo si muove di più quando cambiano i tassi.
 
 **2. Quanto devo investire al minimo?**
-Il lotto minimo è generalmente **1.000 € nominali** (10 BOT da 100 € ciascuno), acquistabile per multipli di 1.000 €.
+Di solito il taglio minimo è **1.000 € nominali**, poi multipli di 1.000 €. Con importi piccoli però commissioni minime e spese fisse pesano molto: prova il tuo importo nel calcolatore.
 
-**3. Dove compro i BOT?**
-Tramite la tua banca o broker abilitato, sia in asta che sul MOT (Mercato Telematico delle Obbligazioni di Borsa Italiana).
+**3. Dove li compro?**
+Tramite la tua banca o un broker online, in asta o sul MOT (Mercato Telematico delle Obbligazioni di Borsa Italiana).
 
-**4. Qual è la tassazione?**
-L'imposta sostitutiva sul disaggio (guadagno) è del **12,5%** — la più bassa tra gli strumenti finanziari italiani. È già trattenuta automaticamente dalla banca al momento dell'acquisto.
+**4. Quali spese devo considerare oltre al prezzo?**
 
-**5. Oltre al prezzo di acquisto, quali altre spese devo considerare?**
-Tre voci si sommano al costo del BOT:
+- **Commissioni bancarie**, all'acquisto e all'eventuale vendita: percentuale, minimo e quote fisse cambiano da banca a banca. Alcune banche trattengono anche una **spesa fissa a ogni cedola** dei BTP.
+- **Imposta di bollo**, lo 0,20% l'anno, per tutto il tempo in cui tieni il titolo.
+- **Tasse al 12,5%** su scarto di emissione, cedole e plusvalenza.
 
-- **Commissioni bancarie** — applicate al momento dell'acquisto (e dell'eventuale vendita anticipata). La percentuale e il minimo variano da banca a banca; alcune banche non applicano commissioni sugli acquisti in asta. Usa il [Calcolatore BOT](/calculator/) con il profilo della tua banca per vedere l'impatto esatto.
-- **Imposta di bollo** — pari allo **0,2% annuo** sul controvalore del titolo in portafoglio. Viene addebitata trimestralmente (o annualmente, a seconda del regime scelto) per ogni periodo di detenzione; più a lungo tieni il BOT, più periodi di bollo accumuli.
-- **Imposta sostitutiva sul disaggio** — il **12,5%** del guadagno lordo (differenza tra rimborso e prezzo di emissione, pro-quota per il periodo di possesso). È trattenuta automaticamente dalla banca a rimborso o a vendita.
+Il [Calcolatore Obbligazioni](/calculator/), con il profilo della tua banca, tiene conto di tutto.
 
-> Per gli acquisti sul MOT può aggiungersi anche l'**imposta sul capital gain (26%)** sulla differenza tra prezzo di acquisto e prezzo di vendita/rimborso, al netto del rateo di disaggio fiscale già tassato. Il Calcolatore gestisce automaticamente tutti questi casi.
+**5. BOT o BTP?**
+Dipende soprattutto da **quando ti servono i soldi**. Se è entro un anno, un BOT. Se è più in là, un BTP con una scadenza vicina a quella data: così lo tieni fino al rimborso e non dipendi dal prezzo di mercato. Il resto (rendimento netto, costi) lo confronti nel catalogo e nel calcolatore.
