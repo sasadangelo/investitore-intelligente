@@ -3,7 +3,8 @@
 # Licensed under the MIT License. See LICENSE.md for details.
 # -----------------------------------------------------------------------------
 """
-Indicative gross/net yields and modified duration for bonds quoted on the MOT.
+Indicative gross/net yields for bonds quoted on the MOT, and the modified
+duration shown on the bond detail page.
 
 Shared by the bond catalogue and the bond detail page. Yields are computed per
 100 of nominal; commissions and stamp duty are not modelled (unknown at
@@ -116,7 +117,7 @@ def bond_modified_duration(bond: BondDTO, net_yield: float | None, today: date) 
     Modified duration of a bond bought today and held to maturity, at its indicative net yield.
 
     Same rule as the calculator (cell K16): None for a bond without coupons (BOT), with
-    less than 365 days to maturity or without a positive yield. The catalogue net yield
+    less than 365 days to maturity or without a positive yield. The indicative net yield
     leaves stamp duty out, unlike K4: the difference on the duration is negligible.
 
     Args:

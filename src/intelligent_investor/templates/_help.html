@@ -1,0 +1,110 @@
+{#
+  Field help: the text shown when the user clicks the info icon next to a field
+  of the calculator or a column of the catalogue.
+
+  Usage:  {% from "_help.html" import info %}  ...  <th>Corso secco {{ info('corso_secco') }}</th>
+
+  The popovers are initialised in base.html. Texts are for a reader new to bonds:
+  what the field is and where its value comes from, in one to three sentences.
+  The full explanations live in the guides (docs/guides/).
+#}
+{% set HELP = {
+  'titolo': "Il BOT o il BTP da simulare. I dati del titolo (date, prezzo di emissione, cedola) si compilano da soli. Con «Inserisci BOT manualmente» puoi simulare un BOT non ancora in archivio, per esempio della prossima asta.",
+  'manual_issue_date': "Data in cui il BOT viene emesso, cioè la data di regolamento dell'asta.",
+  'manual_maturity_date': "Data in cui lo Stato rimborsa il BOT a 100.",
+  'manual_issue_price': "Prezzo di aggiudicazione dell'asta ogni 100 € di nominale. Se l'asta non c'è ancora stata, usa la stima della pagina Previsioni.",
+  'manual_redemption_price': "Quanto viene rimborsato a scadenza ogni 100 € di nominale: per i BOT è sempre 100.",
+  'venue': "Asta: compri all'emissione tramite la banca, al prezzo d'asta, con commissioni regolate per legge. MOT: compri in Borsa, sempre tramite la banca, un titolo già emesso, al prezzo di mercato, con le commissioni di negoziazione della banca.",
+  'purchase_date': "Giorno in cui paghi e ricevi il titolo. In asta è la data di emissione; sul MOT è il giorno dell'ordine più 2 giorni lavorativi. Da questa data partono rateo, scarto maturato e rendimenti.",
+  'purchase_price': "Prezzo ogni 100 € di nominale, senza il rateo (corso secco): è il prezzo che vedi quotato. In asta è il prezzo di emissione, sul MOT l'ultimo prezzo.",
+  'face_value': "Quanto valore nominale compri, in multipli di 100 €. 10.000 € = 100 titoli, che a scadenza ti rimborsano 10.000 €. Non è quanto paghi: quello dipende dal prezzo.",
+  'bank_profile': "Le commissioni della tua banca. Scegliendola, i campi delle commissioni si compilano da soli in base al mercato e alla durata del titolo; puoi sempre correggerli.",
+  'buy_commissions': "Quanto ti fa pagare la banca per eseguire l'acquisto. Si somma al prezzo e abbassa il rendimento, tanto più quanto più il titolo è breve.",
+  'commission_pct': "Percentuale della commissione: in asta si calcola sul nominale, sul MOT sull'importo secco.",
+  'commission_min': "Commissione minima in euro: se la percentuale dà meno, paghi comunque questo importo. Pesa molto sui lotti piccoli.",
+  'commission_max': "Commissione massima in euro: se la percentuale dà di più, paghi solo questo importo. Vuoto = nessun tetto.",
+  'commission_fixed': "Quota fissa in euro che la banca aggiunge a ogni ordine, oltre alla percentuale.",
+  'has_sale': "Attivalo se pensi di vendere il titolo sul MOT prima della scadenza. Spento, il calcolo assume che lo tieni fino al rimborso.",
+  'sale_date': "Giorno di regolamento della vendita: il giorno dell'ordine più 2 giorni lavorativi.",
+  'sale_price': "Prezzo di vendita ogni 100 € di nominale, senza il rateo (corso secco).",
+  'sell_commissions': "Commissioni della banca sulla vendita, calcolate sull'importo secco incassato. Al rimborso a scadenza non si pagano.",
+  'stamp_duty_period': "Ogni quanto la banca addebita l'imposta di bollo (0,20% l'anno). Cambia di poco il totale: guarda nel tuo estratto conto titoli.",
+  'coupon_fee': "Spesa fissa in euro che alcune banche trattengono a ogni stacco di cedola, qualunque sia l'importo. Si toglie da ogni cedola netta. Si compila dal profilo bancario; la maggior parte delle banche non la applica.",
+  'portfolio_losses': "Minusvalenze che hai già nello zainetto fiscale, cioè perdite passate non ancora recuperate. Riducono le tasse su un'eventuale plusvalenza di questa operazione. Lascia 0 se non ne hai.",
+
+  'quantita': "Numero di titoli da 100 € di nominale: lotto nominale diviso 100.",
+  'corso_secco': "Il prezzo quotato del titolo ogni 100 € di nominale, senza il rateo della cedola in corso.",
+  'rateo_lordo': "La parte di cedola maturata dall'ultimo stacco, ogni 100 € di nominale. Comprando la paghi al venditore, ma te la restituisce lo Stato con la prossima cedola, che incassi per intero.",
+  'prezzo_tel_quel': "Quello che paghi davvero ogni 100 € di nominale: corso secco più rateo.",
+  'importo_secco': "Corso secco per numero di titoli: il controvalore senza rateo.",
+  'rateo_pagato': "Il rateo in euro che paghi al venditore per la cedola in corso.",
+  'importo_tel_quel': "Importo secco più rateo: il controvalore che passa di mano, prima di commissioni e tasse.",
+  'commissioni': "Commissione percentuale della banca, già con il minimo e il massimo applicati.",
+  'commissioni_fisse': "Quota fissa per ordine della banca.",
+  'disaggio_maturato': "Quanto dello scarto di emissione (100 meno il prezzo di emissione) è già maturato a questa data, ogni 100 € di nominale. Su questa parte il fisco tassa il 12,5% a chi teneva il titolo prima di te.",
+  'credito_disaggio': "Credito del 12,5% sullo scarto già maturato quando compri: lo paga chi te l'ha venduto, quindi la banca te lo riconosce subito. Ha segno meno perché riduce quanto paghi.",
+  'credito_rateo': "Credito del 12,5% sul rateo pagato al venditore: alla prossima cedola la banca tasserà la cedola intera, anche la parte che hai già pagato. Ha segno meno perché riduce quanto paghi.",
+  'disaggio_pro_quota': "La parte dello scarto di emissione (100 meno il prezzo di emissione) che maturerà mentre tieni il BOT, ogni 100 € di nominale. È il tuo guadagno dal prezzo: in asta è tutto lo scarto.",
+  'imposta_disaggio_pro_quota': "Il 12,5% del disaggio pro-quota, ogni 100 € di nominale.",
+  'imposta_disaggio': "Imposta del 12,5% sul disaggio, che per i BOT la banca trattiene subito all'acquisto.",
+  'totale_pagato': "Quanto esce dal tuo conto: importo tel quel più commissioni, più o meno le imposte e i crediti di questa sezione.",
+
+  'data_stacco': "Giorno in cui la cedola viene pagata a chi possiede il titolo.",
+  'cedola_lorda_100': "Cedola prima delle tasse ogni 100 € di nominale. La prima può essere più piccola delle altre se il titolo è stato emesso a periodo già iniziato.",
+  'cedola_lorda_eur': "Cedola prima delle tasse sul tuo lotto.",
+  'cedola_netta_eur': "Cedola che ricevi davvero sul conto: la lorda meno il 12,5%.",
+  'totale_cedole': "Somma delle cedole che incassi tra l'acquisto e la vendita o la scadenza.",
+
+  'prezzo_teorico_acquisto': "Prezzo di emissione più lo scarto di emissione maturato alla data di acquisto. Serve a separare il guadagno da scarto (tassato a parte) dalla plusvalenza.",
+  'prezzo_teorico_vendita': "Prezzo di emissione più lo scarto maturato alla vendita; a scadenza è 100.",
+  'prezzo_carico': "Il tuo costo fiscale ogni 100 € di nominale: prezzo di acquisto più commissioni, meno lo scarto già maturato (tassato a parte).",
+  'prezzo_scarico': "Il tuo ricavo fiscale ogni 100 € di nominale: prezzo di vendita o rimborso meno commissioni, meno lo scarto maturato fino a quel giorno.",
+  'plusminus_unit': "Prezzo di scarico meno prezzo di carico, ogni 100 € di nominale: positivo è plusvalenza, negativo minusvalenza.",
+  'plusminus_realizzata': "Plusvalenza (o minusvalenza) in euro sul tuo lotto.",
+  'riduzione_tds': "Sui titoli di Stato una plusvalenza o minusvalenza conta per il 48,08% (12,5% / 26%) quando la compensi con lo zainetto fiscale.",
+  'imposta_plusvalenza': "Imposta del 12,5% sulla plusvalenza, al netto delle minusvalenze dello zainetto. La trattiene la banca alla vendita o al rimborso.",
+  'zainetto_residuo': "La parte delle tue minusvalenze che questa plusvalenza non ha consumato: resta nello zainetto per le prossime operazioni.",
+  'minus_zainetto': "La minusvalenza di questa operazione, già ridotta al 48,08%, che finisce nello zainetto fiscale: potrai usarla contro plusvalenze future.",
+
+  'corso_secco_vendita': "Prezzo di vendita ogni 100 € di nominale, senza rateo; a scadenza è il prezzo di rimborso.",
+  'rateo_lordo_vendita': "La parte di cedola maturata mentre il titolo era tuo, che il compratore ti paga ogni 100 € di nominale.",
+  'prezzo_tel_quel_vendita': "Quello che incassi ogni 100 € di nominale: corso secco più rateo.",
+  'importo_secco_vendita': "Corso secco di vendita (o di rimborso) per numero di titoli.",
+  'rateo_incassato': "Il rateo in euro che il compratore ti paga per la cedola in corso.",
+  'importo_tel_quel_vendita': "Importo secco più rateo incassato, prima di commissioni e tasse.",
+  'commissioni_vendita': "Commissione percentuale della banca sulla vendita; 0 al rimborso a scadenza.",
+  'commissioni_fisse_vendita': "Quota fissa per ordine sulla vendita; 0 al rimborso a scadenza.",
+  'disaggio_maturato_vendita': "Quanto dello scarto di emissione è maturato fino alla vendita o alla scadenza, ogni 100 € di nominale.",
+  'imposta_disaggio_trattenuta': "Imposta del 12,5% sullo scarto maturato fino a oggi, trattenuta alla vendita o al rimborso. Tolto il credito ricevuto all'acquisto, paghi solo sulla parte maturata mentre il titolo era tuo.",
+  'imposta_rateo_incassato': "Il 12,5% trattenuto sul rateo che ti paga il compratore, come se fosse una cedola.",
+  'imposta_disaggio_rimborsata': "Per un BOT venduto prima della scadenza: la parte dell'imposta sul disaggio pagata all'acquisto che riguarda i giorni dopo la vendita. Te la rimborsa il compratore. A scadenza è 0.",
+  'imposta_plusvalenza_vendita': "L'imposta sulla plusvalenza della sezione Capital Gain, trattenuta qui.",
+  'totale_ricevuto': "Quanto entra sul tuo conto alla vendita o al rimborso, dopo commissioni e tasse. Le cedole sono a parte, nel piano cedole.",
+
+  'periodi_possesso': "Per quanti periodi di addebito tieni il titolo: trimestri con il bollo trimestrale, mesi con quello annuale.",
+  'stima_bollo': "Imposta di bollo stimata: 0,20% l'anno sulla media tra importo pagato e nominale, per il periodo in cui tieni il titolo.",
+  'guadagno_lordo': "Quanto guadagni prima di commissioni, tasse e bollo: cedole lorde più incasso finale, meno quanto hai pagato (tel quel).",
+  'guadagno_netto_prebollo': "Guadagno dopo commissioni e tasse, ma prima del bollo: cedole nette più totale ricevuto, meno totale pagato.",
+  'guadagno_netto': "Quello che ti resta in tasca davvero, al netto di commissioni, tasse e bollo.",
+  'rendimento_lordo': "Rendimento annuo prima di commissioni, tasse e bollo. Il primo valore è semplice (guadagno diviso capitale e anni), il secondo è composto (TIR), che tiene conto di quando arrivano cedole e rimborso.",
+  'rendimento_netto_prebollo': "Rendimento annuo dopo commissioni e tasse, prima del bollo. Semplice / composto, come sopra.",
+  'rendimento_netto': "Rendimento annuo di quello che ti resta in tasca, dopo commissioni, tasse e bollo. Per confrontare titoli guarda il composto, il secondo valore.",
+  'duration': "Quanto si muove il prezzo se cambiano i tassi: se i tassi di mercato salgono dell'1%, il prezzo scende di circa questa percentuale (e sale se scendono). Conta solo se vendi prima della scadenza. Calcolata fino alla scadenza.",
+
+  'cat_nome': "Nome del titolo come quotato in Borsa: tipo, cedola annua (per i BTP) e mese di scadenza. Cliccalo per la scheda completa.",
+  'cat_isin': "Codice internazionale che identifica il titolo: serve per trovarlo e comprarlo dalla tua banca.",
+  'cat_emissione': "Data in cui il titolo è stato emesso.",
+  'cat_scadenza': "Data in cui lo Stato rimborsa il titolo a 100: è il tuo orizzonte se lo tieni fino alla fine.",
+  'cat_prezzo': "Ultimo prezzo sul MOT ogni 100 € di nominale, senza rateo.",
+  'cat_rend_lordo': "Rendimento annuo composto se compri oggi all'ultimo prezzo e tieni il titolo fino a scadenza, prima delle tasse.",
+  'cat_rend_netto': "Lo stesso rendimento dopo le tasse (cedole, scarto di emissione, plusvalenza). Senza i parametri avanzati non include commissioni e bollo; con i parametri avanzati sì.",
+  'cat_guadagno': "Quanto ti resta in tasca in euro sul lotto indicato, comprando oggi e tenendo il titolo a scadenza, al netto di commissioni, tasse e bollo.",
+  'cat_lotto': "Il valore nominale che vuoi investire, in multipli di 100 €.",
+  'cat_profilo': "Le commissioni MOT della tua banca, scelte titolo per titolo in base alla durata. Se lo scegli, le commissioni manuali vengono ignorate.",
+} %}
+
+{% macro info(key) -%}
+<span class="info-tip" role="button" tabindex="0" aria-label="Informazioni"
+      data-bs-toggle="popover" data-bs-trigger="focus" data-bs-placement="top"
+      data-bs-content="{{ HELP[key] }}"><i class="bi bi-info-circle"></i></span>
+{%- endmacro %}

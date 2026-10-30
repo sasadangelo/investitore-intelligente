@@ -282,6 +282,14 @@ sono ferme ai soli BOT):
   numerico.
 - [inizia-qui.md](../docs/guides/inizia-qui.md) — percorso di lettura che includa i BTP.
 
+**Aiuto sui campi** ✅: ogni campo del calcolatore (form e risultato) e ogni intestazione del
+catalogo, pannello "Parametri avanzati" compreso, ha un'icona ⓘ che al clic apre un popover con
+una spiegazione breve. I testi stanno in un solo posto,
+[_help.html](../src/intelligent_investor/templates/_help.html) (dizionario `HELP` e macro
+`info('chiave')`); la spiegazione completa resta nelle guide. **Regola**: un campo o una colonna
+nuova si aggiunge insieme al suo testo; `test_field_help.py` fallisce se una chiave usata non ha
+testo o se un testo non è più usato.
+
 **Guide di ogni fase** (dettagli nella voce "Guide" della fase):
 
 | Fase | Guida |
@@ -292,7 +300,7 @@ sono ferme ai soli BOT):
 | 11 — Calcolatore BTP in pagina | ✅ `calcolatore-btp.md` (nuova), con esempio completo |
 | 12 — Duration modificata | ✅ `cosa-e-un-btp.md`, `catalogo.md` (anche una riga in `calcolatore-btp.md`) |
 | 13 — Costi reali nel catalogo | ✅ `catalogo.md` (sezione "Parametri avanzati") |
-| 14 — Rifiniture | `calcolatore-btp.md`, guida banche |
+| 14 — Rifiniture | ✅ `calcolatore-btp.md`, `calcolatore.md`, `catalogo.md` (spesa per cedola) |
 
 ## Per ogni fase — Test
 
@@ -621,6 +629,12 @@ Viene dopo le fasi 8–10 così l'utente vede da subito risultati corretti.
 - Guide: sezione "Quanto si muove il prezzo: la duration" in `cosa-e-un-btp.md` con BTP reali a
   3, 27 e 45 anni; colonna e paragrafo in `catalogo.md`; una riga in `calcolatore-btp.md`.
 
+**Rivisto dopo la Fase 13:** la colonna del catalogo è stata tolta. Chi sceglie un titolo parte
+dall'orizzonte, che legge già nella data di scadenza; la duration conta solo per chi vende prima
+ed era vuota per tutti i BOT e i BTP sotto l'anno. Resta nella scheda dettaglio e nel riepilogo
+del calcolatore, con la frase "se i tassi salgono dell'1%, il prezzo scende di circa il X%";
+`CatalogueEntry` non la calcola più (`bond_modified_duration` serve solo il dettaglio).
+
 **Piano originale:**
 
 Il foglio `Bond` la calcola con `MDURATION` (`K16`, solo per durate residue ≥ 1 anno) e la
@@ -693,7 +707,48 @@ BTP a 2 anni?") e per importi piccoli.
   cambia rispetto a quello di default (commissioni, bollo, zainetto) e perché pesano di più su
   titoli brevi e importi piccoli. Nessuna guida nuova.
 
-## Fase 14 — Rifiniture (🟢)
+## Fase 14 — Rifiniture (🟢) ✅
+
+**Fatto:**
+- **Spesa fissa per cedola** (`K44`): campo `coupon_fee` nel profilo banca (form, dettaglio,
+  migrazione `REAL NOT NULL DEFAULT 0`, tutte le banche esistenti a 0) e in `BondTransactionDTO`.
+  Si toglie da ogni cedola incassata, compresa l'ultima a scadenza e quella di una vendita in data
+  di stacco (`K41`), non da una vendita a metà periodo, dove si incassa il rateo. Entra nel
+  guadagno netto e nei rendimenti netti; il lordo resta senza, come il foglio con "Lordo senza
+  Commissioni" (`C15`, colonna `AD`). Campo nel calcolatore (precompilato dal profilo) e nei
+  parametri avanzati del catalogo (dal profilo, o a mano); il piano cedole mostra le nette già al
+  netto della spesa. Corretto anche un difetto vecchio: `create_profile`/`update_profile` non
+  salvavano `info_url`.
+- **Bollo nei flussi dell'XIRR netto** (colonna `R`): `spread_stamp_duty` divide il bollo sugli
+  anni solari tra acquisto e fine (`M17`) e toglie ogni quota dal primo flusso del nuovo anno; se
+  acquisto e fine cadono nello stesso anno lo toglie tutto dall'ultimo flusso. Cambia solo il
+  rendimento netto composto: sul BTP 3,35% Lug29 della guida 3,004% → 2,995% (a scadenza) e
+  3,671% → 3,664% (vendita); per i BOT nulla, con due soli flussi è identico.
+- Test: spesa per cedola su tenuta a scadenza (6 cedole) e su vendita tra due stacchi (2 cedole),
+  lordo invariato, XIRR netto confrontato con la colonna `R` rifatta a mano, profilo banca che
+  salva `coupon_fee` e `info_url`, spesa dal profilo nel catalogo.
+- Guide: spesa per cedola in `calcolatore-btp.md`, `calcolatore.md` (profilo bancario e parametri)
+  e `catalogo.md`; rendimenti dell'esempio aggiornati. Non esiste una guida delle banche: la spesa
+  è spiegata nella sezione "Profilo bancario" di `calcolatore.md`.
+
+**Scartato — book di negoziazione** (foglio `QuotazioneIsin`): nemmeno il foglio lo usa. La macro
+`AggiornaQuotazRigaSelect` (`Module3`) scarica in `QuotazioneIsin` la pagina "dati completi" di
+Borsa Italiana, che contiene anche il book a 5 livelli (righe 1–7), ma in `Emissioni` colonna `J`
+copia solo il "Prezzo ultimo contratto" (riga 16) o, senza contratti, il "Prezzo ufficiale" (riga
+31); nessuna formula legge il book. La pagina di dettaglio Teleborsa, già letta dal sync, espone il
+miglior denaro/lettera, ma resta l'ultimo prezzo, come nel foglio. Sui BTP liquidi lo
+spread è di pochi centesimi (BTP Lug29 al 30/10/2026: denaro 99,28, lettera 99,31, ultimo 99,34),
+meno della commissione; il book cambia di continuo mentre noi lo leggeremmo solo a "Aggiorna
+Quotazioni", e a mercato chiuso non è significativo. Per i titoli poco scambiati il book si guarda
+comunque dalla banca al momento dell'ordine.
+
+**Scartato — rendimenti aggiuntivi del foglio**: netto al lordo del capital gain e del bollo
+(`K8`) e ROI totale lordo/netto (`K11`–`K14`). `K8` è un rendimento intermedio che non aiuta a
+scegliere; nel foglio il ROI è il rendimento annuo × la durata in anni (`K15`), quindi
+un'approssimazione lineare del guadagno totale, che il calcolatore mostra già esatto in euro.
+Stessa linea della Fase 13 (niente colonne intermedie di `ConfrontoRendimenti`).
+
+**Piano originale:**
 
 - **Spesa fissa per cedola** (`K44`): commissione che alcune banche addebitano a ogni stacco.
   Nuovo campo nel profilo banca e in `BondTransactionDTO`, dedotto da ogni cedola netta.

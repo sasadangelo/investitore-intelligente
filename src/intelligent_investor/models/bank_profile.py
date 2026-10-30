@@ -18,6 +18,8 @@ class BankProfileDAO(Base):
     profile_name: Column[str] = Column(String(length=100), nullable=False)
     notes: Column[str] = Column(String(length=500), nullable=True)
     info_url: Column[str] = Column(String(length=500), nullable=True)
+    # Fixed fee in EUR charged at every coupon payment (spesa fissa per cedola, cell K44)
+    coupon_fee = Column(Float, nullable=False, default=0.0)
 
     # One profile has many commission rows
     commissions = relationship(

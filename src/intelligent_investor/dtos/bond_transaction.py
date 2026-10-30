@@ -57,6 +57,7 @@ class BondTransactionDTO(BaseModel):
     # --- Bank parameters ---
     stamp_duty_period: Literal["annual", "quarterly"] = "quarterly"
     portfolio_losses: float = 0.0               # capital losses in the fiscal backpack
+    coupon_fee: float = 0.0                     # fixed fee in € charged at every coupon cashed (cell K44)
 
     # ------------------------------------------------------------------
     # Validators

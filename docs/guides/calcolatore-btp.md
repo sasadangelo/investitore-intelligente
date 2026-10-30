@@ -20,6 +20,7 @@ Questa guida dà per buono quello che trovi in due altre guide:
 - **Le cedole**: il calcolatore elenca tutte quelle che incassi tra l'acquisto e la vendita (o la scadenza), lorde e nette.
 - **Lo scarto di emissione va al contrario rispetto al BOT.** Nel BOT l'imposta sul disaggio si paga all'acquisto e una parte torna indietro se vendi prima. Nel BTP all'acquisto ricevi un **credito** sullo scarto già maturato, e alla vendita o a scadenza la banca **trattiene** l'imposta sullo scarto maturato fino a quel giorno. Per questo nel risultato le righe hanno nomi diversi e importi negativi.
 - **Il rateo è tassato**: credito del 12,5% sul rateo che paghi al venditore, trattenuta del 12,5% su quello che ti paga il compratore se vendi prima della scadenza.
+- **Spesa per cedola**: alcune banche trattengono una cifra fissa a ogni stacco di cedola, qualunque sia l'importo. Se la tua lo fa, inseriscila nel campo **Spesa per cedola (€)** (o salvala nel profilo della banca, così si compila da sola): il piano cedole mostra le cedole nette già al netto di questa spesa, e guadagno e rendimenti netti ne tengono conto. Non si paga se vendi prima di uno stacco, perché in quel caso incassi il rateo, non una cedola. Su un lotto piccolo pesa molto: 2 € su una cedola da 16,75 € (1.000 € di un BTP al 3,35%) sono il 12%.
 - **Asta**: se compri un BTP in asta, inserisci come data la data di regolamento e come prezzo quello di aggiudicazione. Nelle riaperture (asta di un BTP già in circolazione) paghi anche il rateo maturato dall'ultimo stacco, che il calcolatore aggiunge come per il MOT. Controlla che le commissioni precompilate dal profilo bancario corrispondano a quelle che la tua banca applica ai BTP in asta.
 
 ## Esempio completo: acquisto sul MOT e rimborso a scadenza
@@ -119,11 +120,11 @@ A scadenza non c'è rateo: l'ultima cedola è pagata per intero ed è nel piano 
 |---|---|---|
 | Lordo | 3,649% | 3,707% |
 | Netto (pre-bollo) | 3,162% | 3,207% |
-| **Netto** | **2,958%** | **3,004%** |
+| **Netto** | **2,958%** | **2,995%** |
 
 Sotto i rendimenti trovi la **duration modificata**, qui **2,51**: se i tassi di mercato salgono dell'1% il prezzo del BTP scende di circa il 2,51%. Conta se pensi di vendere prima della scadenza; è spiegata in **[Cos'è un BTP](/guides/cosa-e-un-btp)**. Il calcolatore la mostra solo se tieni il titolo almeno un anno, e la calcola sempre fino alla scadenza, anche se simuli una vendita anticipata.
 
-Il **rendimento composto** è il tasso interno di rendimento (TIR) calcolato su tutti i flussi con le loro date: il pagamento iniziale, ogni cedola e il rimborso. Per un BTP è il numero da guardare, perché tiene conto che le cedole arrivano prima della scadenza. Il **rendimento semplice** divide il guadagno per il capitale e per gli anni, senza badare a quando arrivano i soldi.
+Il **rendimento composto** è il tasso interno di rendimento (TIR) calcolato su tutti i flussi con le loro date: il pagamento iniziale, ogni cedola e il rimborso. Per un BTP è il numero da guardare, perché tiene conto che le cedole arrivano prima della scadenza. Nel rendimento netto il bollo si toglie un anno alla volta, come lo paghi davvero: qui 54,77 € divisi sui tre anni solari 2027, 2028 e 2029. Il **rendimento semplice** divide il guadagno per il capitale e per gli anni, senza badare a quando arrivano i soldi.
 
 ## Stesso BTP, venduto prima della scadenza
 
@@ -144,7 +145,7 @@ Stessi dati di acquisto, ma attivi **Vendita anticipata**: vendi con regolamento
 | Imposta sulla plusvalenza | (100,50 − 0,1005 − 0,127914) − 99,18936 = 1,08222 → 108,22 € × 12,5% | −13,53 € |
 | **Totale ricevuto** | 10.202,02 − 10,05 − 1,60 − 19,00 − 13,53 | **10.157,84 €** |
 
-Vendendo prima dello stacco del 1° gennaio non incassi quella cedola, ma il compratore ti paga la parte maturata finora (il rateo), su cui la banca trattiene il 12,5% come su una cedola. Con 4 trimestri di bollo (19,92 €) il guadagno netto è **408,67 €**, con un rendimento netto composto del **3,671%**: più alto del rimborso a scadenza perché in questo esempio il prezzo è salito da 99,18 a 100,50 in poco più di un anno.
+Vendendo prima dello stacco del 1° gennaio non incassi quella cedola, ma il compratore ti paga la parte maturata finora (il rateo), su cui la banca trattiene il 12,5% come su una cedola. Con 4 trimestri di bollo (19,92 €) il guadagno netto è **408,67 €**, con un rendimento netto composto del **3,664%**: più alto del rimborso a scadenza perché in questo esempio il prezzo è salito da 99,18 a 100,50 in poco più di un anno.
 
 Se nel risultato il piano cedole è vuoto vuol dire che vendi prima del primo stacco: l'unico interesse che incassi è il rateo pagato dal compratore.
 

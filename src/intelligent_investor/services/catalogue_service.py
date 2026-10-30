@@ -6,8 +6,7 @@
 Bond catalogue service.
 
 The catalogue is the set of bonds still on the market (not yet matured), each
-paired with its last MOT quote and the indicative gross/net yield and modified
-duration implied by it.
+paired with its last MOT quote and the indicative gross/net yield implied by it.
 Entries can be filtered by bond type and sorted by maturity or yield.
 
 By default yields leave out commissions and stamp duty. With PurchaseCosts (the
@@ -24,7 +23,7 @@ from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.services.bank_profile_service import BankProfileService
 from intelligent_investor.services.bond_quote_service import BondQuoteService
 from intelligent_investor.services.bond_service import BondService
-from intelligent_investor.services.bond_yields import bond_modified_duration, bond_yields, bond_yields_with_costs
+from intelligent_investor.services.bond_yields import bond_yields, bond_yields_with_costs
 
 logger = LoggerManager.get_logger("CatalogueService")
 
@@ -40,7 +39,6 @@ class CatalogueEntry:
     quote: BondQuoteDTO | None = None  # None until the first quote sync
     gross_yield: float | None = None  # percentage, None when not computable
     net_yield: float | None = None  # percentage, None when not computable
-    modified_duration: float | None = None  # None for BOTs and when not computable
     net_gain: float | None = None  # euro, only with PurchaseCosts
 
 
@@ -50,8 +48,9 @@ class PurchaseCosts:
     Lot and costs of a real purchase on the MOT, applied to every catalogue entry.
 
     With bank_profile_id the commission is that profile's MOT row for each bond (resolved
-    on the bond's duration, as the calculator page does) and the commission_* fields are
-    ignored; without it they are used as entered.
+    on the bond's duration, as the calculator page does) and the fee per coupon is the
+    profile's: the commission_* and coupon_fee fields are ignored. Without it they are
+    used as entered.
     """
 
     face_value: float = 10000.0
@@ -61,6 +60,7 @@ class PurchaseCosts:
     commission_max: float | None = None  # None = no cap
     commission_fixed: float = 0.0
     portfolio_losses: float = 0.0
+    coupon_fee: float = 0.0  # fixed fee in € at every coupon cashed (cell K44)
 
 
 class CatalogueService:
@@ -128,7 +128,7 @@ class CatalogueService:
             costs: Lot and costs of a real purchase; None for the indicative yields
 
         Returns:
-            The catalogue entry; yields and duration stay None without a quote
+            The catalogue entry; yields stay None without a quote
         """
         if quote is None:
             return CatalogueEntry(bond=bond)
@@ -144,7 +144,6 @@ class CatalogueService:
             quote=quote,
             gross_yield=gross,
             net_yield=net,
-            modified_duration=bond_modified_duration(bond=bond, net_yield=net, today=today),
             net_gain=net_gain,
         )
 
@@ -160,7 +159,10 @@ class CatalogueService:
             costs.commission_max,
             costs.commission_fixed,
         )
+        coupon_fee = costs.coupon_fee
         if costs.bank_profile_id is not None:
+            profile = self._bank_svc.get_profile(costs.bank_profile_id)
+            coupon_fee = profile.coupon_fee if profile else 0.0
             # Same tier lookup as the calculator page: issue-to-maturity days (no row -> no commission)
             row = self._bank_svc.resolve_commission(
                 costs.bank_profile_id, "mot", (bond.maturity_date - bond.issue_date).days
@@ -181,6 +183,7 @@ class CatalogueService:
             buy_commission_max=max_fee,
             buy_commission_fixed=fixed,
             portfolio_losses=costs.portfolio_losses,
+            coupon_fee=coupon_fee,
         )
 
 

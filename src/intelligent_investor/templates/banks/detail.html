@@ -29,6 +29,10 @@
 </div>
 {% endif %}
 
+{% if profile.coupon_fee %}
+<p class="small mb-3"><i class="bi bi-calendar-check me-1"></i>Spesa fissa per cedola: <strong>€ {{ profile.coupon_fee | r2 }}</strong> a ogni stacco.</p>
+{% endif %}
+
 {% if commissions %}
 <div class="card shadow-sm">
   <div class="card-body p-0">

@@ -15,10 +15,12 @@ from intelligent_investor.models.bond_quotes import BondQuoteDAO  # noqa: F401
 logger = LoggerManager.get_logger(name="DatabaseInitializer")
 
 # Columns added to existing tables after their creation: create_all does not alter
-# tables that already exist, so they are added by _migrate. Only nullable columns.
+# tables that already exist, so they are added by _migrate. Only nullable columns, or
+# NOT NULL with a constant DEFAULT (SQLite fills the existing rows with it).
 _ADDED_COLUMNS: list[tuple[str, str, str]] = [
     # (table, column, SQL type)
     ("bond", "first_coupon_date", "DATE"),  # BTP roadmap phase 10
+    ("bank_profile", "coupon_fee", "REAL NOT NULL DEFAULT 0"),  # BTP roadmap phase 14
 ]
 
 

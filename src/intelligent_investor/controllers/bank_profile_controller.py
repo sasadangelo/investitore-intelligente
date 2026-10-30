@@ -26,6 +26,8 @@ def _form_to_profile(form: dict, profile_id: int | None = None) -> BankProfileDT
         profile_name=form["profile_name"].strip(),
         notes=form.get("notes", "").strip() or None,
         info_url=form.get("info_url", "").strip() or None,
+        # Blank -> no fee; a non-number raises ValueError, a negative one ValidationError
+        coupon_fee=float((form.get("coupon_fee", "") or "0").strip().replace(",", ".")),
     )
 
 

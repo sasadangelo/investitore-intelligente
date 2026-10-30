@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "_help.html" import info %}
 
 {% block title %}Calcolatore BOT e BTP — Investitore Intelligente{% endblock %}
 
@@ -51,7 +52,7 @@
 
           <!-- Bond selector (BOTs and BTPs, grouped by type) -->
           <div class="mb-3">
-            <label for="bond_id" class="form-label fw-semibold">Titolo <span class="text-danger">*</span></label>
+            <label for="bond_id" class="form-label fw-semibold">Titolo {{ info('titolo') }} <span class="text-danger">*</span></label>
             <select class="form-select" id="bond_id" name="bond_id" required>
               <option value="">— Seleziona un titolo —</option>
               <option value="manual"
@@ -86,13 +87,13 @@
             <div class="mb-2 fw-semibold text-muted small">Dati BOT manuale</div>
             <div class="row g-2 mb-2">
               <div class="col-sm-6">
-                <label for="manual_issue_date" class="form-label form-label-sm">Data emissione <span class="text-danger">*</span></label>
+                <label for="manual_issue_date" class="form-label form-label-sm">Data emissione {{ info('manual_issue_date') }} <span class="text-danger">*</span></label>
                 <input type="date" class="form-control form-control-sm" id="manual_issue_date"
                        name="manual_issue_date"
                        value="{{ fval('manual_issue_date', '') }}">
               </div>
               <div class="col-sm-6">
-                <label for="manual_maturity_date" class="form-label form-label-sm">Data scadenza <span class="text-danger">*</span></label>
+                <label for="manual_maturity_date" class="form-label form-label-sm">Data scadenza {{ info('manual_maturity_date') }} <span class="text-danger">*</span></label>
                 <input type="date" class="form-control form-control-sm" id="manual_maturity_date"
                        name="manual_maturity_date"
                        value="{{ fval('manual_maturity_date', '') }}">
@@ -100,7 +101,7 @@
             </div>
             <div class="row g-2">
               <div class="col-sm-6">
-                <label for="manual_issue_price" class="form-label form-label-sm">Prezzo emissione <span class="text-danger">*</span></label>
+                <label for="manual_issue_price" class="form-label form-label-sm">Prezzo emissione {{ info('manual_issue_price') }} <span class="text-danger">*</span></label>
                 <div class="input-group input-group-sm">
                   <input type="number" class="form-control" id="manual_issue_price"
                          name="manual_issue_price" step="0.0001" min="0" max="100"
@@ -110,7 +111,7 @@
                 </div>
               </div>
               <div class="col-sm-6">
-                <label for="manual_redemption_price" class="form-label form-label-sm">Prezzo rimborso</label>
+                <label for="manual_redemption_price" class="form-label form-label-sm">Prezzo rimborso {{ info('manual_redemption_price') }}</label>
                 <div class="input-group input-group-sm">
                   <input type="number" class="form-control" id="manual_redemption_price"
                          name="manual_redemption_price" step="0.0001" min="0" max="100"
@@ -144,16 +145,16 @@
 
           <!-- Purchase venue -->
           <div class="mb-3">
-            <label class="form-label fw-semibold">Mercato di acquisto <span class="text-danger">*</span></label>
+            <label class="form-label fw-semibold">Mercato di acquisto {{ info('venue') }} <span class="text-danger">*</span></label>
             <div class="d-flex gap-3">
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="purchase_venue" id="venue_asta"
-                       value="asta" {% if fval('purchase_venue', 'asta') == 'asta' %}checked{% endif %}>
+                       value="asta" {% if fval('purchase_venue', 'mot') == 'asta' %}checked{% endif %}>
                 <label class="form-check-label" for="venue_asta">Asta (mercato primario)</label>
               </div>
               <div class="form-check">
                 <input class="form-check-input" type="radio" name="purchase_venue" id="venue_mot"
-                       value="mot" {% if fval('purchase_venue') == 'mot' %}checked{% endif %}>
+                       value="mot" {% if fval('purchase_venue', 'mot') == 'mot' %}checked{% endif %}>
                 <label class="form-check-label" for="venue_mot">MOT (mercato secondario)</label>
               </div>
             </div>
@@ -162,16 +163,16 @@
           <!-- Purchase date + price -->
           <div class="row g-2 mb-3">
             <div class="col-sm-6">
-              <label for="purchase_date" class="form-label fw-semibold">Data regolamento <span class="text-danger">*</span></label>
+              <label for="purchase_date" class="form-label fw-semibold">Data regolamento {{ info('purchase_date') }} <span class="text-danger">*</span></label>
               <input type="date" class="form-control" id="purchase_date" name="purchase_date"
-                     value="{{ fval('purchase_date', bond.issue_date if bond else '') }}" required>
+                     value="{{ fval('purchase_date', today) }}" required>
               <div class="form-text">Per il MOT: data esecuzione ordine + 2 giorni lavorativi (T+2).</div>
             </div>
             <div class="col-sm-6">
-              <label for="purchase_price" class="form-label fw-semibold">Prezzo acquisto <span class="text-danger">*</span></label>
+              <label for="purchase_price" class="form-label fw-semibold">Prezzo acquisto {{ info('purchase_price') }} <span class="text-danger">*</span></label>
               <div class="input-group">
                 <input type="number" class="form-control" id="purchase_price" name="purchase_price"
-                       value="{{ fval('purchase_price', bond.issue_price if bond else '') }}"
+                       value="{{ fval('purchase_price', (quotes[bond.id].last_price if bond.id in quotes else bond.issue_price) if bond else '') }}"
                        step="0.0001" min="0" required>
                 <span class="input-group-text">%</span>
               </div>
@@ -180,11 +181,11 @@
 
           <!-- Face value (lot) -->
           <div class="mb-3">
-            <label for="face_value" class="form-label fw-semibold">Lotto nominale <span class="text-danger">*</span></label>
+            <label for="face_value" class="form-label fw-semibold">Lotto nominale {{ info('face_value') }} <span class="text-danger">*</span></label>
             <div class="input-group">
               <span class="input-group-text">€</span>
               <input type="number" class="form-control" id="face_value" name="face_value"
-                     value="{{ fval('face_value', 5000) }}" step="100" min="100" required>
+                     value="{{ fval('face_value', 10000) }}" step="100" min="100" required>
             </div>
             <div class="form-text">Multiplo di 100 (es. 5000 = 50 titoli da 100 € nominali)</div>
           </div>
@@ -195,7 +196,7 @@
                  value="{{ fval('bank_profile_id', '') }}">
 
           <div class="mb-3">
-            <label for="bank_profile" class="form-label fw-semibold">Profilo bancario</label>
+            <label for="bank_profile" class="form-label fw-semibold">Profilo bancario {{ info('bank_profile') }}</label>
             <div class="input-group">
               <select class="form-select" id="bank_profile">
                 <option value="">— Inserisci commissioni manualmente —</option>
@@ -210,12 +211,12 @@
 
           <!-- Buy commissions -->
           <div class="mb-1">
-            <span class="form-label fw-semibold">Commissioni acquisto</span>
+            <span class="form-label fw-semibold">Commissioni acquisto {{ info('buy_commissions') }}</span>
           </div>
           <div class="row g-2 mb-2">
             <div class="col-sm-4">
               <label for="buy_commission_pct" class="form-label form-label-sm">
-                % <span id="lbl_pct" class="text-muted">(su nominale)</span>
+                % <span id="lbl_pct" class="text-muted">(su nominale)</span> {{ info('commission_pct') }}
               </label>
               <div class="input-group input-group-sm">
                 <input type="number" class="form-control" id="buy_commission_pct" name="buy_commission_pct"
@@ -224,12 +225,12 @@
               </div>
             </div>
             <div class="col-sm-4 mot-only">
-              <label for="buy_commission_min" class="form-label form-label-sm">Min (€)</label>
+              <label for="buy_commission_min" class="form-label form-label-sm">Min (€) {{ info('commission_min') }}</label>
               <input type="number" class="form-control form-control-sm" id="buy_commission_min"
                      name="buy_commission_min" value="{{ fval('buy_commission_min', 0) }}" step="0.01" min="0">
             </div>
             <div class="col-sm-4 mot-only">
-              <label for="buy_commission_max" class="form-label form-label-sm">Max (€)</label>
+              <label for="buy_commission_max" class="form-label form-label-sm">Max (€) {{ info('commission_max') }}</label>
               <input type="number" class="form-control form-control-sm" id="buy_commission_max"
                      name="buy_commission_max" value="{{ fval('buy_commission_max', '') }}"
                      step="0.01" min="0" placeholder="INF">
@@ -237,7 +238,7 @@
           </div>
           <div class="row g-2 mb-3">
             <div class="col-sm-5">
-              <label for="buy_commission_fixed" class="form-label form-label-sm">Commissione fissa (€)</label>
+              <label for="buy_commission_fixed" class="form-label form-label-sm">Commissione fissa (€) {{ info('commission_fixed') }}</label>
               <input type="number" class="form-control form-control-sm" id="buy_commission_fixed"
                      name="buy_commission_fixed" value="{{ fval('buy_commission_fixed', 0) }}" step="0.01" min="0">
             </div>
@@ -249,18 +250,18 @@
           <div class="form-check form-switch mb-3">
             <input class="form-check-input" type="checkbox" id="has_sale" name="has_sale"
                    {% if tx and tx.get('has_sale') == 'on' %}checked{% endif %}>
-            <label class="form-check-label fw-semibold" for="has_sale">Vendita anticipata</label>
+            <label class="form-check-label fw-semibold" for="has_sale">Vendita anticipata {{ info('has_sale') }}</label>
           </div>
 
           <div id="sale_fields" style="display:none">
             <div class="row g-2 mb-3">
               <div class="col-sm-6">
-                <label for="sale_date" class="form-label fw-semibold">Data vendita</label>
+                <label for="sale_date" class="form-label fw-semibold">Data vendita {{ info('sale_date') }}</label>
                 <input type="date" class="form-control" id="sale_date" name="sale_date"
                        value="{{ fval('sale_date', '') }}">
               </div>
               <div class="col-sm-6">
-                <label for="sale_price" class="form-label fw-semibold">Prezzo vendita</label>
+                <label for="sale_price" class="form-label fw-semibold">Prezzo vendita {{ info('sale_price') }}</label>
                 <div class="input-group">
                   <input type="number" class="form-control" id="sale_price" name="sale_price"
                          value="{{ fval('sale_price', '') }}" step="0.0001" min="0">
@@ -269,11 +270,11 @@
               </div>
             </div>
             <div class="mb-1">
-              <span class="form-label fw-semibold">Commissioni vendita</span>
+              <span class="form-label fw-semibold">Commissioni vendita {{ info('sell_commissions') }}</span>
             </div>
             <div class="row g-2 mb-3">
               <div class="col-sm-4">
-                <label for="sell_commission_pct" class="form-label form-label-sm">%</label>
+                <label for="sell_commission_pct" class="form-label form-label-sm">% {{ info('commission_pct') }}</label>
                 <div class="input-group input-group-sm">
                   <input type="number" class="form-control" id="sell_commission_pct"
                          name="sell_commission_pct" value="{{ fval('sell_commission_pct', 0) }}"
@@ -282,13 +283,13 @@
                 </div>
               </div>
               <div class="col-sm-4">
-                <label for="sell_commission_min" class="form-label form-label-sm">Min (€)</label>
+                <label for="sell_commission_min" class="form-label form-label-sm">Min (€) {{ info('commission_min') }}</label>
                 <input type="number" class="form-control form-control-sm" id="sell_commission_min"
                        name="sell_commission_min" value="{{ fval('sell_commission_min', 0) }}"
                        step="0.01" min="0">
               </div>
               <div class="col-sm-4">
-                <label for="sell_commission_max" class="form-label form-label-sm">Max (€)</label>
+                <label for="sell_commission_max" class="form-label form-label-sm">Max (€) {{ info('commission_max') }}</label>
                 <input type="number" class="form-control form-control-sm" id="sell_commission_max"
                        name="sell_commission_max" value="{{ fval('sell_commission_max', '') }}"
                        step="0.01" min="0" placeholder="INF">
@@ -296,7 +297,7 @@
             </div>
             <div class="row g-2 mb-3">
               <div class="col-sm-5">
-                <label for="sell_commission_fixed" class="form-label form-label-sm">Commissione fissa (€)</label>
+                <label for="sell_commission_fixed" class="form-label form-label-sm">Commissione fissa (€) {{ info('commission_fixed') }}</label>
                 <input type="number" class="form-control form-control-sm" id="sell_commission_fixed"
                        name="sell_commission_fixed" value="{{ fval('sell_commission_fixed', 0) }}"
                        step="0.01" min="0">
@@ -308,20 +309,22 @@
 
           <!-- Bank parameters -->
           <div class="row g-2 mb-3">
-            <div class="col-sm-7">
-              <label for="stamp_duty_period" class="form-label fw-semibold">Periodicità bollo</label>
+            <div class="col-sm-4">
+              <label for="stamp_duty_period" class="form-label fw-semibold">Periodicità bollo {{ info('stamp_duty_period') }}</label>
               <select class="form-select" id="stamp_duty_period" name="stamp_duty_period">
                 <option value="quarterly" {% if fval('stamp_duty_period', 'quarterly') == 'quarterly' %}selected{% endif %}>Trimestrale</option>
                 <option value="annual"    {% if fval('stamp_duty_period') == 'annual' %}selected{% endif %}>Annuale</option>
               </select>
             </div>
-            <div class="col-sm-5">
-              <label for="portfolio_losses" class="form-label fw-semibold">Minusvalenze (€)</label>
-              <div class="input-group">
-                <span class="input-group-text">€</span>
-                <input type="number" class="form-control" id="portfolio_losses" name="portfolio_losses"
-                       value="{{ fval('portfolio_losses', 0) }}" step="0.01" min="0">
-              </div>
+            <div class="col-sm-4">
+              <label for="portfolio_losses" class="form-label fw-semibold">Minusvalenze (€) {{ info('portfolio_losses') }}</label>
+              <input type="number" class="form-control" id="portfolio_losses" name="portfolio_losses"
+                     value="{{ fval('portfolio_losses', 0) }}" step="0.01" min="0">
+            </div>
+            <div class="col-sm-4">
+              <label for="coupon_fee" class="form-label fw-semibold">Spesa per cedola (€) {{ info('coupon_fee') }}</label>
+              <input type="number" class="form-control" id="coupon_fee" name="coupon_fee"
+                     value="{{ fval('coupon_fee', 0) }}" step="0.01" min="0">
             </div>
           </div>
 
@@ -351,45 +354,45 @@
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <tbody>
-            <tr><th class="ps-3 text-muted fw-normal w-50">Quantità {{ bond.bond_type if bond else 'titoli' }}</th>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Quantità {{ bond.bond_type if bond else 'titoli' }} {{ info('quantita') }}</th>
                 <td class="pe-3 text-end result-value">{{ result.quantity | int }}</td></tr>
             {% if has_coupons %}
-            <tr><th class="ps-3 text-muted fw-normal">Corso secco</th>
+            <tr><th class="ps-3 text-muted fw-normal">Corso secco {{ info('corso_secco') }}</th>
                 <td class="pe-3 text-end">{{ "%.4f"|format(result.purchase.clean_price) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Rateo lordo</th>
+            <tr><th class="ps-3 text-muted fw-normal">Rateo lordo {{ info('rateo_lordo') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.accrued_interest) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Prezzo tel quel</th>
+            <tr><th class="ps-3 text-muted fw-normal">Prezzo tel quel {{ info('prezzo_tel_quel') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.dirty_price) }}</td></tr>
             {% endif %}
-            <tr><th class="ps-3 text-muted fw-normal">Importo secco</th>
+            <tr><th class="ps-3 text-muted fw-normal">Importo secco {{ info('importo_secco') }}</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.dry_amount | r2 }}</td></tr>
             {% if has_coupons %}
-            <tr><th class="ps-3 text-muted fw-normal">Rateo pagato al venditore</th>
+            <tr><th class="ps-3 text-muted fw-normal">Rateo pagato al venditore {{ info('rateo_pagato') }}</th>
                 <td class="pe-3 text-end">€ {{ (result.purchase.dirty_amount - result.purchase.dry_amount) | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Importo tel quel</th>
+            <tr><th class="ps-3 text-muted fw-normal">Importo tel quel {{ info('importo_tel_quel') }}</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.dirty_amount | r2 }}</td></tr>
             {% endif %}
-            <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni {{ info('commissioni') }}</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.commission | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse {{ info('commissioni_fisse') }}</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.fixed_commission | r2 }}</td></tr>
             {% if has_coupons %}
-            <tr><th class="ps-3 text-muted fw-normal">Disaggio maturato pro-quota</th>
+            <tr><th class="ps-3 text-muted fw-normal">Disaggio maturato pro-quota {{ info('disaggio_maturato') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Credito imposta disaggio</th>
+            <tr><th class="ps-3 text-muted fw-normal">Credito imposta disaggio {{ info('credito_disaggio') }}</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.discount_tax | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Credito imposta sul rateo</th>
+            <tr><th class="ps-3 text-muted fw-normal">Credito imposta sul rateo {{ info('credito_rateo') }}</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.accrued_interest_tax | r2 }}</td></tr>
             {% else %}
-            <tr><th class="ps-3 text-muted fw-normal">Disaggio pro-quota</th>
+            <tr><th class="ps-3 text-muted fw-normal">Disaggio pro-quota {{ info('disaggio_pro_quota') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio pro-quota</th>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio pro-quota {{ info('imposta_disaggio_pro_quota') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.purchase.unit_discount * 0.125) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio</th>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio {{ info('imposta_disaggio') }}</th>
                 <td class="pe-3 text-end">€ {{ result.purchase.discount_tax | r2 }}</td></tr>
             {% endif %}
             <tr class="table-light">
-              <th class="ps-3 fw-semibold">Totale pagato</th>
+              <th class="ps-3 fw-semibold">Totale pagato {{ info('totale_pagato') }}</th>
               <td class="pe-3 text-end fw-semibold fs-6">€ {{ result.purchase.total_paid | r2 }}</td>
             </tr>
           </tbody>
@@ -406,10 +409,10 @@
         <table class="table table-sm mb-0">
           <thead>
             <tr>
-              <th class="ps-3 text-muted fw-normal">Data stacco</th>
-              <th class="text-end text-muted fw-normal">Lorda (per 100)</th>
-              <th class="text-end text-muted fw-normal">Lorda (€)</th>
-              <th class="pe-3 text-end text-muted fw-normal">Netta (€)</th>
+              <th class="ps-3 text-muted fw-normal">Data stacco {{ info('data_stacco') }}</th>
+              <th class="text-end text-muted fw-normal">Lorda (per 100) {{ info('cedola_lorda_100') }}</th>
+              <th class="text-end text-muted fw-normal">Lorda (€) {{ info('cedola_lorda_eur') }}</th>
+              <th class="pe-3 text-end text-muted fw-normal">Netta (€) {{ info('cedola_netta_eur') }}</th>
             </tr>
           </thead>
           <tbody>
@@ -418,14 +421,17 @@
               <td class="ps-3">{{ cp.payment_date.strftime('%d/%m/%Y') }}</td>
               <td class="text-end">{{ "%.6f"|format(cp.gross_amount) }}</td>
               <td class="text-end">€ {{ (cp.gross_amount * result.quantity) | r2 }}</td>
-              <td class="pe-3 text-end">€ {{ (cp.net_amount * result.quantity) | r2 }}</td>
+              <td class="pe-3 text-end">€ {{ (cp.net_amount * result.quantity - result.coupon_fee) | r2 }}</td>
             </tr>
             {% endfor %}
             <tr class="table-light">
-              <th class="ps-3 fw-semibold" colspan="2">Totale cedole ({{ result.coupon_plan | length }})</th>
+              <th class="ps-3 fw-semibold" colspan="2">Totale cedole ({{ result.coupon_plan | length }}) {{ info('totale_cedole') }}</th>
               <td class="text-end fw-semibold">€ {{ ((result.coupon_plan | sum(attribute='gross_amount')) * result.quantity) | r2 }}</td>
-              <td class="pe-3 text-end fw-semibold">€ {{ ((result.coupon_plan | sum(attribute='net_amount')) * result.quantity) | r2 }}</td>
+              <td class="pe-3 text-end fw-semibold">€ {{ ((result.coupon_plan | sum(attribute='net_amount')) * result.quantity - result.coupon_fee * (result.coupon_plan | length)) | r2 }}</td>
             </tr>
+            {% if result.coupon_fee %}
+            <tr><td colspan="4" class="ps-3 text-muted small">Netta al netto della spesa della banca di € {{ result.coupon_fee | r2 }} a ogni stacco.</td></tr>
+            {% endif %}
           </tbody>
         </table>
         {% else %}
@@ -443,42 +449,42 @@
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <tbody>
-            <tr><th class="ps-3 text-muted fw-normal w-50">Prezzo teorico acquisto</th>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Prezzo teorico acquisto {{ info('prezzo_teorico_acquisto') }}</th>
                 <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.theoretical_purchase_price) }}</td></tr>
-             <tr><th class="ps-3 text-muted fw-normal">Prezzo teorico vendita</th>
+             <tr><th class="ps-3 text-muted fw-normal">Prezzo teorico vendita {{ info('prezzo_teorico_vendita') }}</th>
                  <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.theoretical_sale_price) }}</td></tr>
-             <tr><th class="ps-3 text-muted fw-normal">Prezzo di carico</th>
+             <tr><th class="ps-3 text-muted fw-normal">Prezzo di carico {{ info('prezzo_carico') }}</th>
                  <td class="pe-3 text-end">{{ "%.5f"|format(result.capital_gain.load_price) }}</td></tr>
-             <tr><th class="ps-3 text-muted fw-normal">Prezzo di scarico</th>
+             <tr><th class="ps-3 text-muted fw-normal">Prezzo di scarico {{ info('prezzo_scarico') }}</th>
                  <td class="pe-3 text-end">{{ "%.3f"|format(result.capital_gain.unload_price) }}</td></tr>
             <tr>
-              <th class="ps-3 text-muted fw-normal">Plus/Minus valenza (per 100 nominale)</th>
+              <th class="ps-3 text-muted fw-normal">Plus/Minus valenza (per 100 nominale) {{ info('plusminus_unit') }}</th>
               <td class="pe-3 text-end fw-semibold
                 {% if result.capital_gain.unit_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
                 {{ "%+.5f"|format(result.capital_gain.unit_gain_loss) }}
               </td>
             </tr>
             <tr>
-              <th class="ps-3 text-muted fw-normal">Plus/Minus realizzata</th>
+              <th class="ps-3 text-muted fw-normal">Plus/Minus realizzata {{ info('plusminus_realizzata') }}</th>
               <td class="pe-3 text-end fw-semibold
                 {% if result.capital_gain.total_gain_loss >= 0 %}text-success{% else %}text-danger{% endif %}">
                 € {{ result.capital_gain.total_gain_loss | r2 }}
               </td>
             </tr>
-            <tr><th class="ps-3 text-muted fw-normal">Riduzione imponibile TdS (48.08%)</th>
+            <tr><th class="ps-3 text-muted fw-normal">Riduzione imponibile TdS (48.08%) {{ info('riduzione_tds') }}</th>
                 <td class="pe-3 text-end">€ {{ result.capital_gain.tds_reduction | r2 }}</td></tr>
             {% if result.capital_gain.total_gain_loss > 0 %}
             <tr class="table-light">
-              <th class="ps-3 fw-semibold">Imposta sulla plusvalenza (12.5%)</th>
+              <th class="ps-3 fw-semibold">Imposta sulla plusvalenza (12.5%) {{ info('imposta_plusvalenza') }}</th>
               <td class="pe-3 text-end fw-semibold">€ {{ result.capital_gain.capital_gain_tax | r2 }}</td>
             </tr>
             {% if result.capital_gain.remaining_loss > 0 %}
-            <tr><th class="ps-3 text-muted fw-normal">Zainetto fiscale residuo</th>
+            <tr><th class="ps-3 text-muted fw-normal">Zainetto fiscale residuo {{ info('zainetto_residuo') }}</th>
                 <td class="pe-3 text-end text-success">€ {{ result.capital_gain.remaining_loss | r2 }}</td></tr>
             {% endif %}
             {% else %}
             <tr class="table-light">
-              <th class="ps-3 fw-semibold">Minus valenza da zainetto</th>
+              <th class="ps-3 fw-semibold">Minus valenza da zainetto {{ info('minus_zainetto') }}</th>
               <td class="pe-3 text-end fw-semibold text-danger">€ {{ result.capital_gain.remaining_loss | r2 }}</td>
             </tr>
             {% endif %}
@@ -498,46 +504,46 @@
         <table class="table table-sm mb-0">
           <tbody>
             {% if has_coupons %}
-            <tr><th class="ps-3 text-muted fw-normal w-50">Corso secco</th>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Corso secco {{ info('corso_secco_vendita') }}</th>
                 <td class="pe-3 text-end">{{ "%.4f"|format(result.sale.clean_price) }}</td></tr>
             {% if result.sale.accrued_interest > 0 %}
-            <tr><th class="ps-3 text-muted fw-normal">Rateo lordo</th>
+            <tr><th class="ps-3 text-muted fw-normal">Rateo lordo {{ info('rateo_lordo_vendita') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.sale.accrued_interest) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Prezzo tel quel</th>
+            <tr><th class="ps-3 text-muted fw-normal">Prezzo tel quel {{ info('prezzo_tel_quel_vendita') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.sale.dirty_price) }}</td></tr>
             {% endif %}
             {% endif %}
-            <tr><th class="ps-3 text-muted fw-normal w-50">Importo secco</th>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Importo secco {{ info('importo_secco_vendita') }}</th>
                 <td class="pe-3 text-end">€ {{ result.sale.dry_amount | r2 }}</td></tr>
             {% if has_coupons and result.sale.accrued_interest > 0 %}
-            <tr><th class="ps-3 text-muted fw-normal">Rateo incassato dal compratore</th>
+            <tr><th class="ps-3 text-muted fw-normal">Rateo incassato dal compratore {{ info('rateo_incassato') }}</th>
                 <td class="pe-3 text-end">€ {{ (result.sale.dirty_amount - result.sale.dry_amount) | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Importo tel quel</th>
+            <tr><th class="ps-3 text-muted fw-normal">Importo tel quel {{ info('importo_tel_quel_vendita') }}</th>
                 <td class="pe-3 text-end">€ {{ result.sale.dirty_amount | r2 }}</td></tr>
             {% endif %}
-            <tr><th class="ps-3 text-muted fw-normal">Commissioni</th>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni {{ info('commissioni_vendita') }}</th>
                 <td class="pe-3 text-end">€ {{ result.sale.commission | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse</th>
+            <tr><th class="ps-3 text-muted fw-normal">Commissioni fisse {{ info('commissioni_fisse_vendita') }}</th>
                 <td class="pe-3 text-end">€ {{ result.sale.fixed_commission | r2 }}</td></tr>
             {% if has_coupons %}
-            <tr><th class="ps-3 text-muted fw-normal">Disaggio maturato pro-quota</th>
+            <tr><th class="ps-3 text-muted fw-normal">Disaggio maturato pro-quota {{ info('disaggio_maturato_vendita') }}</th>
                 <td class="pe-3 text-end">{{ "%.6f"|format(result.sale.unit_discount) }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio trattenuta</th>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio trattenuta {{ info('imposta_disaggio_trattenuta') }}</th>
                 <td class="pe-3 text-end">€ {{ result.sale.discount_tax | r2 }}</td></tr>
             {% if result.sale.accrued_interest > 0 %}
-            <tr><th class="ps-3 text-muted fw-normal">Imposta sul rateo incassato</th>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta sul rateo incassato {{ info('imposta_rateo_incassato') }}</th>
                 <td class="pe-3 text-end">€ {{ result.sale.accrued_interest_tax | r2 }}</td></tr>
             {% endif %}
             {% else %}
-            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata</th>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta disaggio rimborsata {{ info('imposta_disaggio_rimborsata') }}</th>
                 <td class="pe-3 text-end">€ {{ result.sale.discount_tax | r2 }}</td></tr>
             {% endif %}
             {% if result.capital_gain and result.capital_gain.capital_gain_tax > 0 %}
-            <tr><th class="ps-3 text-muted fw-normal">Imposta sulla plusvalenza</th>
+            <tr><th class="ps-3 text-muted fw-normal">Imposta sulla plusvalenza {{ info('imposta_plusvalenza_vendita') }}</th>
                 <td class="pe-3 text-end text-danger">− € {{ result.capital_gain.capital_gain_tax | r2 }}</td></tr>
             {% endif %}
             <tr class="table-light">
-              <th class="ps-3 fw-semibold">Totale ricevuto</th>
+              <th class="ps-3 fw-semibold">Totale ricevuto {{ info('totale_ricevuto') }}</th>
               <td class="pe-3 text-end fw-semibold fs-6">€ {{ result.sale.total_received | r2 }}</td>
             </tr>
           </tbody>
@@ -551,10 +557,10 @@
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <tbody>
-            <tr><th class="ps-3 text-muted fw-normal w-50">Periodi di possesso</th>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Periodi di possesso {{ info('periodi_possesso') }}</th>
                 <td class="pe-3 text-end">{{ result.stamp_duty.holding_periods }}</td></tr>
             <tr class="table-light">
-              <th class="ps-3 fw-semibold">Stima bollo</th>
+              <th class="ps-3 fw-semibold">Stima bollo {{ info('stima_bollo') }}</th>
               <td class="pe-3 text-end fw-semibold">€ {{ result.stamp_duty.estimated_duty | r2 }}</td>
             </tr>
           </tbody>
@@ -568,12 +574,12 @@
       <div class="card-body p-0">
         <table class="table table-sm mb-0">
           <tbody>
-            <tr><th class="ps-3 text-muted fw-normal w-50">Guadagno lordo</th>
+            <tr><th class="ps-3 text-muted fw-normal w-50">Guadagno lordo {{ info('guadagno_lordo') }}</th>
                 <td class="pe-3 text-end">€ {{ result.summary.gross_gain | r2 }}</td></tr>
-            <tr><th class="ps-3 text-muted fw-normal">Guadagno netto (pre-bollo)</th>
+            <tr><th class="ps-3 text-muted fw-normal">Guadagno netto (pre-bollo) {{ info('guadagno_netto_prebollo') }}</th>
                 <td class="pe-3 text-end">€ {{ result.summary.net_gain_before_duty | r2 }}</td></tr>
             <tr class="table-success">
-              <th class="ps-3 fw-semibold">Guadagno netto</th>
+              <th class="ps-3 fw-semibold">Guadagno netto {{ info('guadagno_netto') }}</th>
               <td class="pe-3 text-end fw-semibold fs-5">€ {{ result.summary.net_gain | r2 }}</td>
             </tr>
             <tr><td colspan="2"><hr class="my-1"></td></tr>
@@ -581,7 +587,7 @@
               <small class="text-uppercase text-muted" style="font-size:.7rem;letter-spacing:.05em">Semplice &nbsp;/&nbsp; Composto</small>
             </th></tr>
             <tr>
-              <th class="ps-3 text-muted fw-normal">Rendimento lordo</th>
+              <th class="ps-3 text-muted fw-normal">Rendimento lordo {{ info('rendimento_lordo') }}</th>
               <td class="pe-3 text-end">
                 {{ "%.3f"|format(result.summary.simple_gross_yield) }}%
                 &nbsp;<span class="text-muted">/</span>&nbsp;
@@ -589,7 +595,7 @@
               </td>
             </tr>
             <tr>
-              <th class="ps-3 text-muted fw-normal">Rendimento netto (pre-bollo)</th>
+              <th class="ps-3 text-muted fw-normal">Rendimento netto (pre-bollo) {{ info('rendimento_netto_prebollo') }}</th>
               <td class="pe-3 text-end">
                 {{ "%.3f"|format(result.summary.simple_net_yield_before_duty) }}%
                 &nbsp;<span class="text-muted">/</span>&nbsp;
@@ -597,7 +603,7 @@
               </td>
             </tr>
             <tr class="table-success">
-              <th class="ps-3 fw-semibold">Rendimento netto</th>
+              <th class="ps-3 fw-semibold">Rendimento netto {{ info('rendimento_netto') }}</th>
               <td class="pe-3 text-end fw-semibold fs-5">
                 {{ "%.3f"|format(result.summary.simple_net_yield) }}%
                 &nbsp;<span class="text-muted">/</span>&nbsp;
@@ -607,7 +613,7 @@
             {% if result.summary.modified_duration is not none %}
             <tr><td colspan="2"><hr class="my-1"></td></tr>
             <tr>
-              <th class="ps-3 text-muted fw-normal">Duration modificata</th>
+              <th class="ps-3 text-muted fw-normal">Duration modificata {{ info('duration') }}</th>
               <td class="pe-3 text-end">{{ "%.2f"|format(result.summary.modified_duration) }}</td>
             </tr>
             <tr><td colspan="2" class="ps-3 pe-3 text-muted small">
@@ -743,6 +749,9 @@
     const days  = selectedBondDays();
     const row   = resolveCommission(profileId, venue, days);
     applyBuyCommission(row);
+    // The fee per coupon belongs to the profile, not to a commission row
+    const profile = BANK_PROFILES.find(p => p.id === profileId);
+    document.getElementById('coupon_fee').value = profile ? parseFloat(profile.coupon_fee || 0).toFixed(2) : '0';
   }
 
   document.getElementById('bank_profile').addEventListener('change', function() {
@@ -766,11 +775,27 @@
   // Price helper
   // -----------------------------------------------------------------------
 
+  // MOT: last quote (issue price if the bond was never quoted); Asta: issue price
   function updatePurchasePrice() {
     const opt   = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
     const isMot = document.getElementById('venue_mot').checked;
-    const price = isMot ? (opt.dataset.lastPrice || '') : (opt.dataset.issuePrice || '');
+    const price = isMot ? (opt.dataset.lastPrice || opt.dataset.issuePrice || '') : (opt.dataset.issuePrice || '');
     if (price) document.getElementById('purchase_price').value = price;
+  }
+
+  // Today as YYYY-MM-DD in local time (toISOString would give the UTC date, a day off after midnight)
+  function todayIso() {
+    const d = new Date();
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
+
+  // MOT: today; Asta: the bond's issue date (manual BOT: its own issue date field)
+  function updatePurchaseDate() {
+    const opt   = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
+    const isMot = document.getElementById('venue_mot').checked;
+    const issue = opt.value === 'manual' ? document.getElementById('manual_issue_date').value : opt.dataset.issueDate;
+    const value = isMot ? todayIso() : (issue || '');
+    if (value) document.getElementById('purchase_date').value = value;
   }
 
   // -----------------------------------------------------------------------
@@ -819,7 +844,7 @@
     } else {
       strip.classList.add('d-none');
     }
-    if (opt.dataset.issueDate) document.getElementById('purchase_date').value = opt.dataset.issueDate;
+    updatePurchaseDate();
     updatePurchasePrice();
     applyBankProfile();   // re-resolve commission for the new bond's duration
   });
@@ -829,7 +854,8 @@
   // -----------------------------------------------------------------------
 
   // Track whether toggleMot is running during the initial page-load call so we
-  // can skip date side-effects that would overwrite POST-restored form values.
+  // can skip date/price side-effects that would overwrite POST-restored form values
+  // (on a fresh page the server already fills them with the MOT defaults).
   let _toggleMotInit = true;
 
   function toggleMot() {
@@ -839,18 +865,12 @@
     });
     document.getElementById('lbl_pct').textContent = isMot ? '(su acquisto)' : '(su nominale)';
 
-    // Only set default dates when the user actively changes the venue radio —
-    // skip on the initial page-load call so POST-restored values are preserved.
+    // Only set default date and price when the user actively changes the venue radio —
+    // skip on the initial page-load call so the user's submitted values are preserved.
     if (!_toggleMotInit) {
-      const opt = document.getElementById('bond_id').options[document.getElementById('bond_id').selectedIndex];
-      if (isMot) {
-        document.getElementById('purchase_date').value = new Date().toISOString().slice(0, 10);
-      } else if (opt.value && opt.dataset.issueDate) {
-        document.getElementById('purchase_date').value = opt.dataset.issueDate;
-      }
+      updatePurchaseDate();
+      updatePurchasePrice();
     }
-
-    updatePurchasePrice();
     applyBankProfile();   // re-resolve commission for the new venue
   }
   document.getElementById('venue_asta').addEventListener('change', toggleMot);

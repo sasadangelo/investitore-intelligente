@@ -4,7 +4,7 @@
 # -----------------------------------------------------------------------------
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, computed_field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, model_validator
 
 
 class BankProfileDTO(BaseModel):
@@ -14,6 +14,8 @@ class BankProfileDTO(BaseModel):
     bank_name    : official bank name (e.g. "Monte dei Paschi di Siena")
     profile_name : channel or tier (e.g. "Internet Banking", "Filiale", "Phone Banking")
     notes        : optional free-text notes (e.g. disclaimer, last verified date)
+    coupon_fee   : fixed fee in EUR the bank charges at every coupon payment
+                   (spesa fissa per cedola, cell K44 of the `Bond` sheet); 0 for most banks
     """
 
     id: int | None = None
@@ -21,6 +23,7 @@ class BankProfileDTO(BaseModel):
     profile_name: str
     notes: str | None = None
     info_url: str | None = None
+    coupon_fee: float = Field(default=0.0, ge=0.0)
 
     @computed_field
     @property

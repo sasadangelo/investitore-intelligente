@@ -25,6 +25,10 @@
     .badge-btp_italia { background-color: #ffc107; color: #000; }
     .badge-corporate  { background-color: #6f42c1; }
     .card-header { background-color: #0d6efd; color: #fff; }
+    /* Field help icon (templates/_help.html): inherits the text colour, also on blue headers */
+    .info-tip { cursor: pointer; margin-left: .25rem; font-size: .85em; opacity: .6; }
+    .info-tip:hover, .info-tip:focus { opacity: 1; outline: none; }
+    .popover { max-width: 320px; font-size: .85rem; }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
@@ -116,6 +120,15 @@
   integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
   crossorigin="anonymous"
 ></script>
+<script>
+  // Field help (templates/_help.html): click the info icon to open its popover, click elsewhere to close it
+  document.querySelectorAll('.info-tip[data-bs-toggle="popover"]').forEach(function(el) {
+    // Attached to <body> so that table-responsive containers do not clip it
+    new bootstrap.Popover(el, { container: 'body' });
+    // Inside a <label> a click would move the focus to the input and close the popover at once
+    el.addEventListener('click', function(e) { e.preventDefault(); e.stopPropagation(); el.focus(); });
+  });
+</script>
 {% block extra_scripts %}{% endblock %}
 </body>
 </html>

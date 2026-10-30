@@ -27,6 +27,7 @@ from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.services.bond_calculator_service import BondCalculatorService
 from intelligent_investor.utils.coupon_schedule import CouponSchedule
 from intelligent_investor.utils.duration import modified_duration
+from intelligent_investor.utils.yield_calculator import xirr
 
 _FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -295,3 +296,53 @@ def test_modified_duration_blank_for_holding_under_365_days() -> None:
     summary = BondCalculatorService().calculate(_mot_purchase(sale_date=date(2027, 10, 28)), _btp_lug29()).summary
 
     assert summary.modified_duration is None
+
+
+# ---------------------------------------------------------------------------
+# Fixed fee per coupon (cell K44) and stamp duty year by year (column R)
+# ---------------------------------------------------------------------------
+
+
+def test_coupon_fee_reduces_every_net_coupon() -> None:
+    no_fee = BondCalculatorService().calculate(_mot_purchase(), _btp_lug29())
+    fee = BondCalculatorService().calculate(_mot_purchase().model_copy(update={"coupon_fee": 2.0}), _btp_lug29())
+
+    coupons = len(fee.coupon_plan)
+    assert coupons == 6
+    assert fee.coupon_fee == 2.0
+    assert fee.summary.net_gain == pytest.approx(no_fee.summary.net_gain - 2.0 * coupons)
+    assert fee.summary.net_gain_before_duty == pytest.approx(no_fee.summary.net_gain_before_duty - 2.0 * coupons)
+    # The gross figures leave bank costs out, as the sheet with "Lordo senza Commissioni"
+    assert fee.summary.gross_gain == pytest.approx(no_fee.summary.gross_gain)
+    assert fee.summary.compound_gross_yield == pytest.approx(no_fee.summary.compound_gross_yield)
+    assert fee.summary.compound_net_yield_before_duty < no_fee.summary.compound_net_yield_before_duty
+
+
+def test_coupon_fee_not_charged_on_a_sale_between_coupons() -> None:
+    # Sold on 15/12/2027: two coupons cashed (01/01 and 01/07/2027), the running one is rateo
+    tx = _mot_purchase(sale_date=date(2027, 12, 15))
+    no_fee = BondCalculatorService().calculate(tx, _btp_lug29())
+    fee = BondCalculatorService().calculate(tx.model_copy(update={"coupon_fee": 3.0}), _btp_lug29())
+
+    assert fee.summary.net_gain == pytest.approx(no_fee.summary.net_gain - 3.0 * 2)
+
+
+def test_net_yield_takes_stamp_duty_out_year_by_year() -> None:
+    result = BondCalculatorService().calculate(_mot_purchase(), _btp_lug29())
+    duty = result.stamp_duty.estimated_duty
+    quantity = result.quantity
+
+    # Column R by hand: purchase 29/10/2026, maturity 01/07/2029 -> 3 calendar years,
+    # duty / 3 taken from the first flow of 2027, 2028 and 2029
+    flows = [(date(2026, 10, 29), -result.purchase.total_paid)]
+    flows += [(cp.payment_date, cp.net_amount * quantity) for cp in result.coupon_plan]
+    flows += [(date(2029, 7, 1), result.sale.total_received)]
+    per_year = duty / 3
+    by_hand = [flows[0]] + [
+        (d, amount - per_year if d.year != flows[i][0].year else amount) for i, (d, amount) in enumerate(flows[1:])
+    ]
+
+    assert result.summary.compound_net_yield == pytest.approx(xirr(by_hand), abs=1e-9)
+    # Taking it all from the last flow, as before, gives a slightly higher yield
+    all_at_end = flows[:-1] + [(flows[-1][0], flows[-1][1] - duty)]
+    assert result.summary.compound_net_yield < xirr(all_at_end)

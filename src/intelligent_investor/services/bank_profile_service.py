@@ -32,6 +32,8 @@ class BankProfileService:
                     bank_name=profile.bank_name,
                     profile_name=profile.profile_name,
                     notes=profile.notes,
+                    info_url=profile.info_url,
+                    coupon_fee=profile.coupon_fee,
                 )
                 session.add(dao)
                 session.flush()
@@ -74,6 +76,8 @@ class BankProfileService:
                 dao.bank_name = profile.bank_name
                 dao.profile_name = profile.profile_name
                 dao.notes = profile.notes
+                dao.info_url = profile.info_url
+                dao.coupon_fee = profile.coupon_fee
                 session.flush()
                 result = BankProfileDTO.model_validate(dao)
             return result
@@ -212,6 +216,7 @@ class BankProfileService:
                 "id": p.id,
                 "display_name": p.display_name,
                 "info_url": p.info_url,
+                "coupon_fee": p.coupon_fee,
                 "commissions": [c.model_dump() for c in commissions],
             })
         return result

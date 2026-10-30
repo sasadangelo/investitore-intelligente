@@ -138,14 +138,16 @@ class SummaryResultDTO(BaseModel):
 
     gross_gain              = inflows - outflow, without commissions, taxes or stamp duty
                               (coupons + sale/redemption dirty amount - purchase dirty amount)
-    net_gain_before_duty    = net coupons + total_received - total_paid
+    net_gain_before_duty    = net coupons - coupon fees + total_received - total_paid
     net_gain                = net_gain_before_duty - estimated_duty
 
     Yields (start=purchase_date, end=sale_date):
         simple   = gain / capital / YEARFRAC(basis=ACT_ACT)
         compound = (proceeds / capital) ^ (365/days) - 1 when no coupon is cashed
                    (2-flow closed form), xirr() on the dated cash flows otherwise
-                   — the two coincide when there are no coupons (days/365 convention)
+                   — the two coincide when there are no coupons (days/365 convention).
+                   In the net yield after stamp duty the duty is spread over the calendar
+                   years held, as column R of the sheet (see spread_stamp_duty).
     """
 
     gross_gain: float
@@ -177,6 +179,9 @@ class BondCalculationResultDTO(BaseModel):
     purchase: PurchaseResultDTO
     # coupons cashed by this holder: paid after purchase and on or before sale/maturity
     coupon_plan: list[CouponPayment]
+    # fixed fee in € the bank charges at each of those coupons (cell K44), already
+    # deducted from the net gain and the net yields
+    coupon_fee: float = 0.0
     sale: SaleResultDTO
     capital_gain: CapitalGainResultDTO | None
     stamp_duty: StampDutyResultDTO

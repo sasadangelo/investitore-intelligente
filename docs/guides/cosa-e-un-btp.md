@@ -131,8 +131,9 @@ La duration è una stima: vale bene per variazioni piccole dei tassi e cambia co
 Nel [Catalogo](/catalogue/) trovi per ogni BTP:
 
 - il **rendimento lordo**: quanto rende all'anno se lo compri oggi all'ultimo prezzo e lo tieni a scadenza, cedole comprese, prima delle tasse;
-- il **rendimento netto**: lo stesso, dopo le tasse su cedole, scarto di emissione e plusvalenza;
-- la **duration modificata**, spiegata sopra. Manca per i BTP che scadono entro un anno, dove il prezzo si muove poco.
+- il **rendimento netto**: lo stesso, dopo le tasse su cedole, scarto di emissione e plusvalenza.
+
+La **duration modificata** non è nel catalogo: la trovi nella scheda di ogni BTP (clicca sul nome nel catalogo) e nel riepilogo del [Calcolatore](/calculator/). Manca per i BTP che scadono entro un anno, dove il prezzo si muove poco.
 
 Entrambi sono **indicativi**: non includono le commissioni della tua banca né l'imposta di bollo, che dipendono da quanto investi e da dove compri. Per i numeri esatti, con le commissioni della tua banca, porta il BTP nel **[Calcolatore](/calculator/)**: la guida **[Calcolatore BTP](/guides/calcolatore-btp)** spiega ogni riga del risultato con un esempio completo.
 

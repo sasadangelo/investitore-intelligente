@@ -52,6 +52,7 @@ _FIELD_LABELS: dict[str, str] = {
     "sell_commission_max": "Commissione vendita max",
     "sell_commission_fixed": "Commissione vendita fissa",
     "portfolio_losses": "Minusvalenze",
+    "coupon_fee": "Spesa per cedola",
 }
 
 
@@ -96,6 +97,8 @@ def _render(
         bond=bond,
         tx=tx,
         result=result,
+        # Default settlement date of a fresh form, which starts on the MOT
+        today=today,
         # Serialised for the page's JavaScript, which fills the commission fields when a bank is chosen
         bank_profiles_json=json.dumps(_bank_service.profiles_with_commissions_json()),
     )
@@ -185,6 +188,7 @@ def _form_to_transaction(form: ImmutableMultiDict[str, str], bond_id: int) -> Bo
         sell_commission_fixed=_f("sell_commission_fixed"),
         stamp_duty_period=form.get("stamp_duty_period", "quarterly"),  # type: ignore[arg-type]  # checked by the DTO
         portfolio_losses=_f("portfolio_losses"),
+        coupon_fee=_f("coupon_fee"),
     )
 
 

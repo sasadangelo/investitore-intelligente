@@ -104,6 +104,7 @@ class BondCalculatorService:
             stamp_duty_period=transaction.stamp_duty_period,
         )
         summary = self._calc_summary(
+            coupon_fee=transaction.coupon_fee,
             bond=bond,
             conventions=conventions,
             purchase=purchase,
@@ -119,6 +120,7 @@ class BondCalculatorService:
             quantity=quantity,
             purchase=purchase,
             coupon_plan=coupon_plan,
+            coupon_fee=transaction.coupon_fee,
             sale=sale,
             capital_gain=capital_gain,
             stamp_duty=stamp_duty,
@@ -302,6 +304,7 @@ class BondCalculatorService:
 
     def _calc_summary(
         self,
+        coupon_fee: float,
         bond: BondDTO,
         conventions: BondConventions,
         purchase: PurchaseResultDTO,
@@ -313,7 +316,8 @@ class BondCalculatorService:
         sale_date: date,
     ) -> SummaryResultDTO:
         gross_coupons: float = sum(cp.gross_amount for cp in coupon_plan) * quantity
-        net_coupons: float = sum(cp.net_amount for cp in coupon_plan) * quantity
+        # The bank's fee per coupon (cell K44) reduces every net coupon cashed, not the gross ones
+        net_coupons: float = sum(cp.net_amount for cp in coupon_plan) * quantity - coupon_fee * len(coupon_plan)
 
         # Gross gain = pure cash flow without commissions, taxes or stamp duty
         gross_gain: float = gross_coupons + sale.dirty_amount - purchase.dirty_amount
@@ -343,21 +347,25 @@ class BondCalculatorService:
             compound_net_yield_before_duty: float = yc.compound(sale.total_received, purchase.total_paid)
             compound_net_yield: float = yc.compound(net_proceeds, purchase.total_paid)
         else:
-            # Coupons in between: XIRR on the dated cash flows; stamp duty is deducted
-            # from the last flow
+            # Coupons in between: XIRR on the dated cash flows
             def flows(outflow: float, coupon_side: Literal["gross", "net"], inflow: float) -> list[tuple[date, float]]:
                 coupons = [
-                    (cp.payment_date, (cp.gross_amount if coupon_side == "gross" else cp.net_amount) * quantity)
+                    (
+                        cp.payment_date,
+                        cp.gross_amount * quantity
+                        if coupon_side == "gross"
+                        else cp.net_amount * quantity - coupon_fee,
+                    )
                     for cp in coupon_plan
                 ]
                 return [(purchase_date, -outflow)] + coupons + [(sale_date, inflow)]
 
             compound = conventions.compound_yield
             compound_gross_yield = xirr(flows(purchase.dirty_amount, "gross", sale.dirty_amount), convention=compound)
-            compound_net_yield_before_duty = xirr(
-                flows(purchase.total_paid, "net", sale.total_received), convention=compound
-            )
-            compound_net_yield = xirr(flows(purchase.total_paid, "net", net_proceeds), convention=compound)
+            net_flows = flows(purchase.total_paid, "net", sale.total_received)
+            compound_net_yield_before_duty = xirr(net_flows, convention=compound)
+            # Stamp duty taken out year by year, as the sheet does (column R)
+            compound_net_yield = xirr(spread_stamp_duty(net_flows, stamp_duty.estimated_duty), convention=compound)
 
         return SummaryResultDTO(
             gross_gain=gross_gain,
@@ -550,6 +558,31 @@ def calc_modified_duration(bond: BondDTO, settlement_date: date, end_date: date,
         bond.coupon_frequency,
         conventions_for(bond.bond_type).duration,
     )
+
+
+def spread_stamp_duty(flows: list[tuple[date, float]], duty: float) -> list[tuple[date, float]]:
+    """
+    Subtract the stamp duty from dated cash flows one calendar year at a time (column R).
+
+    The duty is split evenly over the calendar years between the first and the last
+    flow (cell M17) and each share is taken from the first flow of the new year; when
+    both fall in the same year the whole duty comes out of the last flow.
+
+    Args:
+        flows: (date, amount) pairs in date order, the purchase first
+        duty: Total stamp duty of the holding (cell K17)
+
+    Returns:
+        The flows with the duty subtracted; the total subtracted is always *duty*
+    """
+    years = flows[-1][0].year - flows[0][0].year
+    if years <= 0:
+        return flows[:-1] + [(flows[-1][0], flows[-1][1] - duty)]
+    per_year = duty / years
+    spread = [flows[0]]
+    for (previous, _), (current, amount) in zip(flows, flows[1:], strict=False):  # consecutive pairs
+        spread.append((current, amount - per_year * (current.year - previous.year)))
+    return spread
 
 
 def calc_stamp_duty(

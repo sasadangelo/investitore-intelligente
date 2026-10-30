@@ -8,7 +8,7 @@ Unit tests for CatalogueService and sort_entries.
 CatalogueService depends on BondService and BondQuoteService (both DB-backed).
 We mock them so tests are pure, fast, and DB-free.
 Covers:
-  - list_entries: maturity filter, bond_type filter, quote pairing, yields and duration, argument validation
+  - list_entries: maturity filter, bond_type filter, quote pairing and yields, argument validation
   - list_entries with PurchaseCosts: commissions, minimum fee, bank profile, BOTs through the calculator
   - sort_entries: maturity / gross yield / net yield, entries without yield always last
 """
@@ -59,6 +59,7 @@ def _service_with_mocks(bonds: list[BondDTO], quotes: list[BondQuoteDTO]) -> Cat
     svc._bond_svc.list_all.return_value = bonds
     svc._quote_svc.list_all.return_value = quotes
     svc._bank_svc = MagicMock()
+    svc._bank_svc.get_profile.return_value = None  # no profile: no fee per coupon
     return svc
 
 
@@ -98,19 +99,6 @@ def test_list_entries_pairs_quotes_and_computes_yields() -> None:
     assert by_id[1].gross_yield is not None and by_id[1].net_yield is not None
     assert by_id[2].quote is None
     assert by_id[2].gross_yield is None and by_id[2].net_yield is None
-
-
-def test_list_entries_computes_duration_for_coupon_bonds_only() -> None:
-    btp = _bond(1, date(2029, 7, 1)).model_copy(update={"nominal_rate": 3.35, "coupon_frequency": 2})
-    bot = _bond(2, date(2027, 1, 1), bond_type="BOT")
-    short_btp = _bond(3, date(2027, 6, 1)).model_copy(update={"nominal_rate": 3.0, "coupon_frequency": 2})
-    svc = _service_with_mocks([btp, bot, short_btp], [_quote(1, 99.18), _quote(2, 98.0), _quote(3, 99.5)])
-
-    by_id = {e.bond.id: e for e in svc.list_entries(today=TODAY)}
-
-    assert by_id[1].modified_duration == pytest.approx(2.8, abs=0.1)
-    assert by_id[2].modified_duration is None  # BOT: no coupons
-    assert by_id[3].modified_duration is None  # less than 365 days to maturity (cell K16)
 
 
 @pytest.mark.parametrize("sort, direction", [("name", "asc"), ("maturity", "up")])
@@ -248,3 +236,19 @@ def test_bot_with_costs_goes_through_the_calculator() -> None:
 
     assert costed.net_gain is not None
     assert costed.net_yield == pytest.approx(indicative_net - 0.2, abs=0.05)  # about 0.20%/year of stamp duty
+
+
+def test_coupon_fee_from_the_bank_profile() -> None:
+    bond = _btp(1, date(2030, 1, 1))
+    svc = _service_with_mocks([bond], [_quote(1, 99.0)])
+    svc._bank_svc.resolve_commission.return_value = None
+    svc._bank_svc.get_profile.return_value = MagicMock(coupon_fee=2.0)
+    # The manual fee is ignored when a profile is chosen
+    costs = PurchaseCosts(face_value=10000, bank_profile_id=4, coupon_fee=9.0)
+    with_profile = svc.list_entries(today=TODAY, costs=costs)[0]
+    manual = _entries(PurchaseCosts(face_value=10000, coupon_fee=2.0), [bond], {1: 99.0})[1]
+    free = _entries(PurchaseCosts(face_value=10000), [bond], {1: 99.0})[1]
+
+    # 7 semi-annual coupons from 01/07/2026 (excluded) to 01/01/2030
+    assert with_profile.net_gain == pytest.approx(manual.net_gain)
+    assert manual.net_gain == pytest.approx(free.net_gain - 2.0 * 7)

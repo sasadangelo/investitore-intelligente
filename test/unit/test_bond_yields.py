@@ -9,6 +9,7 @@ Pure functions — no DB, no Flask request context, no I/O.
 Covers:
   - btp_yields: yield-to-maturity from BondCalculatorService (coupons, issue discount, capital gain)
   - bond_yields: dispatch to the BTP vs BOT formula by bond_type
+  - bond_modified_duration: duration shown on the bond detail page (cell K16 rule)
 """
 
 from datetime import date
@@ -18,7 +19,7 @@ import pytest
 from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
 from intelligent_investor.services.bond_calculator_service import BondCalculatorService
-from intelligent_investor.services.bond_yields import bond_yields, bot_yields, btp_yields
+from intelligent_investor.services.bond_yields import bond_modified_duration, bond_yields, bot_yields, btp_yields
 from intelligent_investor.utils.yield_calculator import YieldCalculator
 
 TODAY = date(2026, 7, 1)
@@ -156,3 +157,19 @@ def test_dispatch_btp_uses_btp_formula() -> None:
 def test_dispatch_bot_uses_bot_formula() -> None:
     bond = _make_bot()
     assert bond_yields(bond, last_price=98.0, today=TODAY) == bot_yields(bond, last_price=98.0, today=TODAY)
+
+
+# ------------------------------------------------------------------
+# bond_modified_duration
+# ------------------------------------------------------------------
+
+
+def test_bond_modified_duration_for_coupon_bonds_only() -> None:
+    btp = _make_btp(maturity_date=date(2029, 7, 1), coupon_frequency=2, nominal_rate=3.35)
+    short_btp = _make_btp(maturity_date=date(2027, 6, 1), coupon_frequency=2)
+    bot = btp.model_copy(update={"bond_type": "BOT", "nominal_rate": 0.0, "coupon_frequency": 0})
+
+    assert bond_modified_duration(btp, 3.2, TODAY) == pytest.approx(2.8, abs=0.1)
+    assert bond_modified_duration(bot, 2.0, TODAY) is None  # no coupons
+    assert bond_modified_duration(short_btp, 3.0, TODAY) is None  # less than 365 days to maturity (cell K16)
+    assert bond_modified_duration(btp, None, TODAY) is None  # no quote, no yield

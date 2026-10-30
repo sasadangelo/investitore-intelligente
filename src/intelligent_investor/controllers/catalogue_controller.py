@@ -50,6 +50,7 @@ COST_PARAMS: tuple[str, ...] = (
     "commission_max",
     "commission_fixed",
     "portfolio_losses",
+    "coupon_fee",
 )
 
 # Quote sources refreshed by "Aggiorna Quotazioni", in order: (sync source, log label)
@@ -121,6 +122,7 @@ def _read_costs(args: MultiDict[str, str]) -> tuple[PurchaseCosts | None, dict[s
         commission_max=number("commission_max") if "commission_max" in params else None,
         commission_fixed=number("commission_fixed"),
         portfolio_losses=number("portfolio_losses"),
+        coupon_fee=number("coupon_fee"),
     )
     return costs, params
 

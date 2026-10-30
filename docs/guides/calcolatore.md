@@ -18,6 +18,8 @@ In questo modo conoscerai l'esatta misura dei soldi che metterai in tasca al rim
 
 > Lo stesso calcolatore funziona anche per i **BTP**: rateo, prezzo tel quel e piano cedole sono spiegati nella guida **[Calcolatore BTP](/guides/calcolatore-btp)**.
 
+> 💡 Accanto a ogni campo del form e a ogni riga del risultato trovi l'icona **ⓘ**: cliccala per sapere cosa significa quel valore e da dove arriva. Questa guida spiega gli stessi campi più nel dettaglio.
+
 Se intendi vendere il titolo prima della scadenza, il calcolatore ti permette di simulare l'operazione con i dati di vendita per verificare la convenienza della transazione prima di eseguirla.
 
 ## Parametri di input
@@ -31,7 +33,8 @@ Per simulare un acquisto, o un acquisto seguito da una vendita anticipata, è ne
     - **Asta (mercato primario)**: acquisto direttamente all'emissione tramite la propria banca. Il prezzo
       viene precompilato con il prezzo di emissione.
     - **MOT (mercato secondario)**: acquisto sul mercato dopo l'emissione. Il prezzo viene precompilato
-      con l'ultima quotazione disponibile.
+      con l'ultima quotazione disponibile. È il mercato proposto all'apertura del calcolatore, perché i
+      titoli in archivio sono già emessi.
 - **Data acquisto**: per l'asta corrisponde alla data di regolamento o emissione; per il MOT si imposta automaticamente a oggi.
 - **Prezzo acquisto**: prezzo in euro per ogni 100€ di valore nominale (es. `98.50` = 98,50€ ogni 100€). Per l'asta è il prezzo di emissione; per il MOT è l'ultimo prezzo.
 - **Lotto nominale**: importo nominale in euro (multiplo di 100, es. `5000` = 50 BOT da €100 ciascuno).
@@ -41,6 +44,8 @@ Per simulare un acquisto, o un acquisto seguito da una vendita anticipata, è ne
 Seleziona la tua banca dal menu **Profilo bancario** per precompilare automaticamente i campi commissione in base al mercato selezionato e alla durata del BOT.
 
 Se la tua banca non è presente, seleziona *"Inserisci commissioni manualmente"* e compila i campi.
+
+Nel profilo di una banca (menu **Banche**) puoi salvare anche la **spesa fissa per cedola**, che alcune banche trattengono a ogni stacco di un BTP: scegliendo il profilo si compila da sola nel calcolatore e nei parametri avanzati del catalogo. Per i BOT non conta, perché non hanno cedole.
 
 ### Commissioni acquisto
 
@@ -64,6 +69,8 @@ Se non si attiva, il calcolo assume il rimborso a scadenza a 100.
   di bollo applicati durante il possesso.
 - **Minusvalenze (€)**: eventuali perdite pregresse nel portafoglio che possono compensare il capital gain
   (solo per acquisti sul MOT).
+- **Spesa per cedola (€)**: solo per i BTP, la cifra fissa che la banca trattiene a ogni cedola incassata
+  (vedi **[Calcolatore BTP](/guides/calcolatore-btp)**).
 
 ## Nota sull'acquisto in Asta per BOT già emessi
 

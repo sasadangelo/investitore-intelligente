@@ -123,6 +123,19 @@ def test_update_profile_changes_fields(service: BankProfileService) -> None:
     assert result.notes == "aggiornato"
 
 
+def test_profile_saves_coupon_fee_and_info_url(service: BankProfileService) -> None:
+    saved = service.create_profile(
+        profile=_make_profile().model_copy(update={"coupon_fee": 2.5, "info_url": "https://example.com/fi.pdf"})
+    )
+    assert saved.coupon_fee == 2.5
+    assert saved.info_url == "https://example.com/fi.pdf"
+
+    result = service.update_profile(saved.model_copy(update={"coupon_fee": 1.0, "info_url": None}))
+    assert result.coupon_fee == 1.0
+    assert result.info_url is None
+    assert service.profiles_with_commissions_json()[0]["coupon_fee"] == 1.0
+
+
 def test_update_profile_without_id_raises(service: BankProfileService) -> None:
     with pytest.raises(ValueError):
         service.update_profile(_make_profile())
