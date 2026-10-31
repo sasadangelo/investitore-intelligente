@@ -1,33 +1,35 @@
 ---
-title: Catalogo BOT
-description: Come leggere il catalogo, i rendimenti lordo e netto, e come navigare alle schede dettaglio.
+title: Catalogo Obbligazioni
+description: Come leggere il catalogo di BOT e BTP, i rendimenti lordo e netto, i parametri avanzati e le schede dei titoli.
 icon: bi-list-ul
 order: 3
 ---
 
-# Catalogo BOT
+# Catalogo Obbligazioni
 
-Il **Catalogo BOT** è il punto di partenza dell'applicazione. Mostra tutti i Buoni Ordinari del Tesoro (BOT) attualmente in circolazione con le relative quotazioni di mercato aggiornate.
+Il **[Catalogo Obbligazioni](/catalogue/)** è il punto di partenza del sito: mostra tutti i **BOT** e i **BTP a tasso fisso** in circolazione, con l'ultimo prezzo di mercato e il rendimento che otterresti comprandoli oggi e tenendoli fino alla scadenza.
 
-## Cos'è un BOT
+Se non sai ancora cosa sono, parti da **[Cos'è un'obbligazione](/guides/cosa-e-un-obbligazione)**, che porta alle guide di BOT e BTP.
 
-Se non conosci ancora i BOT, leggi la guida completa: **[Cos'è un BOT](/guides/cosa-e-un-bot)**
+## Filtrare e ordinare
+
+- Il menu **Tipo** mostra tutti i titoli, solo i BOT o solo i BTP.
+- Cliccando sulle intestazioni **Data Scadenza**, **Rendimento lordo** e **Rendimento netto** ordini la tabella; un secondo clic inverte l'ordine. Di default i titoli sono in ordine di scadenza, dal più vicino.
 
 ## Come leggere la tabella
 
 | Colonna | Significato |
 |---|---|
-| **Nome** | Identificativo del BOT (es. `Bot Zc Nov26 A Eur` = zero-coupon, scadenza novembre 2026, annuale) |
-| **ISIN** | Codice identificativo internazionale |
-| **Data Emissione** | Data di emissione del BOT |
-| **Data Scadenza** | Data di rimborso a 100 |
-| **Ultimo Prezzo** | Ultima quotazione disponibile sul mercato secondario (MOT) |
-| **Rendimento lordo** | Rendimento annualizzato lordo calcolato sull'ultimo prezzo |
-| **Rendimento netto** | Rendimento annualizzato netto (al netto del 12,5% sul disaggio) |
+| **Nome** | Il nome con cui il titolo è quotato: `Bot Zc Nov26 A Eur` è un BOT (zero coupon) che scade a novembre 2026; `Btp Fx 3.35% Jul29 Eur` è un BTP a tasso fisso con cedola del 3,35% annuo che scade a luglio 2029. Cliccalo per la scheda del titolo |
+| **ISIN** | Il codice che identifica il titolo: serve per comprarlo dalla tua banca |
+| **Data Emissione** | Data in cui il titolo è stato emesso |
+| **Data Scadenza** | Data in cui lo Stato lo rimborsa a 100: è il tuo orizzonte se lo tieni fino alla fine |
+| **Ultimo Prezzo** | Ultima quotazione sul MOT ogni 100 € di nominale, senza rateo |
+| **Rendimento lordo** | Rendimento annuo composto comprando oggi all'ultimo prezzo e tenendo il titolo a scadenza, prima delle tasse; per un BTP comprende le cedole |
+| **Rendimento netto** | Lo stesso dopo le tasse al 12,5% (scarto di emissione, cedole, plusvalenza) |
 | **Guadagno netto** | Solo con i [Parametri avanzati](#parametri-avanzati-i-rendimenti-con-i-tuoi-costi): quanto incassi in euro, al netto di tutto, sul lotto indicato |
-| **Azioni** | Pulsanti per accedere al dettaglio o al calcolatore |
 
-> ℹ️ I rendimenti mostrati sono **annualizzati** e calcolati al netto dell'imposta sostitutiva sul disaggio (12,5%), ma **non includono** commissioni bancarie, imposta di bollo, né altre variabili coe le commissioni sul capital gain. Per il calcolo esatto con tutte le imposte e commissioni della tua banca, usa il **[Calcolatore BOT](/calculator/)**.
+> ℹ️ I rendimenti mostrati sono **annui** e già al netto delle tasse, ma di default **non includono** le commissioni della tua banca né l'imposta di bollo. Per vederli con i tuoi costi usa i **Parametri avanzati** (qui sotto) o il **[Calcolatore Obbligazioni](/calculator/)**.
 
 > 💡 Accanto al nome di ogni colonna trovi l'icona **ⓘ**: cliccala per una spiegazione breve di quel valore.
 
@@ -63,15 +65,19 @@ Anche lo **zainetto** può cambiare la scelta: se hai minusvalenze da recuperare
 
 ## Aggiornamento quotazioni
 
-Le quotazioni vengono sincronizzate da **Teleborsa** tramite il pulsante **Aggiorna quotazioni**
-nella barra in alto. L'aggiornamento è asincrono: una barra di progresso mostra l'avanzamento
-in tempo reale.
+Le quotazioni vengono scaricate da **Teleborsa** con il pulsante **Aggiorna Quotazioni**, in alto
+nella pagina del catalogo: una barra mostra l'avanzamento, prima dei BOT e poi dei BTP. I prezzi
+non si aggiornano da soli: quelli che vedi sono dell'ultimo aggiornamento.
+
+## Gestire l'archivio dei titoli
+
+Il pulsante **Gestisci**, accanto ad **Aggiorna Quotazioni**, apre l'elenco completo dei titoli in archivio, scaduti compresi: da lì puoi aggiungere un titolo a mano, correggerne i dati (per esempio la data della prima cedola di un BTP) o cancellarlo. Di solito non serve: l'aggiornamento delle quotazioni aggiunge da solo i titoli nuovi e ignora quelli scaduti.
 
 ## Dalla lista al dettaglio
 
-Cliccando su un BOT nella tabella si accede alla **scheda dettaglio**, che mostra:
+Cliccando sul nome di un titolo si apre la sua **scheda**, che mostra:
 
 - Tutti i dati dell'emissione (ISIN, date, prezzi, aliquota)
 - Rendimento lordo e netto calcolati
-- Duration modificata (solo BTP con più di un anno alla scadenza): di quanto scende il prezzo se i tassi salgono dell'1%, spiegata in **[Cos'è un BTP](/guides/cosa-e-un-btp)**
-- Pulsante **Calcolatore** per simulare l'acquisto di quel BOT con le proprie commissioni bancarie
+- Duration modificata (solo BTP con più di un anno alla scadenza): una stima di quanto scenderebbe il prezzo se i tassi di mercato salissero dell'1% (e di quanto salirebbe se scendessero); conta solo se pensi di vendere prima della scadenza: **[cos'è la duration](/guides/cosa-e-un-btp#quanto-si-muove-il-prezzo-la-duration)**
+- Pulsante **Calcolatore** per simulare l'acquisto di quel titolo con le commissioni della tua banca

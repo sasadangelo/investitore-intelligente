@@ -1,29 +1,17 @@
 ---
-title: Calcolatore BTP
-description: Come simulare acquisto, cedole, vendita o rimborso di un BTP a tasso fisso, con rateo, scarto di emissione, commissioni e tasse.
-icon: bi-calculator
-order: 4
+title: "Esempi di calcolo: BTP"
+description: Un BTP comprato sul MOT, tenuto fino alla scadenza o venduto prima, riga per riga con i numeri del calcolatore.
+icon: bi-journal-check
+order: 21
 ---
 
-# Calcolatore BTP
+# Esempi di calcolo: BTP
 
-Il **[Calcolatore](/calculator/)** è lo stesso per BOT e BTP: scegli un BTP dal gruppo **BTP** del menu **Titolo** e il calcolatore aggiunge alle sezioni che conosci dal BOT quelle tipiche di un titolo con cedola: **rateo**, **prezzo tel quel** e **piano cedole**.
+Ogni esempio mostra il risultato del **[Calcolatore Obbligazioni](/calculator/)** riga per riga, con il calcolo che c'è dietro. Cosa significa ogni riga è spiegato nella guida **[Calcolatore Obbligazioni](/guides/calcolatore)**, alla sezione **[Righe in più per un BTP](/guides/calcolatore#righe-in-piu-per-un-btp)**; i concetti (rateo, scarto di emissione, duration) in **[Cos'è un BTP](/guides/cosa-e-un-btp)**.
 
-Questa guida dà per buono quello che trovi in due altre guide:
+[TOC]
 
-- **[Calcolatore BOT](/guides/calcolatore)**: i campi del form (mercato, data, prezzo, lotto, profilo bancario, commissioni, vendita anticipata, bollo, minusvalenze) funzionano allo stesso modo;
-- **[Cos'è un BTP](/guides/cosa-e-un-btp)**: cos'è il rateo, cosa sono il corso secco e il tel quel, come è tassato lo scarto di emissione.
-
-## Cosa cambia rispetto al BOT
-
-- **Il prezzo che inserisci è il corso secco**, quello che vedi quotato sul MOT. Il rateo lo calcola il calcolatore dalla data di regolamento.
-- **Le cedole**: il calcolatore elenca tutte quelle che incassi tra l'acquisto e la vendita (o la scadenza), lorde e nette.
-- **Lo scarto di emissione va al contrario rispetto al BOT.** Nel BOT l'imposta sul disaggio si paga all'acquisto e una parte torna indietro se vendi prima. Nel BTP all'acquisto ricevi un **credito** sullo scarto già maturato, e alla vendita o a scadenza la banca **trattiene** l'imposta sullo scarto maturato fino a quel giorno. Per questo nel risultato le righe hanno nomi diversi e importi negativi.
-- **Il rateo è tassato**: credito del 12,5% sul rateo che paghi al venditore, trattenuta del 12,5% su quello che ti paga il compratore se vendi prima della scadenza.
-- **Spesa per cedola**: alcune banche trattengono una cifra fissa a ogni stacco di cedola, qualunque sia l'importo. Se la tua lo fa, inseriscila nel campo **Spesa per cedola (€)** (o salvala nel profilo della banca, così si compila da sola): il piano cedole mostra le cedole nette già al netto di questa spesa, e guadagno e rendimenti netti ne tengono conto. Non si paga se vendi prima di uno stacco, perché in quel caso incassi il rateo, non una cedola. Su un lotto piccolo pesa molto: 2 € su una cedola da 16,75 € (1.000 € di un BTP al 3,35%) sono il 12%.
-- **Asta**: se compri un BTP in asta, inserisci come data la data di regolamento e come prezzo quello di aggiudicazione. Nelle riaperture (asta di un BTP già in circolazione) paghi anche il rateo maturato dall'ultimo stacco, che il calcolatore aggiunge come per il MOT. Controlla che le commissioni precompilate dal profilo bancario corrispondano a quelle che la tua banca applica ai BTP in asta.
-
-## Esempio completo: acquisto sul MOT e rimborso a scadenza
+## BTP 3,35% Lug 2029 comprato sul MOT e tenuto a scadenza
 
 **BTP 3,35% Lug 2029** (ISIN IT0005584849): emesso il 1° marzo 2024 a **99,82**, scade il 1° luglio 2029, paga una cedola semestrale di **1,675 €** ogni 1° gennaio e 1° luglio per ogni 100 € di nominale.
 
@@ -33,7 +21,7 @@ Questa guida dà per buono quello che trovi in due altre guide:
 | Data regolamento | 29/10/2026 (ordine del 27/10 + 2 giorni lavorativi) |
 | Prezzo acquisto (corso secco) | 99,18 |
 | Lotto nominale | 10.000 € (100 BTP) |
-| Commissioni acquisto | 0,10% — minimo 5 € — nessun massimo, nessun costo fisso |
+| Commissioni acquisto | 0,10% — minimo 5 € — nessun massimo, nessuna quota fissa |
 | Vendita anticipata | No (rimborso a scadenza) |
 | Bollo | Trimestrale |
 | Minusvalenze | 0 € |
@@ -56,7 +44,7 @@ Questa guida dà per buono quello che trovi in due altre guide:
 | Credito imposta sul rateo | −109,24 × 12,5% | −13,65 € |
 | **Totale pagato** | 10.027,24 + 9,92 − 1,12 − 13,65 | **10.022,38 €** |
 
-Il rateo non è un costo: lo recuperi con la prima cedola, che incassi per intero. I due crediti sono importi che la banca ti riconosce subito e che pareggiano le tasse che pagherai sulla cedola intera e sullo scarto alla scadenza.
+I due crediti sono importi che la banca ti riconosce subito e che pareggiano le tasse che pagherai sulla cedola intera e sullo scarto alla scadenza.
 
 ### Piano cedole
 
@@ -85,7 +73,7 @@ La cedola netta è la lorda meno il 12,5%: 167,50 × 87,5% = 146,56 €. L'ultim
 | Riduzione imponibile TdS (48,08%) | 63,06 × 48,08% | 30,32 € |
 | **Imposta sulla plusvalenza (12,5%)** | 63,06 × 12,5% | **7,88 €** |
 
-Prezzo di carico e di scarico non contengono lo scarto maturato, che è già tassato a parte: così ogni euro di guadagno sul prezzo è tassato una sola volta. Il prezzo di carico comprende anche le commissioni, quindi riducono la plusvalenza. Il rateo non entra mai nel capital gain. Il perché di ogni riga è spiegato in **[Approfondimenti sul Calcolatore BOT](/guides/calcolatore-approfondimenti)**: le formule sono le stesse.
+Prezzo di carico e di scarico non contengono lo scarto maturato, che è già tassato a parte: così ogni euro di guadagno sul prezzo è tassato una sola volta. Il rateo non entra mai nel capital gain.
 
 ### Rimborso a scadenza
 
@@ -122,13 +110,11 @@ A scadenza non c'è rateo: l'ultima cedola è pagata per intero ed è nel piano 
 | Netto (pre-bollo) | 3,162% | 3,207% |
 | **Netto** | **2,958%** | **2,995%** |
 
-Sotto i rendimenti trovi la **duration modificata**, qui **2,51**: se i tassi di mercato salgono dell'1% il prezzo del BTP scende di circa il 2,51%. Conta se pensi di vendere prima della scadenza; è spiegata in **[Cos'è un BTP](/guides/cosa-e-un-btp)**. Il calcolatore la mostra solo se tieni il titolo almeno un anno, e la calcola sempre fino alla scadenza, anche se simuli una vendita anticipata.
+La **duration modificata** è **2,51**: se i tassi di mercato salgono dell'1%, il prezzo del BTP scende di circa il 2,51%. Nel rendimento netto composto il bollo (54,77 €) è diviso sui tre anni solari 2027, 2028 e 2029.
 
-Il **rendimento composto** è il tasso interno di rendimento (TIR) calcolato su tutti i flussi con le loro date: il pagamento iniziale, ogni cedola e il rimborso. Per un BTP è il numero da guardare, perché tiene conto che le cedole arrivano prima della scadenza. Nel rendimento netto il bollo si toglie un anno alla volta, come lo paghi davvero: qui 54,77 € divisi sui tre anni solari 2027, 2028 e 2029. Il **rendimento semplice** divide il guadagno per il capitale e per gli anni, senza badare a quando arrivano i soldi.
+## Lo stesso BTP, venduto prima della scadenza
 
-## Stesso BTP, venduto prima della scadenza
-
-Stessi dati di acquisto, ma attivi **Vendita anticipata**: vendi con regolamento il 15/12/2027 a un corso secco di **100,50**, con le stesse commissioni dell'acquisto. Il piano cedole si ferma alle due cedole del 2027 (293,13 € nette) e la sezione di vendita si allunga:
+Stessi dati di acquisto, ma con **Vendita anticipata**: vendi con regolamento il 15/12/2027 a un corso secco di **100,50**, con le stesse commissioni dell'acquisto. Il piano cedole si ferma alle due cedole del 2027 (293,13 € nette) e la sezione di vendita si allunga:
 
 | Riga | Come si calcola | Valore |
 |---|---|---|
@@ -149,13 +135,6 @@ Vendendo prima dello stacco del 1° gennaio non incassi quella cedola, ma il com
 
 Se nel risultato il piano cedole è vuoto vuol dire che vendi prima del primo stacco: l'unico interesse che incassi è il rateo pagato dal compratore.
 
-## Consigli pratici
-
-- **Guarda il rendimento netto composto**, non la cedola: un BTP con cedola alta comprato sopra 100 può rendere meno di uno con cedola bassa comprato sotto 100.
-- **Confronta più date di vendita** per lo stesso titolo: il rateo e lo scarto si spostano dal compratore al venditore giorno per giorno, il prezzo di mercato no.
-- **Per lotti piccoli** il minimo di commissione e il bollo pesano di più: prova a cambiare il lotto nominale per vedere da dove in su la spesa diventa trascurabile.
-- **Inserisci le minusvalenze** che hai nello zainetto: riducono l'imposta sulla plusvalenza, come per i BOT.
-
 ---
 
-Torna a **[Cos'è un BTP](/guides/cosa-e-un-btp)** per i concetti, o a **[Sei Nuovo? Inizia Qui](/guides/inizia-qui)** per i passi pratici.
+L'esempio con un BOT è in **[Esempi di calcolo: BOT](/guides/esempi-bot)**.

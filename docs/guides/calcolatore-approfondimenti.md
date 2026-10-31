@@ -1,13 +1,13 @@
 ---
-title: Approfondimenti sul Calcolatore BOT
-description: Spiegazione dettagliata dei calcoli interni del Calcolatore BOT — disaggio, capital gain e imposta sui TdS.
+title: Approfondimenti sul Calcolatore
+description: Spiegazione dettagliata dei calcoli interni del Calcolatore — disaggio, capital gain e imposta sui TdS.
 icon: bi-journal-text
-order: 7
+order: 8
 ---
 
-# Approfondimenti sul Calcolatore BOT
+# Approfondimenti sul Calcolatore
 
-Questa pagina approfondisce i calcoli che il **[Calcolatore BOT](/guides/calcolatore)** esegue internamente e che nella guida principale sono stati volutamente semplificati. Se sei curioso di sapere come vengono prodotti certi numeri, sei nel posto giusto.
+Questa pagina approfondisce i calcoli che il **[Calcolatore Obbligazioni](/guides/calcolatore)** esegue internamente e che nella guida principale sono stati volutamente semplificati. Se sei curioso di sapere come vengono prodotti certi numeri, sei nel posto giusto.
 
 ## Prezzo Teorico Acquisto e Vendita
 
@@ -73,9 +73,9 @@ Prezzo teorico alla data di vendita = Prezzo emissione + (100 − Prezzo emissio
 Imposta rimborsata = (100 − Prezzo teorico vendita) × 12,5% × Quantità
 ```
 
-## Capital Gain (solo acquisti MOT)
+## Capital Gain
 
-Quando si acquista un BOT sul mercato secondario (MOT), il calcolatore determina sempre se si è realizzata una plusvalenza o una minusvalenza — sia in caso di **vendita anticipata** sia in caso di **rimborso a scadenza**. Questa sezione spiega ciascun campo della sezione **Capital Gain**.
+Per ogni acquisto, in asta o sul MOT, il calcolatore determina se si è realizzata una plusvalenza o una minusvalenza, sia in caso di **vendita anticipata** sia in caso di **rimborso a scadenza**. In asta il prezzo teorico di acquisto coincide con il prezzo di emissione, ma le commissioni entrano comunque nel prezzo di carico: un BOT comprato in asta e tenuto a scadenza chiude con una minusvalenza pari alle commissioni, che va nello zainetto. Questa sezione spiega ciascun campo della sezione **Capital Gain**.
 
 ### Prezzo di carico
 

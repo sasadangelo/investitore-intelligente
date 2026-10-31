@@ -16,6 +16,8 @@ Un'**obbligazione** è un prestito. Invece di chiedere soldi a una banca, uno St
 
 In inglese si chiama *bond*: è la stessa cosa.
 
+> Sai già cos'è un'obbligazione? Vai diretto alle guide dei titoli che trovi sul sito: **[Cos'è un BOT](/guides/cosa-e-un-bot)** e **[Cos'è un BTP](/guides/cosa-e-un-btp)**.
+
 ## Le parole che incontrerai
 
 | Parola | Cosa significa |
@@ -31,9 +33,11 @@ In inglese si chiama *bond*: è la stessa cosa.
 ## Due modi di pagare l'interesse
 
 - **Con le cedole**: ricevi un pagamento a intervalli regolari e a scadenza riavrai 100. È il caso dei **BTP**.
-- **Con lo sconto**: non ricevi nulla fino alla scadenza, ma compri a meno di 100. È il caso dei **BOT**.
+- **Con lo sconto**: non ricevi nulla fino alla scadenza, ma compri a meno di 100 e il guadagno è la differenza. È il caso dei **BOT**.
 
-In entrambi i casi quello che conta è il **rendimento**: un titolo con una cedola alta comprato a un prezzo alto può rendere meno di uno con una cedola bassa comprato a sconto.
+I due modi si possono sommare. Anche un titolo con cedola può essere emesso un po' sotto 100: molti BTP lo sono (il BTP 2,5% Dic 2032, per esempio, è stato emesso a 97,66) e la differenza, lo **scarto di emissione**, è un guadagno in più oltre alle cedole. E sul mercato qualsiasi titolo si può comprare sotto o sopra 100, a seconda di come si sono mossi i tassi: sotto 100 la differenza la guadagni, sopra la perdi.
+
+Per questo quello che conta è il **rendimento**, che mette insieme cedole e prezzo: un titolo con una cedola alta comprato a un prezzo alto può rendere meno di uno con una cedola bassa comprato a sconto.
 
 ## Perché il prezzo si muove
 
@@ -76,6 +80,11 @@ Tramite la tua banca o il tuo broker online, in due modi:
 
 Il sito per ora gestisce **BOT** e **BTP a tasso fisso**: sono le due famiglie più semplici e più usate da chi investe la propria liquidità. Le altre arriveranno un po' alla volta.
 
+<div class="row g-3 my-4">
+<div class="col-md-6"><a href="/guides/cosa-e-un-bot" class="card h-100 shadow-sm border-primary text-decoration-none text-reset"><div class="card-body"><h3 class="h5 text-primary mb-2"><i class="bi bi-hourglass-split me-2"></i>Cos'è un BOT</h3><p class="mb-2">Il titolo di Stato fino a <strong>12 mesi</strong>, senza cedole: compri sotto 100 e a scadenza ti rimborsano 100.</p><span class="small text-primary fw-semibold">Leggi la guida <i class="bi bi-arrow-right"></i></span></div></a></div>
+<div class="col-md-6"><a href="/guides/cosa-e-un-btp" class="card h-100 shadow-sm border-success text-decoration-none text-reset"><div class="card-body"><h3 class="h5 text-success mb-2"><i class="bi bi-calendar2-check me-2"></i>Cos'è un BTP</h3><p class="mb-2">Il titolo di Stato a <strong>tasso fisso</strong> per orizzonti di anni: una cedola ogni sei mesi e 100 a scadenza.</p><span class="small text-success fw-semibold">Leggi la guida <i class="bi bi-arrow-right"></i></span></div></a></div>
+</div>
+
 ### Quale scegliere?
 
 Dipende soprattutto da **quando ti servono i soldi**:
@@ -85,4 +94,4 @@ Dipende soprattutto da **quando ti servono i soldi**:
 
 ---
 
-Prosegui con **[Cos'è un BOT](/guides/cosa-e-un-bot)** o **[Cos'è un BTP](/guides/cosa-e-un-btp)**, oppure torna a **[Sei Nuovo? Inizia Qui](/guides/inizia-qui)** per i passi pratici.
+Scelta la famiglia, leggi la sua guida qui sopra, oppure torna a **[Sei Nuovo? Inizia Qui](/guides/inizia-qui)** per i passi pratici.

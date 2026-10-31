@@ -3,11 +3,11 @@ title: Cos'è un BOT
 description: "Il titolo di Stato a breve termine: disaggio, tasse e rendimento lordo e netto."
 icon: bi-info-circle
 order: 1
+# Not in the guide index: reached from the cards in "Cos'è un'obbligazione"
+listed: false
 ---
 
 # Cos'è un BOT
-
-Se non sai ancora cos'è un'obbligazione o quali tipi di titoli di Stato esistono, parti dalla guida **[Cos'è un'obbligazione](/guides/cosa-e-un-obbligazione)**: qui diamo per buone quelle basi.
 
 ## Cos'è un BOT
 
@@ -34,7 +34,7 @@ Il rendimento lordo è il guadagno prima delle imposte, espresso come tasso annu
 rendimento_lordo = (100 / prezzo_acquisto) ^ (365 / giorni_a_scadenza) − 1
 ```
 
-Questo è il rendimento che trovi nel [Catalogo BOT](/catalogue/) e nelle quotazioni di mercato.
+Questo è il rendimento che trovi nel [Catalogo Obbligazioni](/catalogue/) e nelle quotazioni di mercato.
 
 ### L'imposta sostitutiva agevolata al 12,5%
 
@@ -52,9 +52,9 @@ imposta_disaggio = disaggio_lordo × 12,5%
 rendimento_netto = ((100 − imposta_disaggio) / prezzo_acquisto) ^ (365 / giorni_a_scadenza) − 1
 ```
 
-> Il **Catalogo BOT** mostra sia il rendimento lordo che quello netto per ogni BOT in circolazione. È pensato per una scelta rapida: ti permette di confrontare i BOT disponibili in base all'orizzonte temporale e al rendimento indicativo.
+> Il **Catalogo Obbligazioni** mostra sia il rendimento lordo che quello netto per ogni BOT in circolazione. È pensato per una scelta rapida: ti permette di confrontare i BOT disponibili in base all'orizzonte temporale e al rendimento indicativo.
 >
-> Per un calcolo più preciso — che includa le commissioni bancarie, l'imposta di bollo e tutti i dettagli del tuo investimento — usa il **Calcolatore BOT** con il BOT che hai scelto dal catalogo.
+> Per un calcolo più preciso — che includa le commissioni bancarie, l'imposta di bollo e tutti i dettagli del tuo investimento — usa il **Calcolatore Obbligazioni** con il BOT che hai scelto dal catalogo.
 
 ## Per orizzonti più lunghi: i BTP
 

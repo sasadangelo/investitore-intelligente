@@ -2,7 +2,7 @@
 title: Previsione Prezzo Emissione BOT
 description: Come viene stimata la previsione del prezzo di emissione e il rendimento atteso per i BOT non ancora emessi.
 icon: bi-graph-up-arrow
-order: 6
+order: 7
 ---
 
 # Previsione Prezzo Emissione BOT
@@ -94,5 +94,5 @@ per decidere se conviene:
 - **Partecipare all'asta** (prezzo stimato, nessuna commissione percentuale per alcune banche)
 - **Acquistare sul MOT** (prezzo noto, ma commissioni di negoziazione più alte)
 
-Usa il [Calcolatore BOT](/guides/calcolatore) per simulare entrambi gli scenari con le
+Usa il [Calcolatore Obbligazioni](/guides/calcolatore) per simulare entrambi gli scenari con le
 commissioni della tua banca.

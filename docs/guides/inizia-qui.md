@@ -17,7 +17,7 @@ Oggi il sito tratta i **titoli di Stato italiani**: i **BOT**, per orizzonti fin
 |---|---|
 | [Catalogo Obbligazioni](/catalogue/) | Tutti i BOT e i BTP in circolazione, con ultimo prezzo e rendimento lordo e netto |
 | [Calcolatore Obbligazioni](/calculator/) | Simula acquisto, cedole e vendita o rimborso con le commissioni della tua banca |
-| [Calendario Aste](/auctions/) | Le date delle prossime aste dei BOT |
+| [Calendario Aste](/auctions/) | Le date delle prossime aste di BOT e BTP, con i BTP offerti |
 | [Previsioni](/auctions/forecast) | Il prezzo stimato dei BOT alla prossima asta |
 | [Guide](/guides/) | Approfondimenti su ogni funzionalità del sito |
 
@@ -59,7 +59,7 @@ La scelta dipende da due cose, in quest'ordine.
 - **Fino a un anno**: guarda i **BOT**. Ce ne sono con scadenze sparse lungo tutto l'anno: scegli quello che scade quando ti serviranno i soldi.
 - **Più di un anno**: guarda i **BTP**. In cambio di un orizzonte più lungo, di solito rendono di più e pagano una cedola ogni sei mesi.
 
-In generale, **più lontana è la scadenza, più alto è il rendimento**, ma anche più si muove il prezzo se ti servono i soldi prima: un BTP a 30 anni può perdere il 15–20% del suo valore se i tassi salgono di un punto. Se tieni il titolo fino alla scadenza questo non ti tocca, perché lo Stato rimborsa sempre 100. La spiegazione è in **[Cos'è un BTP](/guides/cosa-e-un-btp)**, alla voce duration.
+In generale, **più lontana è la scadenza, più alto è il rendimento**, ma anche più si muove il prezzo se ti servono i soldi prima: un BTP a 30 anni può perdere il 15–20% del suo valore se i tassi salgono di un punto. Se tieni il titolo fino alla scadenza questo non ti tocca, perché lo Stato rimborsa sempre 100. Questa sensibilità ai tassi si chiama **duration**: la spiegazione è in **[Cos'è un BTP](/guides/cosa-e-un-btp#quanto-si-muove-il-prezzo-la-duration)**.
 
 **2. Quanto rende?** Tra i titoli con la scadenza che fa per te, confronta la colonna **Rendimento netto**: è quello che ti resta dopo le tasse.
 
@@ -100,9 +100,9 @@ Il risultato ti mostra:
 - per un BTP, il **piano cedole**: data e importo netto di ogni cedola che incasserai;
 - il **totale ricevuto** al rimborso o alla vendita, dopo commissioni e tasse;
 - il **guadagno netto in euro** e il **rendimento netto** annuo, bollo compreso;
-- per un BTP tenuto almeno un anno, la **duration**: di quanto scende il prezzo se i tassi salgono dell'1%.
+- per un BTP tenuto almeno un anno, la **duration**: una stima di quanto scenderebbe il prezzo del BTP se i tassi di mercato salissero dell'1% (e di quanto salirebbe se scendessero). Conta solo se pensi di venderlo prima della scadenza: **[cos'è la duration](/guides/cosa-e-un-btp#quanto-si-muove-il-prezzo-la-duration)**.
 
-> 📖 **[Guida al Calcolatore per i BOT](/guides/calcolatore)** · **[Guida al Calcolatore per i BTP](/guides/calcolatore-btp)**, con un esempio completo su un BTP reale
+> 📖 **[Leggi la guida → Calcolatore Obbligazioni](/guides/calcolatore)** · esempi completi: **[BOT](/guides/esempi-bot)** e **[BTP](/guides/esempi-btp)**
 
 ---
 
@@ -128,11 +128,13 @@ Per simularlo:
 
 > ⚠️ È una **stima**: il prezzo reale dell'asta può essere diverso, e con lui il guadagno.
 
-> 📖 **[Leggi la guida → Previsione Prezzo Emissione BOT](/guides/forecast)** · **[Leggi la guida → Calendario Aste BOT](/guides/calendario)**
+> 📖 **[Leggi la guida → Previsione Prezzo Emissione BOT](/guides/forecast)** · **[Leggi la guida → Calendario Aste](/guides/calendario)**
 
 ### BTP: le riaperture
 
-Il Tesoro emette spesso nuove tranche di BTP **già in circolazione** (le riaperture): in quel caso il BTP è già nel catalogo. Nel calcolatore sceglilo, seleziona il mercato **Asta** e inserisci la data di regolamento dell'asta e il prezzo di aggiudicazione. Come sul MOT, paghi anche il rateo della cedola in corso. Le Previsioni oggi stimano solo i prezzi dei BOT.
+Il Tesoro emette spesso nuove tranche di BTP **già in circolazione** (le riaperture): in quel caso il BTP è già nel catalogo. Il **[Calendario Aste](/auctions/)** mostra le aste BTP (medio-lungo e BTP Short) e, dopo il comunicato del Tesoro, i titoli offerti: accanto a una riapertura l'icona del calcolatore apre il **[Calcolatore Obbligazioni](/calculator/)** già impostato su quel BTP, mercato **Asta** e data di regolamento dell'asta. Ti resta da inserire il prezzo di aggiudicazione (prima dell'asta, l'ultimo prezzo di mercato è una buona stima). Come sul MOT, paghi anche il rateo della cedola in corso. Le Previsioni oggi stimano solo i prezzi dei BOT.
+
+> 📖 **[Leggi la guida → Calendario Aste](/guides/calendario)**
 
 ---
 
@@ -161,7 +163,7 @@ Dal punto di vista fiscale fa tutto la banca, come **sostituto d'imposta**: non 
                               oppure
    ┌─ In asta ────────────────────────────────────────────────────────┐
    │  BOT: prezzo stimato dalle Previsioni, BOT inserito a mano        │
-   │  BTP (riapertura): titolo dal catalogo, prezzo di aggiudicazione  │
+   │  BTP (riapertura): dal Calendario Aste, prezzo di aggiudicazione  │
    │  Dai l'ordine alla banca entro la data di presentazione           │
    └───────────────────────────────────────────────────────────────────┘
 
