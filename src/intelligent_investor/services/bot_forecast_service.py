@@ -116,7 +116,8 @@ class BotForecastService:
         """
         today = date.today()
         auctions = sorted(
-            [a for a in self._auction_svc.list_all() if a.settlement_date >= today],
+            # BTP auctions are in the same calendar but the forecast covers BOTs only
+            [a for a in self._auction_svc.list_all() if a.settlement_date >= today and a.session == "bot"],
             key=lambda a: a.auction_date,
         )
         bonds = self._bond_svc.list_all()

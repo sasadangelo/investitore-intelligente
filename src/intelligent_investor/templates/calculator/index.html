@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% from "_help.html" import info %}
 
-{% block title %}Calcolatore BOT e BTP — Investitore Intelligente{% endblock %}
+{% block title %}Calcolatore Obbligazioni — Investitore Intelligente{% endblock %}
 
 {% block extra_head %}
 <style>
@@ -9,6 +9,7 @@
   .result-value   { font-weight: 600; }
   .mot-only       { display: none; }
   .manual-only    { display: none; }
+  .calc-section   { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #6c757d; margin-bottom: .75rem; }
 </style>
 {% endblock %}
 
@@ -21,7 +22,7 @@
 {%- endmacro %}
 <div class="d-flex justify-content-between align-items-center mb-4">
   <h2 class="mb-0">
-    <i class="bi bi-calculator me-2 text-primary"></i>Calcolatore BOT e BTP
+    <i class="bi bi-calculator me-2 text-primary"></i>Calcolatore Obbligazioni
   </h2>
   <a href="{{ url_for('catalogue.index') }}" class="btn btn-outline-secondary">
     <i class="bi bi-arrow-left me-1"></i>Torna al catalogo
@@ -65,6 +66,7 @@
               {% set q = quotes.get(b.id) %}
               <option value="{{ b.id }}"
                 data-isin="{{ b.isin }}"
+                data-bond-type="{{ b.bond_type }}"
                 data-coupon="{{ coupon_label(b) }}"
                 data-issue-date="{{ b.issue_date }}"
                 data-issue-date-display="{{ b.issue_date.strftime('%d/%m/%Y') }}"
@@ -143,6 +145,7 @@
             {% endif %}
           </div>
 
+          <h6 class="calc-section"><i class="bi bi-cart me-1"></i>Acquisto</h6>
           <!-- Purchase venue -->
           <div class="mb-3">
             <label class="form-label fw-semibold">Mercato di acquisto {{ info('venue') }} <span class="text-danger">*</span></label>
@@ -190,6 +193,36 @@
             <div class="form-text">Multiplo di 100 (es. 5000 = 50 titoli da 100 € nominali)</div>
           </div>
 
+          <hr class="my-3">
+
+          <h6 class="calc-section"><i class="bi bi-arrow-left-right me-1"></i>Vendita anticipata (facoltativa)</h6>
+          <!-- Sale section -->
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" id="has_sale" name="has_sale"
+                   {% if tx and tx.get('has_sale') == 'on' %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="has_sale">Vendo prima della scadenza {{ info('has_sale') }}</label>
+          </div>
+          <div id="sale_fields" style="display:none">
+            <div class="row g-2 mb-3">
+              <div class="col-sm-6">
+                <label for="sale_date" class="form-label fw-semibold">Data vendita {{ info('sale_date') }}</label>
+                <input type="date" class="form-control" id="sale_date" name="sale_date"
+                       value="{{ fval('sale_date', '') }}">
+              </div>
+              <div class="col-sm-6">
+                <label for="sale_price" class="form-label fw-semibold">Prezzo vendita {{ info('sale_price') }}</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" id="sale_price" name="sale_price"
+                         value="{{ fval('sale_price', '') }}" step="0.0001" min="0">
+                  <span class="input-group-text">%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <h6 class="calc-section"><i class="bi bi-bank me-1"></i>Banca e tasse</h6>
           <!-- Bank profile preset -->
           {# Hidden field so the selected bank profile id survives POST round-trips #}
           <input type="hidden" id="bank_profile_id_saved" name="bank_profile_id"
@@ -220,7 +253,7 @@
               </label>
               <div class="input-group input-group-sm">
                 <input type="number" class="form-control" id="buy_commission_pct" name="buy_commission_pct"
-                       value="{{ fval('buy_commission_pct', 0.15) }}" step="0.01" min="0">
+                       value="{{ fval('buy_commission_pct', 0.15) }}" step="any" min="0">
                 <span class="input-group-text">%</span>
               </div>
             </div>
@@ -244,31 +277,8 @@
             </div>
           </div>
 
-          <hr class="my-3">
-
-          <!-- Sale section -->
-          <div class="form-check form-switch mb-3">
-            <input class="form-check-input" type="checkbox" id="has_sale" name="has_sale"
-                   {% if tx and tx.get('has_sale') == 'on' %}checked{% endif %}>
-            <label class="form-check-label fw-semibold" for="has_sale">Vendita anticipata {{ info('has_sale') }}</label>
-          </div>
-
-          <div id="sale_fields" style="display:none">
-            <div class="row g-2 mb-3">
-              <div class="col-sm-6">
-                <label for="sale_date" class="form-label fw-semibold">Data vendita {{ info('sale_date') }}</label>
-                <input type="date" class="form-control" id="sale_date" name="sale_date"
-                       value="{{ fval('sale_date', '') }}">
-              </div>
-              <div class="col-sm-6">
-                <label for="sale_price" class="form-label fw-semibold">Prezzo vendita {{ info('sale_price') }}</label>
-                <div class="input-group">
-                  <input type="number" class="form-control" id="sale_price" name="sale_price"
-                         value="{{ fval('sale_price', '') }}" step="0.0001" min="0">
-                  <span class="input-group-text">%</span>
-                </div>
-              </div>
-            </div>
+          <!-- Sell commissions: shown only with an early sale -->
+          <div id="sale_commissions" style="display:none">
             <div class="mb-1">
               <span class="form-label fw-semibold">Commissioni vendita {{ info('sell_commissions') }}</span>
             </div>
@@ -278,7 +288,7 @@
                 <div class="input-group input-group-sm">
                   <input type="number" class="form-control" id="sell_commission_pct"
                          name="sell_commission_pct" value="{{ fval('sell_commission_pct', 0) }}"
-                         step="0.01" min="0">
+                         step="any" min="0">
                   <span class="input-group-text">%</span>
                 </div>
               </div>
@@ -304,8 +314,6 @@
               </div>
             </div>
           </div>
-
-          <hr class="my-3">
 
           <!-- Bank parameters -->
           <div class="row g-2 mb-3">
@@ -442,7 +450,7 @@
     </div>
     {% endif %}
 
-    {# ---- Capital Gain (MOT only) ---- #}
+    {# ---- Capital Gain (every purchase, auction included) ---- #}
     {% if result.capital_gain %}
     <div class="card shadow-sm mb-3">
       <div class="card-header section-header"><i class="bi bi-graph-up me-1"></i>Capital Gain</div>
@@ -674,32 +682,45 @@
   // -----------------------------------------------------------------------
 
   /**
-   * Return the best-matching commission row for the given profile id, venue
-   * and bond duration in days, or null if none found.
+   * Return the best-matching commission row for the given profile id, venue,
+   * bond duration in days and bond type ('BOT' / 'BTP'), or null if none found.
    *
-   * Lookup order:
-   *   1. Row whose days_min/days_max range contains 'days' (for the given venue)
-   *   2. Row with days_min==null && days_max==null (the 'any' fallback)
+   * Rows for the bond's own type are tried first, then the rows for every bond ('all').
+   * Within each group:
+   *   1. Row whose days_min/days_max range contains 'days'
+   *   2. Row with days_min==null && days_max==null
    */
-  function resolveCommission(profileId, venue, days) {
+  function resolveCommission(profileId, venue, days, bondType) {
     const profile = BANK_PROFILES.find(p => p.id === profileId);
     if (!profile) return null;
 
     const venueRows = profile.commissions.filter(c => c.venue === venue);
-
-    // Step 1: exact days-range match
-    if (days !== null) {
-      for (const row of venueRows) {
-        if (row.days_min !== null || row.days_max !== null) {
-          const aboveMin = (row.days_min === null || days >= row.days_min);
-          const belowMax = (row.days_max === null || days <= row.days_max);
-          if (aboveMin && belowMax) return row;
+    const groups = [venueRows.filter(c => bondType && c.bond_type === bondType),
+                    venueRows.filter(c => c.bond_type === 'all')];
+    for (const group of groups) {
+      // Step 1: exact days-range match
+      if (days !== null) {
+        for (const row of group) {
+          if (row.days_min !== null || row.days_max !== null) {
+            const aboveMin = (row.days_min === null || days >= row.days_min);
+            const belowMax = (row.days_max === null || days <= row.days_max);
+            if (aboveMin && belowMax) return row;
+          }
         }
       }
+      // Step 2: row without a days range
+      const anyRow = group.find(r => r.days_min === null && r.days_max === null);
+      if (anyRow) return anyRow;
     }
+    return null;
+  }
 
-    // Step 2: fallback to "any" row (both bounds null)
-    return venueRows.find(r => r.days_min === null && r.days_max === null) || null;
+  /** Type of the selected bond ('BOT' / 'BTP'); a manually entered bond is always a BOT. */
+  function selectedBondType() {
+    const sel = document.getElementById('bond_id');
+    const opt = sel.options[sel.selectedIndex];
+    if (!opt.value) return null;
+    return opt.value === 'manual' ? 'BOT' : (opt.dataset.bondType || null);
   }
 
   /**
@@ -734,7 +755,8 @@
    * Passing null clears the fields.
    */
   function applyBuyCommission(row) {
-    document.getElementById('buy_commission_pct').value   = row ? parseFloat(row.commission_pct).toFixed(2)   : '';
+    // The percentage keeps all its decimals (e.g. 0,215%): rounding it to 2 would change the commission
+    document.getElementById('buy_commission_pct').value   = row ? String(parseFloat(row.commission_pct))       : '';
     document.getElementById('buy_commission_min').value   = row ? parseFloat(row.commission_min).toFixed(2)   : '';
     document.getElementById('buy_commission_max').value   = (row && row.commission_max !== null) ? parseFloat(row.commission_max).toFixed(2) : '';
     document.getElementById('buy_commission_fixed').value = row ? parseFloat(row.commission_fixed).toFixed(2) : '';
@@ -747,8 +769,9 @@
     if (isNaN(profileId)) return;
     const venue = document.getElementById('venue_mot').checked ? 'mot' : 'asta';
     const days  = selectedBondDays();
-    const row   = resolveCommission(profileId, venue, days);
-    applyBuyCommission(row);
+    const row   = resolveCommission(profileId, venue, days, selectedBondType());
+    // No row for this bond (e.g. a BTP at auction, usually free): show an explicit zero commission
+    applyBuyCommission(row || {commission_pct: 0, commission_min: 0, commission_max: null, commission_fixed: 0});
     // The fee per coupon belongs to the profile, not to a commission row
     const profile = BANK_PROFILES.find(p => p.id === profileId);
     document.getElementById('coupon_fee').value = profile ? parseFloat(profile.coupon_fee || 0).toFixed(2) : '0';
@@ -885,6 +908,7 @@
   function toggleSale() {
     const isChecked = document.getElementById('has_sale').checked;
     document.getElementById('sale_fields').style.display = isChecked ? '' : 'none';
+    document.getElementById('sale_commissions').style.display = isChecked ? '' : 'none';
     
     // Clear sale fields when unchecking to prevent stale data from being sent
     if (!isChecked) {

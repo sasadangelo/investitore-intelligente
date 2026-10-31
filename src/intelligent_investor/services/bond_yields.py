@@ -14,7 +14,7 @@ and the calculator page agree.
 from datetime import date
 
 from intelligent_investor.dtos import BondDTO
-from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
+from intelligent_investor.dtos.bond_transaction import BondTransactionDTO, BuyTransactionDTO
 from intelligent_investor.services.bond_calculator_service import BondCalculatorService, calc_modified_duration
 from intelligent_investor.utils.day_count import conventions_for
 from intelligent_investor.utils.yield_calculator import YieldCalculator
@@ -83,10 +83,7 @@ def btp_yields(bond: BondDTO, last_price: float, today: date) -> tuple[float | N
 
     transaction = BondTransactionDTO(
         bond_id=bond.id or 0,
-        purchase_venue="mot",
-        purchase_date=today,
-        purchase_price=last_price,
-        face_value=100.0,
+        buy=BuyTransactionDTO(venue="mot", date=today, price=last_price, face_value=100.0),
     )
     try:
         summary = _calculator.calculate(transaction, bond).summary
@@ -147,7 +144,8 @@ def bond_yields_with_costs(
         bond: The bond to evaluate
         last_price: Last MOT clean price per 100 of nominal
         today: Valuation date, used as purchase date
-        transaction: Lot, commissions and portfolio losses; venue, dates and price are overridden
+        transaction: Lot, commissions and account; venue, date and price of the purchase are
+            overridden and any sale is dropped
 
     Returns:
         (gross_pct, net_pct, net_gain_eur), or (None, None, None) if not computable
@@ -157,11 +155,8 @@ def bond_yields_with_costs(
     tx = transaction.model_copy(
         update={
             "bond_id": bond.id or 0,
-            "purchase_venue": "mot",
-            "purchase_date": today,
-            "purchase_price": last_price,
-            "sale_date": None,
-            "sale_price": None,
+            "buy": transaction.buy.model_copy(update={"venue": "mot", "date": today, "price": last_price}),
+            "sell": None,
         }
     )
     try:

@@ -13,6 +13,8 @@ Each guide file must start with a YAML frontmatter block:
     description: Breve descrizione mostrata nell'indice
     icon: bi-book          # Bootstrap Icons class (optional, default: bi-book)
     order: 1               # Sort order in the index (optional, default: 99)
+    listed: false          # Leave it out of the guide index (optional, default: true);
+                           # the guide is still reachable from the links to it
     ---
 
     # Corpo della guida in Markdown...
@@ -38,6 +40,8 @@ _MD_EXTENSIONS = [
     "sane_lists",   # better list handling
     "nl2br",        # newlines → <br>
 ]
+# A [TOC] lists only the main sections (## headings), not every sub-heading
+_MD_EXTENSION_CONFIGS = {"toc": {"toc_depth": "2-2"}}
 
 
 @dataclass
@@ -48,6 +52,7 @@ class GuideMetadata:
     description: str
     icon: str = "bi-book"
     order: int = 99
+    listed: bool = True  # False: reachable by link only, not shown in the guide index
 
 
 @dataclass
@@ -66,12 +71,13 @@ class GuideService:
     """
 
     def list_all(self) -> list[GuideMetadata]:
-        """Return metadata for all guides, sorted by `order` then `title`."""
+        """Return metadata for the guides shown in the index (listed), sorted by `order` then `title`."""
         guides = []
         for path in _GUIDES_DIR.glob("*.md"):
             try:
                 meta = self._parse_frontmatter(path)
-                guides.append(meta)
+                if meta.listed:
+                    guides.append(meta)
             except Exception as exc:
                 logger.warning(f"Skipping {path.name}: {exc}")
         return sorted(guides, key=lambda g: (g.order, g.title))
@@ -84,7 +90,7 @@ class GuideService:
         try:
             meta = self._parse_frontmatter(path)
             body = self._body(path)
-            html = markdown.markdown(body, extensions=_MD_EXTENSIONS)
+            html = markdown.markdown(body, extensions=_MD_EXTENSIONS, extension_configs=_MD_EXTENSION_CONFIGS)
             return Guide(meta=meta, html_content=html)
         except Exception as exc:
             logger.error(f"Failed to render guide {slug}: {exc}")
@@ -113,6 +119,7 @@ class GuideService:
             description=fm.get("description", ""),
             icon=fm.get("icon", "bi-book"),
             order=int(fm.get("order", 99)),
+            listed=fm.get("listed", True) is not False,
         )
 
     @staticmethod

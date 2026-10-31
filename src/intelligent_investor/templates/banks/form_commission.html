@@ -17,9 +17,18 @@
         {%- endmacro %}
 
         <form action="{{ action }}" method="post" novalidate>
-          <!-- Venue + Duration -->
+          <!-- Venue + bond type + Duration -->
           <div class="row g-3 mb-3">
-            <div class="col-sm-6">
+            <div class="col-sm-4">
+              <label for="bond_type" class="form-label fw-semibold">Titoli</label>
+              <select class="form-select" id="bond_type" name="bond_type">
+                {% for val, lbl in bond_type_labels.items() %}
+                <option value="{{ val }}" {% if fval('bond_type', 'all') == val %}selected{% endif %}>{{ lbl }}</option>
+                {% endfor %}
+              </select>
+              <div class="form-text">Una riga per BOT o BTP vince su una riga "Tutti".</div>
+            </div>
+            <div class="col-sm-4">
               <label for="venue" class="form-label fw-semibold">Venue <span class="text-danger">*</span></label>
               <select class="form-select" id="venue" name="venue" required>
                 {% for val, lbl in venue_labels.items() %}
@@ -27,7 +36,7 @@
                 {% endfor %}
               </select>
             </div>
-            <div class="col-sm-6">
+            <div class="col-sm-4">
               <label for="duration_type" class="form-label fw-semibold">Durata</label>
               <select class="form-select" id="duration_type" name="duration_type">
                 {% for val, lbl in duration_labels.items() %}

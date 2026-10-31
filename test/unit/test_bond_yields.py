@@ -17,7 +17,7 @@ from datetime import date
 import pytest
 
 from intelligent_investor.dtos.bond import BondDTO
-from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
+from intelligent_investor.dtos.bond_transaction import BondTransactionDTO, BuyTransactionDTO
 from intelligent_investor.services.bond_calculator_service import BondCalculatorService
 from intelligent_investor.services.bond_yields import bond_modified_duration, bond_yields, bot_yields, btp_yields
 from intelligent_investor.utils.yield_calculator import YieldCalculator
@@ -84,7 +84,9 @@ def test_btp_yields_match_the_calculator() -> None:
     gross, net = btp_yields(bond, last_price=98.0, today=TODAY)
 
     result = BondCalculatorService().calculate(
-        BondTransactionDTO(bond_id=0, purchase_venue="mot", purchase_date=TODAY, purchase_price=98.0, face_value=100.0),
+        BondTransactionDTO(
+            bond_id=0, buy=BuyTransactionDTO(venue="mot", date=TODAY, price=98.0, face_value=100.0)
+        ),
         bond,
     )
     assert gross == pytest.approx(result.summary.compound_gross_yield)

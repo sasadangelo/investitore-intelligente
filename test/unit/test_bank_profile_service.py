@@ -289,3 +289,64 @@ def test_resolve_commission_days_none_matches_any_row(service: BankProfileServic
     result = service.resolve_commission(profile.id, "asta", None)
     assert result is not None
     assert result.commission_pct == 0.07
+
+
+# ------------------------------------------------------------------
+# resolve_commission by bond type
+# ------------------------------------------------------------------
+
+
+def _profile_with_bot_and_btp_rows(service: BankProfileService) -> int:
+    """Auction: BOT legal caps by duration plus free BTP subscriptions; MOT: one row for every bond."""
+    profile = service.create_profile(_make_profile())
+    assert profile.id is not None
+    for days_min, days_max, pct in ((None, 80, 0.03), (81, 140, 0.05), (141, 270, 0.10), (271, None, 0.15)):
+        service.create_commission(
+            _make_commission(profile.id, venue="asta", days_min=days_min, days_max=days_max, commission_pct=pct)
+            .model_copy(update={"bond_type": "BOT"})
+        )
+    service.create_commission(
+        _make_commission(profile.id, venue="asta", commission_pct=0.0).model_copy(update={"bond_type": "BTP"})
+    )
+    service.create_commission(_make_commission(profile.id, venue="mot", commission_pct=0.25))
+    return profile.id
+
+
+def test_resolve_commission_uses_the_row_of_the_bond_type(service: BankProfileService) -> None:
+    profile_id = _profile_with_bot_and_btp_rows(service)
+
+    bot = service.resolve_commission(profile_id, "asta", 365, "BOT")
+    btp = service.resolve_commission(profile_id, "asta", 1825, "BTP")
+
+    assert bot is not None and bot.commission_pct == 0.15
+    assert btp is not None and btp.commission_pct == 0.0 and btp.bond_type == "BTP"
+
+
+def test_resolve_commission_falls_back_to_the_rows_for_every_bond(service: BankProfileService) -> None:
+    profile_id = _profile_with_bot_and_btp_rows(service)
+
+    for bond_type in ("BOT", "BTP", None):
+        row = service.resolve_commission(profile_id, "mot", 365, bond_type)
+        assert row is not None and row.commission_pct == 0.25 and row.bond_type == "all"
+
+
+def test_resolve_commission_ignores_rows_of_another_bond_type(service: BankProfileService) -> None:
+    # Only BOT rows at auction: a BTP gets no commission row rather than the BOT caps
+    profile = service.create_profile(_make_profile())
+    assert profile.id is not None
+    service.create_commission(
+        _make_commission(profile.id, venue="asta", commission_pct=0.15).model_copy(update={"bond_type": "BOT"})
+    )
+
+    assert service.resolve_commission(profile.id, "asta", 1825, "BTP") is None
+
+
+def test_commission_bond_type_defaults_to_all_and_is_saved(service: BankProfileService) -> None:
+    profile = service.create_profile(_make_profile())
+    assert profile.id is not None
+    saved = service.create_commission(_make_commission(profile.id))
+    assert saved.bond_type == "all"
+
+    updated = service.update_commission(saved.model_copy(update={"bond_type": "BTP"}))
+    assert updated.bond_type == "BTP"
+    assert service.profiles_with_commissions_json()[0]["commissions"][0]["bond_type"] == "BTP"

@@ -10,6 +10,7 @@ bond, or a BOT purchase on a manually entered one, and renders the net result
 computed by BondCalculatorService. Coupon bonds also show rateo, tel quel price
 and coupon plan.
 """
+import contextlib
 import json
 from datetime import date
 
@@ -170,7 +171,8 @@ def _form_to_transaction(form: ImmutableMultiDict[str, str], bond_id: int) -> Bo
     buy_max_raw = form.get("buy_commission_max", "").strip()
     sell_max_raw = form.get("sell_commission_max", "").strip()
 
-    return BondTransactionDTO(
+    # The form is flat (purchase, sale and account fields side by side), as from_flat expects
+    return BondTransactionDTO.from_flat(
         bond_id=bond_id,
         purchase_venue=form["purchase_venue"],  # type: ignore[arg-type]  # value checked by the DTO
         purchase_date=_parse_date(form["purchase_date"]),
@@ -204,13 +206,21 @@ def index() -> str:
 
     An optional ?bond_id=<id> pre-selects a specific bond (used when coming from
     the bond detail page); otherwise the bond with the nearest maturity is used.
+    With ?venue=asta&purchase_date=YYYY-MM-DD (from a BTP reopening in the auction
+    calendar) the form starts on the auction with its settlement date.
 
     Returns:
         The rendered calculator page, without a result
     """
     preselect_id: int | None = request.args.get("bond_id", type=int)
     if preselect_id is not None:
-        return _render(bond=_service.get_by_id(preselect_id))
+        prefill: dict[str, str] = {}
+        if request.args.get("venue") == "asta":
+            prefill["purchase_venue"] = "asta"
+            # No valid date: the form keeps its default
+            with contextlib.suppress(ValueError):
+                prefill["purchase_date"] = _parse_date(request.args.get("purchase_date", "")).isoformat()
+        return _render(bond=_service.get_by_id(preselect_id), tx=ImmutableMultiDict(prefill) if prefill else None)
     today: date = date.today()
     active = [b for b in _service.list_all() if b.maturity_date >= today]
     return _render(bond=min(active, key=lambda b: b.maturity_date) if active else None)

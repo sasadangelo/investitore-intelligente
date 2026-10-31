@@ -99,7 +99,7 @@ def _make_bond(raw: dict) -> BondDTO:
 
 
 def _make_transaction(raw: dict) -> BondTransactionDTO:
-    return BondTransactionDTO(
+    return BondTransactionDTO.from_flat(
         bond_id=raw.get("bond_id", 0),
         purchase_venue=raw["purchase_venue"],
         purchase_date=date.fromisoformat(raw["purchase_date"]),
@@ -156,38 +156,35 @@ def test_bot_calculator(test_id: str, case: dict) -> None:
         f"[{test_id}] purchase.total_paid"
 
     # -- capital_gain --------------------------------------------------------
-    exp_cg = expected.get("capital_gain")
-    if exp_cg is None:
-        assert result.capital_gain is None, f"[{test_id}] capital_gain should be None for asta"
-    else:
-        assert result.capital_gain is not None, f"[{test_id}] capital_gain should not be None for mot"
-        assert result.capital_gain.theoretical_purchase_price == pytest.approx(
-            exp_cg["theoretical_purchase_price"], abs=_ABS_PRICE
-        ), f"[{test_id}] capital_gain.theoretical_purchase_price"
-        assert result.capital_gain.theoretical_sale_price == pytest.approx(
-            exp_cg["theoretical_sale_price"], abs=_ABS_PRICE
-        ), f"[{test_id}] capital_gain.theoretical_sale_price"
-        assert result.capital_gain.load_price == pytest.approx(
-            exp_cg["load_price"], abs=_ABS_PRICE
-        ), f"[{test_id}] capital_gain.load_price"
-        assert result.capital_gain.unload_price == pytest.approx(
-            exp_cg["unload_price"], abs=_ABS_PRICE
-        ), f"[{test_id}] capital_gain.unload_price"
-        assert result.capital_gain.unit_gain_loss == pytest.approx(
-            exp_cg["unit_gain_loss"], abs=_ABS_PRICE
-        ), f"[{test_id}] capital_gain.unit_gain_loss"
-        assert result.capital_gain.total_gain_loss == pytest.approx(
-            exp_cg["total_gain_loss"], abs=_ABS_EURO
-        ), f"[{test_id}] capital_gain.total_gain_loss"
-        assert result.capital_gain.tds_reduction == pytest.approx(
-            exp_cg["tds_reduction"], abs=_ABS_EURO
-        ), f"[{test_id}] capital_gain.tds_reduction"
-        assert result.capital_gain.capital_gain_tax == pytest.approx(
-            exp_cg["capital_gain_tax"], abs=_ABS_EURO
-        ), f"[{test_id}] capital_gain.capital_gain_tax"
-        assert result.capital_gain.remaining_loss == pytest.approx(
-            exp_cg["remaining_loss"], abs=_ABS_EURO
-        ), f"[{test_id}] capital_gain.remaining_loss"
+    # Present for every purchase, auction included (cells K26/K38 do not look at the venue)
+    exp_cg = expected["capital_gain"]
+    assert result.capital_gain.theoretical_purchase_price == pytest.approx(
+        exp_cg["theoretical_purchase_price"], abs=_ABS_PRICE
+    ), f"[{test_id}] capital_gain.theoretical_purchase_price"
+    assert result.capital_gain.theoretical_sale_price == pytest.approx(
+        exp_cg["theoretical_sale_price"], abs=_ABS_PRICE
+    ), f"[{test_id}] capital_gain.theoretical_sale_price"
+    assert result.capital_gain.load_price == pytest.approx(
+        exp_cg["load_price"], abs=_ABS_PRICE
+    ), f"[{test_id}] capital_gain.load_price"
+    assert result.capital_gain.unload_price == pytest.approx(
+        exp_cg["unload_price"], abs=_ABS_PRICE
+    ), f"[{test_id}] capital_gain.unload_price"
+    assert result.capital_gain.unit_gain_loss == pytest.approx(
+        exp_cg["unit_gain_loss"], abs=_ABS_PRICE
+    ), f"[{test_id}] capital_gain.unit_gain_loss"
+    assert result.capital_gain.total_gain_loss == pytest.approx(
+        exp_cg["total_gain_loss"], abs=_ABS_EURO
+    ), f"[{test_id}] capital_gain.total_gain_loss"
+    assert result.capital_gain.tds_reduction == pytest.approx(
+        exp_cg["tds_reduction"], abs=_ABS_EURO
+    ), f"[{test_id}] capital_gain.tds_reduction"
+    assert result.capital_gain.capital_gain_tax == pytest.approx(
+        exp_cg["capital_gain_tax"], abs=_ABS_EURO
+    ), f"[{test_id}] capital_gain.capital_gain_tax"
+    assert result.capital_gain.remaining_loss == pytest.approx(
+        exp_cg["remaining_loss"], abs=_ABS_EURO
+    ), f"[{test_id}] capital_gain.remaining_loss"
 
     # -- sale ----------------------------------------------------------------
     exp_s = expected["sale"]
@@ -254,7 +251,7 @@ _BOT = BondDTO(
 
 def _bot_held_to_maturity(portfolio_losses: float = 0.0, **sell_commissions: float) -> BondTransactionDTO:
     # Bought below the theoretical price (~98.75 on 2025-12-12): capital gain at maturity
-    return BondTransactionDTO(
+    return BondTransactionDTO.from_flat(
         bond_id=0,
         purchase_venue="mot",
         purchase_date=date(2025, 12, 12),

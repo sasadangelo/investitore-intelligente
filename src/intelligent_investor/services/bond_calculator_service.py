@@ -27,7 +27,12 @@ from intelligent_investor.dtos.bond_calculation_result import (
     StampDutyResultDTO,
     SummaryResultDTO,
 )
-from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
+from intelligent_investor.dtos.bond_transaction import (
+    BondTransactionDTO,
+    BuyTransactionDTO,
+    SellTransactionDTO,
+    TransactionDTO,
+)
 from intelligent_investor.utils.coupon_schedule import CouponPayment, CouponSchedule, next_coupon_date
 from intelligent_investor.utils.day_count import BondConventions, DayCountConvention, conventions_for
 from intelligent_investor.utils.duration import modified_duration
@@ -75,14 +80,15 @@ class BondCalculatorService:
             first_coupon_date=bond.first_coupon_date,
         )
 
+        buy, sell, account = transaction.buy, transaction.sell, transaction.account
         # Effective sale date and price (maturity when no early sale)
-        sale_date: date = transaction.sale_date or bond.maturity_date
-        sale_price: float = transaction.sale_price or bond.redemption_price
+        sale_date: date = sell.date if sell else bond.maturity_date
+        sale_price: float = sell.price if sell else bond.redemption_price
 
         tax_rate: float = bond.tax_rate / 100
-        purchase = self._calc_purchase(transaction, coupon_schedule, discount_rule, quantity, tax_rate)
-        coupon_plan = self._calc_coupon_plan(coupon_schedule, transaction.purchase_date, sale_date)
-        sale = self._calc_sale(transaction, coupon_schedule, discount_rule, quantity, tax_rate, sale_date, sale_price)
+        purchase = self._calc_purchase(buy, coupon_schedule, discount_rule, quantity, tax_rate)
+        coupon_plan = self._calc_coupon_plan(coupon_schedule, buy.date, sale_date)
+        sale = self._calc_sale(sell, coupon_schedule, discount_rule, quantity, tax_rate, sale_date, sale_price)
         capital_gain = self._calc_capital_gain(
             tx=transaction,
             bond=bond,
@@ -94,17 +100,17 @@ class BondCalculatorService:
             sale=sale,
         )
         # Capital gain tax is withheld by the broker at sale/redemption
-        if capital_gain and capital_gain.capital_gain_tax > 0:
+        if capital_gain.capital_gain_tax > 0:
             sale = sale.model_copy(update={"total_received": sale.total_received - capital_gain.capital_gain_tax})
         stamp_duty = calc_stamp_duty(
             duty_base_amount=purchase.dry_amount,
-            face_value=transaction.face_value,
-            purchase_date=transaction.purchase_date,
+            face_value=buy.face_value,
+            purchase_date=buy.date,
             sale_date=sale_date,
-            stamp_duty_period=transaction.stamp_duty_period,
+            stamp_duty_period=account.stamp_duty_period,
         )
         summary = self._calc_summary(
-            coupon_fee=transaction.coupon_fee,
+            coupon_fee=account.coupon_fee,
             bond=bond,
             conventions=conventions,
             purchase=purchase,
@@ -112,7 +118,7 @@ class BondCalculatorService:
             sale=sale,
             stamp_duty=stamp_duty,
             quantity=quantity,
-            purchase_date=transaction.purchase_date,
+            purchase_date=buy.date,
             sale_date=sale_date,
         )
 
@@ -120,7 +126,7 @@ class BondCalculatorService:
             quantity=quantity,
             purchase=purchase,
             coupon_plan=coupon_plan,
-            coupon_fee=transaction.coupon_fee,
+            coupon_fee=account.coupon_fee,
             sale=sale,
             capital_gain=capital_gain,
             stamp_duty=stamp_duty,
@@ -133,7 +139,7 @@ class BondCalculatorService:
 
     def _calc_purchase(
         self,
-        tx: BondTransactionDTO,
+        buy: BuyTransactionDTO,
         coupon_schedule: CouponSchedule,
         discount_rule: "_DiscountRule",
         quantity: float,
@@ -141,27 +147,22 @@ class BondCalculatorService:
     ) -> PurchaseResultDTO:
         # Accrued interest (rateo) owed to the seller for the running coupon period
         # (always 0.0 for a BOT, which has no coupons)
-        accrued_interest: float = coupon_schedule.accrued_interest(tx.purchase_date)
-        dirty_price: float = tx.purchase_price + accrued_interest
-        dry_amount: float = tx.purchase_price * quantity
+        accrued_interest: float = coupon_schedule.accrued_interest(buy.date)
+        dirty_price: float = buy.price + accrued_interest
+        dry_amount: float = buy.price * quantity
         dirty_amount: float = dirty_price * quantity
 
         # Commission base: face value at auction, clean amount on the market (cell A26)
-        commission: float = calc_commission(
-            base=tx.face_value if tx.purchase_venue == "asta" else dry_amount,
-            pct=tx.buy_commission_pct,
-            min_fee=tx.buy_commission_min,
-            max_fee=tx.buy_commission_max,
-        )
-        fixed_commission: float = tx.buy_commission_fixed
-        unit_discount, discount_tax = discount_rule.purchase_withholding(tx.purchase_date, quantity)
+        commission: float = trade_commission(buy, dry_amount)
+        fixed_commission: float = buy.commission_fixed
+        unit_discount, discount_tax = discount_rule.purchase_withholding(buy.date, quantity)
         # The next coupon is taxed in full, including the part paid to the seller as
         # rateo: the buyer gets a 12.5% credit on that part (cell K28)
         accrued_interest_tax: float = -accrued_interest * quantity * tax_rate
         total_paid: float = dirty_amount + commission + fixed_commission + discount_tax + accrued_interest_tax
 
         return PurchaseResultDTO(
-            clean_price=tx.purchase_price,
+            clean_price=buy.price,
             accrued_interest=accrued_interest,
             dirty_price=dirty_price,
             dry_amount=dry_amount,
@@ -188,7 +189,7 @@ class BondCalculatorService:
 
     def _calc_sale(
         self,
-        tx: BondTransactionDTO,
+        sell: SellTransactionDTO | None,
         coupon_schedule: CouponSchedule,
         discount_rule: "_DiscountRule",
         quantity: float,
@@ -203,20 +204,15 @@ class BondCalculatorService:
         dry_amount: float = sale_price * quantity
         dirty_amount: float = dirty_price * quantity
 
-        if tx.holds_to_maturity:
+        if sell is None:
             # Redemption is not a sale: no sale commission applies (cell K36)
             commission: float = 0.0
             fixed_commission: float = 0.0
         else:
             # Commission base: clean amount (cell A44)
-            commission = calc_commission(
-                base=dry_amount,
-                pct=tx.sell_commission_pct,
-                min_fee=tx.sell_commission_min,
-                max_fee=tx.sell_commission_max,
-            )
-            fixed_commission = tx.sell_commission_fixed
-        unit_discount, discount_tax = discount_rule.sale_withholding(sale_date, tx.holds_to_maturity, quantity)
+            commission = trade_commission(sell, dry_amount)
+            fixed_commission = sell.commission_fixed
+        unit_discount, discount_tax = discount_rule.sale_withholding(sale_date, sell is None, quantity)
         # The rateo cashed from the buyer is coupon income: 12.5% is withheld on it (cell K40)
         accrued_interest_tax: float = -accrued_interest * quantity * tax_rate
         total_received: float = dirty_amount - commission - fixed_commission + discount_tax + accrued_interest_tax
@@ -245,21 +241,21 @@ class BondCalculatorService:
         sale_price: float,
         purchase: PurchaseResultDTO,
         sale: SaleResultDTO,
-    ) -> CapitalGainResultDTO | None:
-        # A BOT bought at auction pays exactly the theoretical price: no capital gain
-        if bond.bond_type == "BOT" and tx.purchase_venue == "asta":
-            return None
-
-        theoretical_purchase_price: float = discount_rule.theoretical_price(tx.purchase_date)
+    ) -> CapitalGainResultDTO:
+        # Computed for every purchase, auction included, as the sheet does (K26/K38 do not
+        # look at the venue): at auction the theoretical price is the issue price, but the
+        # commissions still raise the load price, and an early sale can be above or below
+        # the theoretical price
+        theoretical_purchase_price: float = discount_rule.theoretical_price(tx.buy.date)
         theoretical_sale_price: float = discount_rule.theoretical_price(sale_date, at_maturity=tx.holds_to_maturity)
 
         # Load/unload prices: clean price with commissions spread per unit, minus the
         # discount accrued so far — that part of the price gap is taxed as discount
         # (discount_tax), not as a capital gain/loss (cells K26 and K38)
         load_price: float = (
-            tx.purchase_price
+            tx.buy.price
             + (purchase.commission + purchase.fixed_commission) / quantity
-            - discount_rule.accrued_discount(tx.purchase_date)
+            - discount_rule.accrued_discount(tx.buy.date)
         )
         unload_price: float = (
             sale_price
@@ -281,10 +277,10 @@ class BondCalculatorService:
         if total_gain_loss > 0:
             # Step 3 — the zainetto offsets the reduced gain (K51); the tax on what is left,
             # brought back to the full gain, is withheld at sale/redemption (K52)
-            taxable: float = max(0.0, tds_reduction - tx.portfolio_losses)
+            taxable: float = max(0.0, tds_reduction - tx.account.portfolio_losses)
             capital_gain_tax: float = taxable / tds_factor * tax_rate if tds_factor > 0 else 0.0
             # Zainetto residuo: part of the zainetto not consumed by the gain (K53)
-            remaining_loss: float = max(0.0, tx.portfolio_losses - tds_reduction)
+            remaining_loss: float = max(0.0, tx.account.portfolio_losses - tds_reduction)
         else:
             capital_gain_tax = 0.0
             # Loss to add to the zainetto: abs(total) × 48.08%
@@ -514,6 +510,25 @@ def _discount_rule_for(bond: BondDTO, convention: DayCountConvention) -> _Discou
 # ---------------------------------------------------------------------------
 # Module-level helpers
 # ---------------------------------------------------------------------------
+
+
+def trade_commission(trade: TransactionDTO, dry_amount: float) -> float:
+    """
+    Percentage commission of a trade, on the base its type defines (TransactionDTO.commission_base).
+
+    Args:
+        trade: The purchase or the sale
+        dry_amount: Clean amount traded (price × quantity)
+
+    Returns:
+        The commission in €, without the fixed fee
+    """
+    return calc_commission(
+        base=trade.commission_base(dry_amount),
+        pct=trade.commission_pct,
+        min_fee=trade.commission_min,
+        max_fee=trade.commission_max,
+    )
 
 
 def calc_commission(base: float, pct: float, min_fee: float, max_fee: float | None) -> float:

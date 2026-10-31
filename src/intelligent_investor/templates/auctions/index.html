@@ -1,13 +1,13 @@
 {% extends "base.html" %}
 
-{% block title %}Calendario Aste BOT — Investitore Intelligente{% endblock %}
+{% block title %}Calendario Aste — Investitore Intelligente{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="mb-0"><i class="bi bi-calendar3 me-2 text-primary"></i>Calendario Aste BOT</h2>
+  <h2 class="mb-0"><i class="bi bi-calendar3 me-2 text-primary"></i>Calendario Aste</h2>
   <div class="d-flex gap-2">
     <a href="{{ url_for('auctions.forecast') }}" class="btn btn-outline-primary">
-      <i class="bi bi-graph-up-arrow me-1"></i>Forecast prezzi
+      <i class="bi bi-graph-up-arrow me-1"></i>Previsioni prezzi BOT
     </a>
     <a href="{{ url_for('auctions.new') }}" class="btn btn-primary">
       <i class="bi bi-plus-circle me-1"></i>Aggiungi
@@ -15,14 +15,46 @@
   </div>
 </div>
 
+<form method="get" class="d-flex flex-wrap gap-3 align-items-end mb-3">
+  <div style="max-width: 260px;">
+    <label class="form-label small text-muted mb-1" for="session">Asta</label>
+    <select id="session" name="session" class="form-select" onchange="this.form.submit()">
+      <option value="" {{ 'selected' if not session_filter else '' }}>Tutte</option>
+      {% for value, label in session_labels.items() %}
+      <option value="{{ value }}" {{ 'selected' if session_filter == value else '' }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <p class="small text-muted mb-1">
+    Per le aste BTP il calendario del Tesoro dà solo le date: i titoli offerti si conoscono dal
+    comunicato del giorno di comunicazione e si aggiungono da <i class="bi bi-pencil"></i>.
+  </p>
+</form>
+
 <!-- External reference links -->
 <div class="d-flex flex-wrap gap-2 mb-4">
   <span class="text-muted small align-self-center me-1">
     <i class="bi bi-link-45deg"></i> Fonti ufficiali:
   </span>
+  <a href="https://www.dt.mef.gov.it/it/debito_pubblico/emissioni_titoli_di_stato_interni/calendari_emissioni_new/"
+     target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-box-arrow-up-right me-1"></i>Calendario emissioni (MEF)
+  </a>
   <a href="https://www.dt.mef.gov.it/it/debito_pubblico/emissioni_titoli_di_stato_interni/comunicazioni_emissioni_bot/"
      target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
     <i class="bi bi-box-arrow-up-right me-1"></i>Comunicazioni BOT (MEF)
+  </a>
+  <a href="https://www.dt.mef.gov.it/it/debito_pubblico/emissioni_titoli_di_stato_interni/comunicazioni_emissioni_medio_lungo_termine/"
+     target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-box-arrow-up-right me-1"></i>Comunicazioni BTP medio-lungo (MEF)
+  </a>
+  <a href="https://www.dt.mef.gov.it/it/debito_pubblico/emissioni_titoli_di_stato_interni/comunicazioni_emissioni_ctz_e_btpei/"
+     target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-box-arrow-up-right me-1"></i>Comunicazioni BTP Short (MEF)
+  </a>
+  <a href="https://www.dt.mef.gov.it/it/debito_pubblico/emissioni_titoli_di_stato_interni/programma_trimestrale_emissione/"
+     target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
+    <i class="bi bi-box-arrow-up-right me-1"></i>Programma trimestrale (MEF)
   </a>
   <a href="https://www.bancaditalia.it/compiti/operazioni-mef/risultati-aste/index.html"
      target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline-secondary">
@@ -46,8 +78,8 @@
         <thead>
           <tr>
             <th style="width:8%">Mese</th>
-            <th style="width:9%">Asta</th>
-            <th style="width:9%">Durata</th>
+            <th style="width:11%">Asta</th>
+            <th>Durata / Titoli</th>
             <th>Comunicazione</th>
             <th>Presentazione</th>
             <th>Data Asta</th>
@@ -68,15 +100,34 @@
                 {{ month_label }}
               </td>
               {% endif %}
-              <td>{{ period_labels[a.period] }}</td>
               <td>
-                <span class="badge
-                  {% if a.duration_type == 'annual' %}bg-primary
-                  {% elif a.duration_type == 'semiannual' %}bg-success
-                  {% else %}bg-secondary
-                  {% endif %}">
-                  {{ duration_labels[a.duration_type] }}
-                </span>
+                {# Same look for every auction: session badge (BOT blue, BTP green) and its period #}
+                <span class="badge {{ 'badge-bot' if a.session == 'bot' else 'badge-btp' }}">{{ session_labels[a.session] }}</span>
+                <div class="small text-muted">{{ period_labels[a.period] | lower }}</div>
+              </td>
+              <td>
+                {% if a.session == 'bot' %}
+                {# Plain text like the BTP bonds below: colours are kept for the session badges #}
+                <span class="small {{ 'text-muted' if a.duration_type == 'tbd' else '' }}">BOT {{ duration_labels[a.duration_type] | lower }}</span>
+                {% elif offerings.get(a.id) %}
+                <ul class="list-unstyled mb-0 small">
+                  {% for o in offerings[a.id] %}
+                  {% set bond_id = bond_ids_by_isin.get(o.isin) %}
+                  <li>
+                    {% if bond_id %}
+                    <a href="{{ url_for('bonds.detail', bond_id=bond_id) }}" class="text-decoration-none">{{ o.name }}</a>
+                    <span class="text-muted">(riapertura)</span>
+                    <a href="{{ url_for('calculator.index', bond_id=bond_id, venue='asta', purchase_date=a.settlement_date.isoformat()) }}"
+                       class="ms-1" title="Simula l'acquisto in quest'asta"><i class="bi bi-calculator"></i></a>
+                    {% else %}
+                    {{ o.name }} <span class="text-muted">(nuovo{% if o.maturity_date %}, scad. {{ o.maturity_date.strftime('%d/%m/%Y') }}{% endif %})</span>
+                    {% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% else %}
+                <span class="text-muted small">Titoli dal comunicato del {{ a.announcement_date.strftime('%d/%m') }}</span>
+                {% endif %}
               </td>
               <td>{{ a.announcement_date.strftime('%d/%m/%Y') }}</td>
               <td>{{ a.submission_deadline.strftime('%d/%m/%Y') }}</td>
@@ -84,6 +135,7 @@
               <td><strong>{{ a.settlement_date.strftime('%d/%m/%Y') }}</strong></td>
               <td>
                 {% if a.maturity_date %}{{ a.maturity_date.strftime('%d/%m/%Y') }}
+                {% elif a.session != 'bot' %}<span class="text-muted">—</span>
                 {% else %}<span class="text-muted">t.b.d.</span>{% endif %}
               </td>
               <td class="text-end">

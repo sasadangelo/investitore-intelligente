@@ -40,6 +40,8 @@ class BankCommissionDAO(Base):
     profile_id: Column[int] = Column(Integer, ForeignKey(column="bank_profile.id", ondelete="CASCADE"), nullable=False)
 
     venue: Column[str] = Column(String(length=10), nullable=False)  # 'asta' | 'mot'
+    # Bonds the row applies to: 'all' | 'BOT' | 'BTP' (banks often charge BTPs differently)
+    bond_type: Column[str] = Column(String(length=10), nullable=False, default="all")
     duration_type: Column[str] = Column(String(length=20), nullable=False, default="any")
     days_min: Column[int] = Column(Integer, nullable=True)
     days_max: Column[int] = Column(Integer, nullable=True)

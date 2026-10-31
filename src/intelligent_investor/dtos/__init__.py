@@ -12,7 +12,7 @@ from .bond_calculation_result import (BondCalculationResultDTO,
                                       SaleResultDTO,
                                       StampDutyResultDTO,
                                       SummaryResultDTO)
-from .bot_auction import BotAuctionDTO
+from .bot_auction import AuctionOfferingDTO, BotAuctionDTO
 
 __all__ = [
     "BankProfileDTO",
@@ -21,6 +21,7 @@ __all__ = [
     "BondQuoteDTO",
     "BondTransactionDTO",
     "BotAuctionDTO",
+    "AuctionOfferingDTO",
     "BondCalculationResultDTO",
     "PurchaseResultDTO",
     "SaleResultDTO",

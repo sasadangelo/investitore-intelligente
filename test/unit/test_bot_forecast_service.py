@@ -257,3 +257,14 @@ def test_forecast_all_returns_one_result_per_future_auction() -> None:
     svc = _service_with_mocks([a1, a2], [b1, b2, b3, b4], qs)
     results = svc.forecast_all()
     assert len(results) == 2
+
+
+def test_forecast_all_skips_btp_auctions() -> None:
+    # BTP auctions share the calendar but the forecast covers BOTs only
+    bot = _auction(TODAY + timedelta(days=5), TODAY + timedelta(days=7), None, duration_type="tbd")
+    btp = bot.model_copy(update={"session": "medium_long"})
+    svc = _service_with_mocks([bot, btp], [], [])
+
+    results = svc.forecast_all()
+
+    assert [r.auction.session for r in results] == ["bot"]

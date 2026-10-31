@@ -8,18 +8,19 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.db.session import db_manager
-from intelligent_investor.dtos.bot_auction import BotAuctionDTO
-from intelligent_investor.models.bot_auction import BotAuctionDAO
+from intelligent_investor.dtos.bot_auction import AuctionOfferingDTO, BotAuctionDTO
+from intelligent_investor.models.bot_auction import AuctionOfferingDAO, BotAuctionDAO
 
 logger = LoggerManager.get_logger(name="BotAuctionService")
 
 
 class BotAuctionService:
     """
-    Service layer for BotAuction CRUD operations.
+    Service layer for the auction calendar: BOT and BTP auctions, and the bonds
+    offered at BTP auctions.
 
-    All persistence is handled via BotAuctionDAO internally.
-    Callers interact exclusively with BotAuctionDTO objects.
+    All persistence is handled via BotAuctionDAO / AuctionOfferingDAO internally.
+    Callers interact exclusively with BotAuctionDTO / AuctionOfferingDTO objects.
     """
 
     # ------------------------------------------------------------------
@@ -142,6 +143,8 @@ class BotAuctionService:
         logger.info(f"Deleting auction id={auction_id}")
         try:
             with db_manager.get_session() as session:
+                # The bonds offered go with the auction (also where foreign keys are not enforced)
+                session.query(AuctionOfferingDAO).filter_by(auction_id=auction_id).delete(synchronize_session=False)
                 count = session.query(BotAuctionDAO).filter_by(id=auction_id).delete(
                     synchronize_session=False
                 )
@@ -153,4 +156,62 @@ class BotAuctionService:
             return deleted
         except SQLAlchemyError as e:
             logger.error(f"Failed to delete auction id={auction_id}: {e}")
+            raise
+
+    # ------------------------------------------------------------------
+    # Bonds offered at BTP auctions
+    # ------------------------------------------------------------------
+
+    def add_offering(self, offering: AuctionOfferingDTO) -> AuctionOfferingDTO:
+        """
+        Add a bond offered at an auction and return it with its id.
+
+        Raises:
+            SQLAlchemyError: on any database failure (e.g. unknown auction_id).
+        """
+        logger.info(f"Adding offering {offering.isin} to auction id={offering.auction_id}")
+        try:
+            with db_manager.get_session() as session:
+                dao = AuctionOfferingDAO(**offering.model_dump(exclude={"id"}))
+                session.add(dao)
+                session.flush()
+                return AuctionOfferingDTO.model_validate(dao)
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to add offering to auction id={offering.auction_id}: {e}")
+            raise
+
+    def list_offerings(self, auction_ids: list[int]) -> dict[int, list[AuctionOfferingDTO]]:
+        """
+        Return the bonds offered at each of the given auctions, keyed by auction id.
+
+        Auctions without offerings are missing from the result; offerings are
+        ordered by maturity (unknown maturities last).
+        """
+        if not auction_ids:
+            return {}
+        try:
+            with db_manager.get_session() as session:
+                daos = (
+                    session.query(AuctionOfferingDAO)
+                    .filter(AuctionOfferingDAO.auction_id.in_(auction_ids))
+                    .order_by(AuctionOfferingDAO.maturity_date.is_(None), AuctionOfferingDAO.maturity_date)
+                    .all()
+                )
+                result: dict[int, list[AuctionOfferingDTO]] = {}
+                for dao in daos:
+                    result.setdefault(dao.auction_id, []).append(AuctionOfferingDTO.model_validate(dao))
+                return result
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to list offerings: {e}")
+            raise
+
+    def delete_offering(self, offering_id: int) -> bool:
+        """Delete an offered bond; True if it existed."""
+        logger.info(f"Deleting offering id={offering_id}")
+        try:
+            with db_manager.get_session() as session:
+                count = session.query(AuctionOfferingDAO).filter_by(id=offering_id).delete(synchronize_session=False)
+            return count > 0
+        except SQLAlchemyError as e:
+            logger.error(f"Failed to delete offering id={offering_id}: {e}")
             raise

@@ -13,6 +13,7 @@ _service = BankProfileService()
 
 VENUE_LABELS = {"asta": "Asta", "mot": "MOT"}
 DURATION_LABELS = {"any": "Qualsiasi", "annual": "Annuale", "semiannual": "Semestrale", "quarterly": "Trimestrale"}
+BOND_TYPE_LABELS = {"all": "Tutti", "BOT": "BOT", "BTP": "BTP"}
 
 
 # ---------------------------------------------------------------------------
@@ -39,6 +40,7 @@ def _form_to_commission(form: dict, profile_id: int, commission_id: int | None =
         id=commission_id,
         profile_id=profile_id,
         venue=form["venue"],
+        bond_type=form.get("bond_type", "all"),
         duration_type=form.get("duration_type", "any"),
         days_min=int(min_raw) if min_raw else None,
         days_max=int(max_days_raw) if max_days_raw else None,
@@ -98,6 +100,7 @@ def detail(profile_id: int):
                            profile=profile,
                            commissions=commissions,
                            venue_labels=VENUE_LABELS,
+                           bond_type_labels=BOND_TYPE_LABELS,
                            duration_labels=DURATION_LABELS)
 
 
@@ -161,6 +164,7 @@ def new_commission(profile_id: int):
                            profile=profile,
                            commission=None,
                            venue_labels=VENUE_LABELS,
+                           bond_type_labels=BOND_TYPE_LABELS,
                            duration_labels=DURATION_LABELS,
                            action=url_for("banks.create_commission", profile_id=profile_id),
                            title="Nuova Commissione")
@@ -183,6 +187,7 @@ def create_commission(profile_id: int):
                                profile=profile,
                                commission=request.form,
                                venue_labels=VENUE_LABELS,
+                           bond_type_labels=BOND_TYPE_LABELS,
                                duration_labels=DURATION_LABELS,
                                action=url_for("banks.create_commission", profile_id=profile_id),
                                title="Nuova Commissione"), 422
@@ -199,6 +204,7 @@ def edit_commission(profile_id: int, commission_id: int):
                            profile=profile,
                            commission=commission,
                            venue_labels=VENUE_LABELS,
+                           bond_type_labels=BOND_TYPE_LABELS,
                            duration_labels=DURATION_LABELS,
                            action=url_for("banks.update_commission",
                                          profile_id=profile_id, commission_id=commission_id),
@@ -219,6 +225,7 @@ def update_commission(profile_id: int, commission_id: int):
                                profile=profile,
                                commission=request.form,
                                venue_labels=VENUE_LABELS,
+                           bond_type_labels=BOND_TYPE_LABELS,
                                duration_labels=DURATION_LABELS,
                                action=url_for("banks.update_commission",
                                              profile_id=profile_id, commission_id=commission_id),

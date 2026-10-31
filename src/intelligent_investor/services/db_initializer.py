@@ -11,6 +11,7 @@ from intelligent_investor.db.session import db_manager
 # Import all DAOs here so SQLAlchemy's metadata is aware of every table
 from intelligent_investor.models.bond import BondDAO  # noqa: F401
 from intelligent_investor.models.bond_quotes import BondQuoteDAO  # noqa: F401
+from intelligent_investor.models.bot_auction import AuctionOfferingDAO, BotAuctionDAO  # noqa: F401
 
 logger = LoggerManager.get_logger(name="DatabaseInitializer")
 
@@ -21,6 +22,8 @@ _ADDED_COLUMNS: list[tuple[str, str, str]] = [
     # (table, column, SQL type)
     ("bond", "first_coupon_date", "DATE"),  # BTP roadmap phase 10
     ("bank_profile", "coupon_fee", "REAL NOT NULL DEFAULT 0"),  # BTP roadmap phase 14
+    ("bot_auction", "session", "VARCHAR(20) NOT NULL DEFAULT 'bot'"),  # BTP roadmap phase 15
+    ("bank_commission", "bond_type", "VARCHAR(10) NOT NULL DEFAULT 'all'"),  # commissions by bond type
 ]
 
 

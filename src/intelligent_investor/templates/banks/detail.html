@@ -40,6 +40,7 @@
       <thead>
         <tr>
           <th>Venue</th>
+          <th>Titoli</th>
           <th>Durata</th>
           <th class="text-end">Giorni min</th>
           <th class="text-end">Giorni max</th>
@@ -58,6 +59,7 @@
               {{ venue_labels[c.venue] }}
             </span>
           </td>
+          <td>{{ bond_type_labels[c.bond_type] }}</td>
           <td>{{ duration_labels[c.duration_type] }}</td>
           <td class="text-end">{{ c.days_min if c.days_min is not none else '—' }}</td>
           <td class="text-end">{{ c.days_max if c.days_max is not none else '—' }}</td>

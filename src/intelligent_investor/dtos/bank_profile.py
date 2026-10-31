@@ -39,6 +39,10 @@ class BankCommissionDTO(BaseModel):
     Commission schedule for one venue/duration combination within a BankProfile.
 
     venue         : 'asta' (primary market) or 'mot' (secondary market).
+    bond_type     : bonds the row applies to: 'all', 'BOT' or 'BTP'. Banks often charge
+                    BTPs differently (e.g. BTP subscriptions at auction are usually free,
+                    while BOT auction fees are capped by law by duration); a row for the
+                    bond's own type wins over an 'all' row (see BankProfileService.resolve_commission).
     duration_type : 'any' when the same rates apply to all durations (most MOT profiles),
                     or 'annual' / 'semiannual' / 'quarterly' for duration-specific rates.
     days_min      : lower bound of the holding-days range (inclusive). None = no lower bound.
@@ -60,6 +64,7 @@ class BankCommissionDTO(BaseModel):
     profile_id: int
 
     venue: Literal["asta", "mot"]
+    bond_type: Literal["all", "BOT", "BTP"] = "all"
     duration_type: Literal["any", "annual", "semiannual", "quarterly"] = "any"
 
     # Days range — both None means "matches any number of days"

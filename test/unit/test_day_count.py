@@ -125,7 +125,7 @@ def test_calculator_uses_the_configured_accrued_interest_convention(monkeypatch:
         nominal_rate=2.5,
         coupon_frequency=2,
     )
-    tx = BondTransactionDTO(
+    tx = BondTransactionDTO.from_flat(
         bond_id=0, purchase_venue="mot", purchase_date=date(2026, 2, 16), purchase_price=97.0, face_value=10000.0
     )
     act_act = BondCalculatorService().calculate(tx, bond).purchase.accrued_interest

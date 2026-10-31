@@ -173,30 +173,30 @@ class BankProfileService:
         profile_id: int,
         venue: str,
         days: int | None,
+        bond_type: str | None = None,
     ) -> BankCommissionDTO | None:
         """
-        Find the best-matching commission row for the given profile, venue and days.
+        Find the best-matching commission row for the given profile, venue, days and bond type.
 
-        Lookup order:
-          1. Exact days-range match for the given venue
-          2. Row with duration_type='any' (days_min=None, days_max=None) for the given venue
-          3. None — caller should leave fields empty
+        Rows for the bond's own type (bond_type 'BOT' or 'BTP') are tried first, then the
+        rows valid for every bond ('all'). Within each group:
+          1. Exact days-range match
+          2. Row without a days range (days_min=None, days_max=None)
+        None when nothing matches — the caller leaves the fields empty.
+        The page's JavaScript (calculator/index.html, resolveCommission) mirrors this lookup.
         """
-        rows = self.list_commissions(profile_id)
-        venue_rows = [r for r in rows if r.venue == venue]
-
-        # Step 1: exact days-range match
-        if days is not None:
-            for row in venue_rows:
-                if row.days_min is not None or row.days_max is not None:
-                    if row.matches_days(days):
+        venue_rows = [r for r in self.list_commissions(profile_id) if r.venue == venue]
+        own_type = [r for r in venue_rows if bond_type and r.bond_type == bond_type]
+        for group in (own_type, [r for r in venue_rows if r.bond_type == "all"]):
+            # Step 1: exact days-range match
+            if days is not None:
+                for row in group:
+                    if (row.days_min is not None or row.days_max is not None) and row.matches_days(days):
                         return row
-
-        # Step 2: fallback to "any" row
-        for row in venue_rows:
-            if row.days_min is None and row.days_max is None:
-                return row
-
+            # Step 2: row without a days range
+            for row in group:
+                if row.days_min is None and row.days_max is None:
+                    return row
         return None
 
     # ------------------------------------------------------------------

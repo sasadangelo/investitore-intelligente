@@ -53,7 +53,7 @@ def _make_bond(raw: dict) -> BondDTO:
 
 
 def _make_transaction(raw: dict) -> BondTransactionDTO:
-    return BondTransactionDTO(
+    return BondTransactionDTO.from_flat(
         bond_id=0, **{key: date.fromisoformat(value) if key.endswith("_date") else value for key, value in raw.items()}
     )
 
@@ -122,7 +122,7 @@ def test_asta_commission_based_on_face_value() -> None:
         nominal_rate=3.0,
         coupon_frequency=2,
     )
-    tx = BondTransactionDTO(
+    tx = BondTransactionDTO.from_flat(
         bond_id=0,
         purchase_venue="asta",
         purchase_date=date(2023, 2, 14),
@@ -151,7 +151,7 @@ def test_purchase_on_stacco_and_early_sale_before_next_coupon() -> None:
         coupon_frequency=2,
         tax_rate=12.5,
     )
-    tx = BondTransactionDTO(
+    tx = BondTransactionDTO.from_flat(
         bond_id=0,
         purchase_venue="mot",
         purchase_date=date(2024, 1, 15),  # exact stacco date
@@ -170,7 +170,8 @@ def test_purchase_on_stacco_and_early_sale_before_next_coupon() -> None:
 
     # Selling mid-period: buyer owes the running rateo to this seller.
     cs = CouponSchedule(bond.issue_date, bond.maturity_date, bond.coupon_frequency, bond.nominal_rate, bond.tax_rate)
-    expected_sale_accrued = cs.accrued_interest(tx.sale_date)
+    assert tx.sell is not None
+    expected_sale_accrued = cs.accrued_interest(tx.sell.date)
     assert expected_sale_accrued > 0
     assert result.sale.accrued_interest == pytest.approx(expected_sale_accrued, abs=_ABS_PRICE)
     assert result.sale.dirty_price == pytest.approx(101.0 + expected_sale_accrued, abs=_ABS_PRICE)
@@ -194,7 +195,7 @@ def test_auction_purchase_cashes_prorated_first_coupon() -> None:
         coupon_frequency=2,
         tax_rate=12.5,
     )
-    tx = BondTransactionDTO(
+    tx = BondTransactionDTO.from_flat(
         bond_id=0,
         purchase_venue="asta",
         purchase_date=date(2028, 3, 1),
@@ -226,7 +227,7 @@ def test_long_first_coupon_from_bond_first_coupon_date() -> None:
         coupon_frequency=2,
         tax_rate=12.5,
     )
-    tx = BondTransactionDTO(
+    tx = BondTransactionDTO.from_flat(
         bond_id=0,
         purchase_venue="mot",
         purchase_date=date(2028, 10, 1),
@@ -262,7 +263,7 @@ def _btp_lug29() -> BondDTO:
 
 
 def _mot_purchase(sale_date: date | None = None) -> BondTransactionDTO:
-    return BondTransactionDTO(
+    return BondTransactionDTO.from_flat(
         bond_id=0,
         purchase_venue="mot",
         purchase_date=date(2026, 10, 29),
@@ -303,9 +304,15 @@ def test_modified_duration_blank_for_holding_under_365_days() -> None:
 # ---------------------------------------------------------------------------
 
 
+def _with_coupon_fee(tx: BondTransactionDTO, fee: float) -> BondTransactionDTO:
+    """The same transaction held in an account charging *fee* € per coupon."""
+    return tx.model_copy(update={"account": tx.account.model_copy(update={"coupon_fee": fee})})
+
+
 def test_coupon_fee_reduces_every_net_coupon() -> None:
     no_fee = BondCalculatorService().calculate(_mot_purchase(), _btp_lug29())
-    fee = BondCalculatorService().calculate(_mot_purchase().model_copy(update={"coupon_fee": 2.0}), _btp_lug29())
+    tx = _mot_purchase()
+    fee = BondCalculatorService().calculate(_with_coupon_fee(tx, 2.0), _btp_lug29())
 
     coupons = len(fee.coupon_plan)
     assert coupons == 6
@@ -322,7 +329,7 @@ def test_coupon_fee_not_charged_on_a_sale_between_coupons() -> None:
     # Sold on 15/12/2027: two coupons cashed (01/01 and 01/07/2027), the running one is rateo
     tx = _mot_purchase(sale_date=date(2027, 12, 15))
     no_fee = BondCalculatorService().calculate(tx, _btp_lug29())
-    fee = BondCalculatorService().calculate(tx.model_copy(update={"coupon_fee": 3.0}), _btp_lug29())
+    fee = BondCalculatorService().calculate(_with_coupon_fee(tx, 3.0), _btp_lug29())
 
     assert fee.summary.net_gain == pytest.approx(no_fee.summary.net_gain - 3.0 * 2)
 

@@ -212,7 +212,9 @@ def test_bank_profile_commission_resolved_per_bond() -> None:
     capped = _entries(PurchaseCosts(face_value=100000, commission_pct=0.19, commission_max=19.0), [bond], {1: 99.0})[1]
 
     # Tier looked up on the issue-to-maturity days, as the calculator page does
-    svc._bank_svc.resolve_commission.assert_called_once_with(4, "mot", (bond.maturity_date - bond.issue_date).days)
+    svc._bank_svc.resolve_commission.assert_called_once_with(
+        4, "mot", (bond.maturity_date - bond.issue_date).days, "BTP"
+    )
     assert with_profile.net_gain == pytest.approx(capped.net_gain)  # 19 € cap, not 5%
 
 

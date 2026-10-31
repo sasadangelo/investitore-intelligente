@@ -1,5 +1,6 @@
 {
   "description": "BOT annuale acquistato all'asta (mercato primario) - Apr 2024 - vendita anticipata 01/04/2025",
+  "source": "capital_gain da ObbligazioniTF v5.0.ods, foglio Bond (F6=3): K26/K38/K46-K53 replicate cella per cella. Il foglio calcola il capital gain anche per i BOT comprati in asta: al prezzo di emissione il prezzo teorico coincide con l'emissione, ma le commissioni entrano nel prezzo di carico.",
   "bond": {
     "name": "Bot Zc Apr25 A Eur",
     "isin": "IT0005589922",
@@ -39,7 +40,17 @@
       "discount_tax": 21.73,
       "total_paid": 4855.43
     },
-    "capital_gain": null,
+    "capital_gain": {
+      "theoretical_purchase_price": 96.524,
+      "theoretical_sale_price": 99.87687,
+      "load_price": 96.674,
+      "unload_price": 96.03785,
+      "unit_gain_loss": -0.63615,
+      "total_gain_loss": -31.81,
+      "tds_reduction": -15.29,
+      "capital_gain_tax": 0.0,
+      "remaining_loss": 15.29
+    },
     "sale": {
       "dry_amount": 4985.0,
       "commission": 11.96,

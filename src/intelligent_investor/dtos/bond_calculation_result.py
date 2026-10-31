@@ -171,8 +171,9 @@ class BondCalculationResultDTO(BaseModel):
     """
     Full result of the bond calculator.
 
-    capital_gain is None only for a BOT bought at auction: its purchase price is the
-    theoretical price by construction, so no capital gain can arise.
+    capital_gain is computed for every purchase, auction included: at auction the
+    theoretical price is the issue price, but commissions and an early sale still give
+    a capital gain or loss (cells K26/K38 of the sheet do not look at the venue).
     """
 
     quantity: float
@@ -183,6 +184,6 @@ class BondCalculationResultDTO(BaseModel):
     # deducted from the net gain and the net yields
     coupon_fee: float = 0.0
     sale: SaleResultDTO
-    capital_gain: CapitalGainResultDTO | None
+    capital_gain: CapitalGainResultDTO
     stamp_duty: StampDutyResultDTO
     summary: SummaryResultDTO

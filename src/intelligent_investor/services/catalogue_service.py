@@ -19,7 +19,7 @@ from datetime import date
 from intelligent_investor.core.log import LoggerManager
 from intelligent_investor.dtos.bond import BondDTO
 from intelligent_investor.dtos.bond_quote import BondQuoteDTO
-from intelligent_investor.dtos.bond_transaction import BondTransactionDTO
+from intelligent_investor.dtos.bond_transaction import AccountDTO, BondTransactionDTO, BuyTransactionDTO
 from intelligent_investor.services.bank_profile_service import BankProfileService
 from intelligent_investor.services.bond_quote_service import BondQuoteService
 from intelligent_investor.services.bond_service import BondService
@@ -165,7 +165,7 @@ class CatalogueService:
             coupon_fee = profile.coupon_fee if profile else 0.0
             # Same tier lookup as the calculator page: issue-to-maturity days (no row -> no commission)
             row = self._bank_svc.resolve_commission(
-                costs.bank_profile_id, "mot", (bond.maturity_date - bond.issue_date).days
+                costs.bank_profile_id, "mot", (bond.maturity_date - bond.issue_date).days, bond.bond_type
             )
             pct, min_fee, max_fee, fixed = (
                 (row.commission_pct, row.commission_min, row.commission_max, row.commission_fixed)
@@ -174,16 +174,17 @@ class CatalogueService:
             )
         return BondTransactionDTO(
             bond_id=bond.id or 0,
-            purchase_venue="mot",
-            purchase_date=bond.issue_date,  # placeholder, replaced by bond_yields_with_costs
-            purchase_price=bond.issue_price,  # placeholder, replaced by bond_yields_with_costs
-            face_value=costs.face_value,
-            buy_commission_pct=pct,
-            buy_commission_min=min_fee,
-            buy_commission_max=max_fee,
-            buy_commission_fixed=fixed,
-            portfolio_losses=costs.portfolio_losses,
-            coupon_fee=coupon_fee,
+            buy=BuyTransactionDTO(
+                venue="mot",
+                date=bond.issue_date,  # placeholder, replaced by bond_yields_with_costs
+                price=bond.issue_price,  # placeholder, replaced by bond_yields_with_costs
+                face_value=costs.face_value,
+                commission_pct=pct,
+                commission_min=min_fee,
+                commission_max=max_fee,
+                commission_fixed=fixed,
+            ),
+            account=AccountDTO(portfolio_losses=costs.portfolio_losses, coupon_fee=coupon_fee),
         )
 
 

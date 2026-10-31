@@ -128,3 +128,20 @@ def test_get_body_excludes_frontmatter(tmp_path: Path) -> None:
 def test_get_returns_none_for_malformed_file(tmp_path: Path) -> None:
     (tmp_path / "bad.md").write_text("no frontmatter", encoding="utf-8")
     assert GuideService().get("bad") is None
+
+
+# ------------------------------------------------------------------
+# listed: false
+# ------------------------------------------------------------------
+
+
+def test_unlisted_guide_left_out_of_the_index_but_still_reachable(tmp_path: Path) -> None:
+    (tmp_path / "shown.md").write_text(FRONTMATTER, encoding="utf-8")
+    hidden = FRONTMATTER.replace("order: 1\n", "order: 1\nlisted: false\n")
+    (tmp_path / "hidden.md").write_text(hidden, encoding="utf-8")
+
+    service = GuideService()
+
+    assert [g.slug for g in service.list_all()] == ["shown"]
+    guide = service.get("hidden")
+    assert guide is not None and guide.meta.listed is False

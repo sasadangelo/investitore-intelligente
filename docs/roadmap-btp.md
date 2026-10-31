@@ -268,9 +268,66 @@ titolo di Stato comprare, senza conoscere il gergo. Quindi:
 
 **Arretrato da recuperare subito**, in parallelo alle fasi (le fasi 5–7 sono complete ma le guide
 sono ferme ai soli BOT):
-- [catalogo.md](../docs/guides/catalogo.md) — si intitola ancora "Catalogo BOT": aggiungere i BTP,
-  il filtro per tipo, l'ordinamento per rendimento, il bottone "Aggiorna Quotazioni" e il
-  bottone "Gestisci" (lista CRUD separata dal catalogo).
+- ✅ [catalogo.md](../docs/guides/catalogo.md) — ora "Catalogo Obbligazioni": BOT e BTP, filtro per
+  tipo, ordinamento, colonne spiegate per entrambi, parametri avanzati, "Aggiorna Quotazioni" e
+  "Gestisci". Rinominata anche `calcolatore.md` in "Calcolatore Obbligazioni" (campi comuni ed
+  esempio BOT; i BTP restano in `calcolatore-btp.md`) e "Approfondimenti sul Calcolatore"; stessi
+  nomi nei titoli delle pagine del sito.
+- ✅ **Una sola guida del calcolatore**: `calcolatore-btp.md` (Fase 11) è stata unita in
+  [calcolatore.md](../docs/guides/calcolatore.md), perché il calcolatore è uno solo: campi del form
+  una volta sola, risultati comuni, sezione "Righe in più per un BTP", esempio BOT ed esempio BTP
+  (a scadenza e con vendita anticipata), indice delle sezioni in cima (`[TOC]`, solo titoli `##`).
+  Corrette alcune frasi rimaste dalla versione solo BOT (capital gain anche a scadenza, prezzo
+  teorico, base del bollo, guadagno lordo, acquisto in asta). Le citazioni di `calcolatore-btp.md`
+  nelle fasi precedenti sono storiche.
+- ✅ **Pagine di esempi**: gli esempi completi sono passati da `calcolatore.md` a due pagine in fondo
+  all'indice, [esempi-bot.md](../docs/guides/esempi-bot.md) (BOT Feb24 sul MOT a scadenza, con il
+  rimborso corretto: a scadenza nessuna "imposta disaggio rimborsata", come la ricevuta della
+  banca) ed [esempi-btp.md](../docs/guides/esempi-btp.md) (BTP Lug29 a scadenza e con vendita
+  anticipata); `calcolatore.md` vi rimanda. Altri esempi da aggiungere.
+- ✅ **Form e modello della transazione**: il form del calcolatore è diviso in Acquisto, Vendita
+  anticipata (facoltativa) e Banca e tasse (le commissioni di vendita compaiono solo con la
+  vendita). Nel codice `BondTransactionDTO` non è più piatto: contiene `buy: BuyTransactionDTO`,
+  `sell: SellTransactionDTO | None` (None = tenuto a scadenza) e `account: AccountDTO` (bollo,
+  spesa per cedola, zainetto). `BuyTransactionDTO` e `SellTransactionDTO` sono sottoclassi di
+  `TransactionDTO` (data, prezzo, commissioni) e definiscono ciascuna la base della commissione
+  (`commission_base`: nominale in asta, importo secco sul MOT e in vendita). `from_flat` costruisce
+  la transazione dai nomi piatti del form e dei casi di test JSON, rimasti invariati. Nessun
+  risultato cambiato: tutti i test passano con gli stessi valori attesi.
+- ✅ **Profili banca verificati sui fogli informativi** (31/10/2026): spesa per cedola sui titoli di
+  Stato 0 € in tutte le 10 banche (segnata nelle note); link aggiornati per BPER, Directa e MPS;
+  Directa sul MOT 6 € per eseguito con ogni profilo (non 5 €; l'1,9‰ "Variabile" vale solo per MTA
+  e SEDEX; il profilo "Dinamico" non è modellabile, degressivo per ordini nella giornata).
+- ✅ **Commissioni per tipo di titolo**: nuova colonna `bond_type` sulle righe di commissione
+  (`all` | `BOT` | `BTP`, default `all`); `resolve_commission` e il JavaScript del calcolatore
+  provano prima le righe del tipo del titolo, poi quelle `all`. Dati corretti: le fasce d'asta
+  per durata sono quelle di legge dei BOT (righe `BOT`), quindi un BTP in asta non paga
+  commissione, come dicono Fineco ("Sottoscrizione BTP 0,00"), Webank ("Gratuito") e Poste
+  ("Nessuna"); Unicredit e MPS Filiale/Phone hanno una tariffa MOT propria per i BTP (Unicredit
+  0,90/0,60/0,40%, MPS 0,85/0,60%); le righe MPS trimestrale/semestrale/annuale non avevano i
+  giorni e il calcolatore usava sempre la prima; Intesa Filiale aveva le tariffe MOT sulle righe
+  d'asta; Poste aveva il minimo di 5,16 € in asta e fasce MOT dei BOT sbagliate. Corretto anche
+  l'arrotondamento a 2 decimali della percentuale nel form (0,215% → 0,22%). **BPER**: l'avviso
+  titoli di Stato del 26/10/2026 conferma l'asta (solo BOT, BTP "non applicabili") e indica 0,50%
+  "per transazioni successive al collocamento" senza distinguere il canale; le tariffe MOT del
+  profilo restano quelle del contratto 12/2024 (per canale), con una nota che segnala la
+  differenza, finché un eseguito reale non chiarisce quale si applica.
+- **Prossimo — spese di custodia dei titoli di Stato**: BPER, Unicredit e Poste 10 € a semestre,
+  Intesa 10 € più un canone mensile in alcuni conti. Vanno nel profilo come costo del conto e
+  nel calcolatore come campo **modificabile**, proposto dal profilo ma azzerabile: non tutti la
+  pagano (es. Intesa con alcuni conti XME), come per la spesa per cedola.
+- ✅ **Capital gain dei BOT comprati in asta**: il calcolatore lo saltava (`_calc_capital_gain`
+  restituiva `None` per ogni BOT in asta), ma nel foglio `K26`/`K38`/`K46`–`K53` non guardano il
+  mercato: in asta il prezzo teorico è quello di emissione, ma le commissioni entrano nel prezzo
+  di carico. Ora si calcola per ogni acquisto (`BondCalculationResultDTO.capital_gain` non è più
+  opzionale). Casi 003 e 004 aggiornati con i valori del foglio rifatti cella per cella (a
+  scadenza minusvalenza −7,50 € = commissioni; vendita a 99,70 sotto il teorico 99,877:
+  −31,81 €); verificati anche i casi MOT 001, 002, 005 (scarto massimo 7e-13). Guide aggiornate
+  (`calcolatore.md`, `calcolatore-approfondimenti.md`). Si può ora aggiungere l'esempio "BOT in
+  asta venduto prima".
+- ✅ **Indice delle guide**: `Cos'è un BOT` e `Cos'è un BTP` non sono più nell'indice (campo
+  `listed: false` nell'intestazione, gestito da `GuideService.list_all`), ma si aprono dai due
+  riquadri in evidenza in `cosa-e-un-obbligazione.md` e dai link delle altre guide.
 - ✅ [cosa-e-un-obbligazione.md](../docs/guides/cosa-e-un-obbligazione.md) — guida di partenza: cos'è
   un'obbligazione, parole chiave, rischi, tasse, dove si compra, e la mappa delle famiglie (BOT, BTP a
   tasso fisso, BTP a cedole crescenti e indicizzati, CCTeu, titoli esteri, corporate). Le guide BOT e
@@ -304,7 +361,7 @@ testo o se un testo non è più usato.
 | 12 — Duration modificata | ✅ `cosa-e-un-btp.md`, `catalogo.md` (anche una riga in `calcolatore-btp.md`) |
 | 13 — Costi reali nel catalogo | ✅ `catalogo.md` (sezione "Parametri avanzati") |
 | 14 — Rifiniture | ✅ `calcolatore-btp.md`, `calcolatore.md`, `catalogo.md` (spesa per cedola) |
-| 15 — Calendario aste BTP | `calendario.md`, `inizia-qui.md` |
+| 15 — Calendario aste BTP | ✅ `calendario.md`, `inizia-qui.md` |
 
 ## Per ogni fase — Test
 
@@ -765,7 +822,38 @@ Stessa linea della Fase 13 (niente colonne intermedie di `ConfrontoRendimenti`).
   prezzo in lettera invece dell'ultimo prezzo.
 - **Guide**: aggiornare `calcolatore-btp.md` e la guida delle banche per la spesa per cedola.
 
-## Fase 15 — Calendario aste anche per i BTP (🟡)
+## Fase 15 — Calendario aste anche per i BTP (🟡) ✅
+
+**Fatto:**
+- Colonna `session` in `bot_auction` (`bot` | `medium_long` | `short`, migrazione
+  `VARCHAR(20) NOT NULL DEFAULT 'bot'`: le 23 aste BOT esistenti restano BOT). La tabella tiene il
+  suo nome: rinominarla in SQLite vuol dire ricostruirla, senza vantaggi.
+- Le sessioni del calendario MEF 2026, lette dalle pagine del PDF: **medio-lungo a metà mese e
+  spesso anche a fine mese** (es. 13/10 e 29/10, 12/11 e 27/11), **BTP Short sempre a fine mese**.
+  Il DTO lo verifica (BTP Short solo `end_month`); un'asta BTP non ha durata né scadenza proprie
+  (`duration_type = 'tbd'`).
+- Nuova tabella `auction_offering` (ISIN, nome, scadenza) per i titoli offerti, da inserire dopo il
+  comunicato. Il collegamento al catalogo si risolve per ISIN quando si mostra il calendario, così
+  una riapertura punta al titolo in archivio e un titolo nuovo non richiede di crearlo; per una
+  riapertura basta l'ISIN, nome e scadenza si prendono dal catalogo. Cancellando un'asta si
+  cancellano anche i suoi titoli.
+- Pagina: titolo "Calendario Aste", filtro **Asta** (BOT, BTP medio-lungo, BTP Short), per le aste
+  BTP i titoli offerti o "Titoli dal comunicato del …"; accanto a una riapertura l'icona del
+  calcolatore apre `/calculator/?bond_id=…&venue=asta&purchase_date=<regolamento>`. Form con la
+  sessione: per i BTP spariscono durata e scadenza (e il periodo per le BTP Short); sezione
+  "Titoli offerti" nella modifica di un'asta BTP. Link al calendario MEF 2026 tra le fonti.
+- Le Previsioni restano solo BOT (filtro esplicito sulla sessione).
+- Dati: inserite nel DB le 4 aste BTP 2026 ancora da tenere (medio-lungo 12/11, 27/11 e 11/12,
+  BTP Short 25/11), con presentazione il giorno lavorativo prima dell'asta come per i BOT.
+  L'estrazione automatica dal PDF non è affidabile (calendario grafico): le date sono lette dalle
+  pagine renderizzate in immagine.
+- Test: sessione di default, aste BTP salvate e validate, medio-lungo anche a fine mese, titoli
+  offerti (normalizzazione ISIN, ordine per scadenza, cancellazione, cascata), previsioni senza BTP.
+  Verificato col client di test su una copia del DB e in Chrome (campi del form per sessione).
+- Guide: `calendario.md` riscritta per BOT e BTP (sessioni, comunicato, riaperture e rateo, come
+  leggere il calendario); `inizia-qui.md` (tabella e Passo 3).
+
+**Piano originale:**
 
 Oggi il [Calendario Aste](../src/intelligent_investor/templates/auctions/index.html) contiene solo
 i BOT (tabella `bot_auction`, 23 aste 2026 inserite a mano): per ogni asta comunicazione,
@@ -775,7 +863,7 @@ conoscono già dal calendario annuale.
 Il [Calendario Emissioni Titoli di Stato 2026](https://www.dt.mef.gov.it/export/sites/sitodt/modules/documenti_it/debito_pubblico/calendario/Calendario-Emissioni-Titoli-di-Stato-2026.pdf)
 del MEF dà per ogni famiglia i giorni di **comunicazione**, **asta** e **regolamento**:
 - **BOT** (metà e fine mese);
-- **medio-lungo** (metà mese): BTP a tasso fisso da 3 a 30/50 anni (BTP Green compresi), insieme
+- **medio-lungo** (metà mese, e spesso anche fine mese): BTP a tasso fisso da 3 a 30/50 anni (BTP Green compresi), insieme
   ai CCTeu;
 - **BTP Short e BTP€i** (fine mese): BTP Short Term, cioè BTP a tasso fisso a circa 2–3 anni
   (es. BTP Fx 2.2% Feb28, emesso il 28/02/2026), insieme ai BTP€i.

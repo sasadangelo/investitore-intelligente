@@ -12,15 +12,17 @@
       <div class="card-body">
         <p>Stai per eliminare l'asta:</p>
         <ul class="mb-3">
+          <li><strong>Asta:</strong> {{ session_labels[auction.session] }}</li>
           <li><strong>Periodo:</strong> {{ period_labels[auction.period] }}</li>
           <li><strong>Durata:</strong> {{ duration_labels[auction.duration_type] }}</li>
-          <li><strong>Asta:</strong> {{ auction.auction_date.strftime('%d/%m/%Y') }}</li>
+          <li><strong>Data asta:</strong> {{ auction.auction_date.strftime('%d/%m/%Y') }}</li>
           <li><strong>Regolamento:</strong> {{ auction.settlement_date.strftime('%d/%m/%Y') }}</li>
           <li><strong>Scadenza:</strong>
             {% if auction.maturity_date %}{{ auction.maturity_date.strftime('%d/%m/%Y') }}
             {% else %}t.b.d.{% endif %}
           </li>
         </ul>
+        {% if auction.session != 'bot' %}<p class="small">Vengono eliminati anche i titoli offerti registrati per quest'asta.</p>{% endif %}
         <p class="text-danger fw-semibold">Questa operazione è irreversibile.</p>
         <div class="d-flex gap-2">
           <form method="post" action="{{ url_for('auctions.delete', auction_id=auction.id) }}">
